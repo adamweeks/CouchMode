@@ -61,7 +61,12 @@ export function useMarkSeriesFinished() {
         .single()
       if (fetchError) throw fetchError
 
-      const updates: Record<string, string | null> = {
+      const updates: {
+        completed_at: string
+        status: 'completed'
+        note: string | null
+        started_at?: string
+      } = {
         completed_at: completedAt,
         status: 'completed',
         note: note ?? null,
