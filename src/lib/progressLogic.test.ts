@@ -4,6 +4,7 @@ import {
   getBackfillEntries,
   isSeriesComplete,
   isRegression,
+  buildCompletionUpdates,
 } from './progressLogic'
 
 describe('getCurrentProgress', () => {
@@ -94,5 +95,50 @@ describe('isRegression', () => {
 
   it('returns false when null (no progress yet)', () => {
     expect(isRegression(1, 1, null)).toBe(false)
+  })
+})
+
+describe('buildCompletionUpdates', () => {
+  const completedAt = '2026-04-01T12:00:00Z'
+  const currentStartedAt = '2026-01-01T12:00:00Z'
+
+  it('always sets status to completed and completed_at to the given date', () => {
+    const result = buildCompletionUpdates(completedAt, currentStartedAt)
+    expect(result.status).toBe('completed')
+    expect(result.completed_at).toBe(completedAt)
+  })
+
+  it('sets note to null when not provided', () => {
+    const result = buildCompletionUpdates(completedAt, currentStartedAt)
+    expect(result.note).toBeNull()
+  })
+
+  it('includes note when provided', () => {
+    const result = buildCompletionUpdates(completedAt, currentStartedAt, undefined, 'Great rewatch')
+    expect(result.note).toBe('Great rewatch')
+  })
+
+  it('uses explicit startedAt when provided', () => {
+    const startedAt = '2026-02-01T12:00:00Z'
+    const result = buildCompletionUpdates(completedAt, currentStartedAt, startedAt)
+    expect(result.started_at).toBe(startedAt)
+  })
+
+  it('uses completedAt as started_at when completedAt is before currentStartedAt', () => {
+    const pastCompleted = '2025-12-01T12:00:00Z'
+    const result = buildCompletionUpdates(pastCompleted, currentStartedAt)
+    expect(result.started_at).toBe(pastCompleted)
+  })
+
+  it('omits started_at when completedAt is after currentStartedAt and no startedAt given', () => {
+    const result = buildCompletionUpdates(completedAt, currentStartedAt)
+    expect(result.started_at).toBeUndefined()
+  })
+
+  it('prefers explicit startedAt over the backdating fallback', () => {
+    const pastCompleted = '2025-12-01T12:00:00Z'
+    const explicitStart = '2025-11-01T12:00:00Z'
+    const result = buildCompletionUpdates(pastCompleted, currentStartedAt, explicitStart)
+    expect(result.started_at).toBe(explicitStart)
   })
 })
