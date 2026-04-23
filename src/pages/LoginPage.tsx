@@ -44,61 +44,81 @@ export function LoginPage() {
           <p className="mt-1 text-gray-400 text-sm">Your TV rewatch tracker</p>
         </div>
 
-        <div className="flex rounded-xl bg-gray-800 p-1">
+        <div className="flex rounded-xl bg-gray-800 p-1" role="tablist" aria-label="Authentication options">
           <button
+            role="tab"
+            aria-selected={tab === 'signin'}
             onClick={() => setTab('signin')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-              tab === 'signin' ? 'bg-purple-600 text-white' : 'text-gray-400'
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 ${
+              tab === 'signin' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-gray-200'
             }`}
           >
             Sign In
           </button>
           <button
+            role="tab"
+            aria-selected={tab === 'signup'}
             onClick={() => setTab('signup')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-              tab === 'signup' ? 'bg-purple-600 text-white' : 'text-gray-400'
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 ${
+              tab === 'signup' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-gray-200'
             }`}
           >
             Sign Up
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3" noValidate>
           <div>
+            <label htmlFor="email" className="sr-only">Email address</label>
             <input
               {...register('email')}
+              id="email"
               type="email"
               placeholder="Email"
               autoComplete="email"
+              aria-describedby={errors.email ? 'email-error' : undefined}
+              aria-invalid={!!errors.email}
               className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
-            {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email.message}</p>}
+            {errors.email && (
+              <p id="email-error" role="alert" className="mt-1 text-xs text-red-300">{errors.email.message}</p>
+            )}
           </div>
           <div>
+            <label htmlFor="password" className="sr-only">Password</label>
             <input
               {...register('password')}
+              id="password"
               type="password"
               placeholder="Password"
               autoComplete={tab === 'signup' ? 'new-password' : 'current-password'}
+              aria-describedby={errors.password ? 'password-error' : undefined}
+              aria-invalid={!!errors.password}
               className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
-            {errors.password && <p className="mt-1 text-xs text-red-400">{errors.password.message}</p>}
+            {errors.password && (
+              <p id="password-error" role="alert" className="mt-1 text-xs text-red-300">{errors.password.message}</p>
+            )}
           </div>
 
-          {serverError && <p className="text-sm text-red-400 text-center">{serverError}</p>}
+          {serverError && (
+            <p role="alert" className="text-sm text-red-300 text-center">{serverError}</p>
+          )}
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 rounded-xl bg-purple-600 text-white font-semibold disabled:opacity-50 active:scale-95 transition-transform min-h-[44px]"
+            className="w-full py-3 rounded-xl bg-purple-600 text-white font-semibold disabled:opacity-60 active:scale-95 transition-transform min-h-[44px] hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f17]"
           >
-            {isSubmitting ? '…' : tab === 'signin' ? 'Sign In' : 'Create Account'}
+            {isSubmitting
+              ? (tab === 'signin' ? 'Signing In…' : 'Creating Account…')
+              : (tab === 'signin' ? 'Sign In' : 'Create Account')}
           </button>
         </form>
 
         <div className="relative flex items-center">
           <div className="flex-1 h-px bg-gray-800" />
-          <span className="px-3 text-xs text-gray-500">or</span>
+          <span className="px-3 text-xs text-gray-500" aria-hidden="true">or</span>
           <div className="flex-1 h-px bg-gray-800" />
         </div>
 
@@ -110,9 +130,9 @@ export function LoginPage() {
               setServerError(getErrorMessage(e))
             }
           }}
-          className="w-full py-3 rounded-xl bg-gray-800 text-white font-medium flex items-center justify-center gap-2 active:scale-95 transition-transform min-h-[44px]"
+          className="w-full py-3 rounded-xl bg-gray-800 text-white font-medium flex items-center justify-center gap-2 active:scale-95 transition-transform min-h-[44px] hover:bg-gray-700 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f17]"
         >
-          <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>

@@ -20,24 +20,34 @@ function Stepper({
 }) {
   return (
     <div className="flex flex-col items-center gap-1">
-      <span className="text-xs text-gray-400 uppercase tracking-wide">{label}</span>
-      <div className="flex items-center gap-3">
+      <span id={`stepper-label-${label.toLowerCase()}`} className="text-xs text-gray-400 uppercase tracking-wide">
+        {label}
+      </span>
+      <div className="flex items-center gap-3" role="group" aria-labelledby={`stepper-label-${label.toLowerCase()}`}>
         <button
           type="button"
           onClick={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
-          className="w-10 h-10 rounded-full bg-gray-700 text-white text-lg font-bold disabled:opacity-30 flex items-center justify-center active:scale-95 transition-transform"
+          aria-label={`Decrease ${label}`}
+          className="w-11 h-11 rounded-full bg-gray-700 text-white text-lg font-bold disabled:opacity-30 flex items-center justify-center active:scale-95 transition-transform hover:bg-gray-600 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
         >
-          −
+          <span aria-hidden="true">−</span>
         </button>
-        <span className="w-10 text-center text-xl font-semibold tabular-nums">{value}</span>
+        <span
+          className="w-10 text-center text-xl font-semibold tabular-nums"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {value}
+        </span>
         <button
           type="button"
           onClick={() => onChange(Math.min(max, value + 1))}
           disabled={value >= max}
-          className="w-10 h-10 rounded-full bg-gray-700 text-white text-lg font-bold disabled:opacity-30 flex items-center justify-center active:scale-95 transition-transform"
+          aria-label={`Increase ${label}`}
+          className="w-11 h-11 rounded-full bg-gray-700 text-white text-lg font-bold disabled:opacity-30 flex items-center justify-center active:scale-95 transition-transform hover:bg-gray-600 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
         >
-          +
+          <span aria-hidden="true">+</span>
         </button>
       </div>
     </div>

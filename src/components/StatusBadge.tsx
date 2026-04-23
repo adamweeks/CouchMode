@@ -3,9 +3,9 @@ interface StatusBadgeProps {
 }
 
 const config = {
-  not_started: { label: 'Not Started', className: 'bg-gray-700 text-gray-300' },
-  in_progress: { label: 'In Progress', className: 'bg-blue-900 text-blue-300' },
-  completed: { label: 'Completed', className: 'bg-green-900 text-green-300' },
+  not_started: { label: 'Not Started', className: 'bg-gray-700 text-gray-200' },
+  in_progress: { label: 'In Progress', className: 'bg-blue-900 text-blue-200' },
+  completed: { label: 'Completed', className: 'bg-green-900 text-green-200' },
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {

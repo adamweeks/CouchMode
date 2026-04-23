@@ -11,6 +11,23 @@ import { formatProgress, formatDuration, formatMonthYear } from '../lib/progress
 
 type Rewatch = { id: string; completed_at: string | null; started_at: string; note: string | null; status: string }
 
+function BackArrowIcon() {
+  return (
+    <svg
+      className="w-5 h-5"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M19 12H5M12 5l-7 7 7 7" />
+    </svg>
+  )
+}
+
 function avgDaysBetweenRewatches(rewatches: Rewatch[]): number | null {
   if (rewatches.length < 2) return null
   const dates = rewatches
@@ -36,8 +53,8 @@ export function ShowDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center pt-16">
-        <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+      <div className="flex justify-center pt-16" role="status" aria-label="Loading show details">
+        <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
       </div>
     )
   }
@@ -53,9 +70,10 @@ export function ShowDetailPage() {
       <header className="px-4 pt-12 pb-4 flex items-center gap-3">
         <button
           onClick={() => navigate('/')}
-          className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-800 text-gray-300 flex-shrink-0"
+          aria-label="Go back"
+          className="w-11 h-11 flex items-center justify-center rounded-full bg-gray-800 text-gray-300 flex-shrink-0 hover:bg-gray-700 active:scale-95 transition-transform focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f17]"
         >
-          ←
+          <BackArrowIcon />
         </button>
         <h1 className="text-lg font-bold text-white line-clamp-1">{show.title}</h1>
       </header>
@@ -74,20 +92,20 @@ export function ShowDetailPage() {
                 {formatProgress(currentProgress.season, currentProgress.episode)}
               </p>
             ) : (
-              <p className="text-gray-500 text-sm">Not started yet</p>
+              <p className="text-gray-400 text-sm">Not started yet</p>
             )}
-            <p className="text-xs text-gray-500">{show.total_seasons} season{show.total_seasons !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-gray-400">{show.total_seasons} season{show.total_seasons !== 1 ? 's' : ''}</p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setShowLogModal(true)}
-              className="px-4 py-2 bg-purple-600 text-white text-sm rounded-xl font-medium active:scale-95 transition-transform min-h-[44px]"
+              className="px-4 py-2 bg-purple-600 text-white text-sm rounded-xl font-medium active:scale-95 transition-transform min-h-[44px] hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f17]"
             >
               Log Progress
             </button>
             <button
               onClick={() => setShowFinishedModal(true)}
-              className="px-4 py-2 bg-green-700 text-white text-sm rounded-xl font-medium active:scale-95 transition-transform min-h-[44px]"
+              className="px-4 py-2 bg-green-700 text-white text-sm rounded-xl font-medium active:scale-95 transition-transform min-h-[44px] hover:bg-green-600 focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f17]"
             >
               Finished it
             </button>
@@ -101,12 +119,12 @@ export function ShowDetailPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="text-center">
                 <p className="text-2xl font-bold text-purple-400">{completedRewatches.length}</p>
-                <p className="text-xs text-gray-500">Rewatches</p>
+                <p className="text-xs text-gray-400">Rewatches</p>
               </div>
               {avgDays !== null && (
                 <div className="text-center">
                   <p className="text-2xl font-bold text-purple-400">{avgDays}d</p>
-                  <p className="text-xs text-gray-500">Avg between rewatches</p>
+                  <p className="text-xs text-gray-400">Avg between rewatches</p>
                 </div>
               )}
             </div>
@@ -124,11 +142,11 @@ export function ShowDetailPage() {
                       Rewatch #{completedRewatches.length - i}
                     </p>
                     {rewatch.completed_at && (
-                      <p className="text-xs text-gray-500">{formatMonthYear(rewatch.completed_at)}</p>
+                      <p className="text-xs text-gray-400">{formatMonthYear(rewatch.completed_at)}</p>
                     )}
                   </div>
                   {rewatch.started_at && rewatch.completed_at && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-400 mt-1">
                       {formatDuration(rewatch.started_at, rewatch.completed_at)}
                     </p>
                   )}
@@ -144,7 +162,7 @@ export function ShowDetailPage() {
         <div className="pt-4 border-t border-gray-800">
           <button
             onClick={() => setShowRemoveConfirm(true)}
-            className="w-full py-3 rounded-xl border border-red-900 text-red-400 text-sm font-medium active:scale-95 transition-transform"
+            className="w-full py-3 rounded-xl border border-red-900 text-red-400 text-sm font-medium active:scale-95 transition-transform min-h-[44px] hover:bg-red-950 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f17]"
           >
             Remove from Rotation
           </button>
@@ -169,10 +187,15 @@ export function ShowDetailPage() {
       )}
 
       {showRemoveConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setShowRemoveConfirm(false)} />
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="remove-dialog-title"
+        >
+          <div className="absolute inset-0 bg-black/60" onClick={() => setShowRemoveConfirm(false)} aria-hidden="true" />
           <div className="relative bg-gray-900 rounded-2xl p-6 w-full max-w-sm space-y-4">
-            <h3 className="text-lg font-semibold text-white">Remove {show.title}?</h3>
+            <h3 id="remove-dialog-title" className="text-lg font-semibold text-white">Remove {show.title}?</h3>
             <p className="text-sm text-gray-400">All rewatch history will be permanently deleted.</p>
             <div className="space-y-2">
               <button
@@ -180,13 +203,13 @@ export function ShowDetailPage() {
                   await removeShow.mutateAsync(show.id)
                   navigate('/')
                 }}
-                className="w-full py-3 rounded-xl bg-red-700 text-white font-medium active:scale-95 transition-transform"
+                className="w-full py-3 rounded-xl bg-red-700 text-white font-medium active:scale-95 transition-transform min-h-[44px] hover:bg-red-600 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
               >
                 Remove
               </button>
               <button
                 onClick={() => setShowRemoveConfirm(false)}
-                className="w-full py-3 rounded-xl bg-gray-800 text-gray-300 font-medium"
+                className="w-full py-3 rounded-xl bg-gray-800 text-gray-300 font-medium min-h-[44px] hover:bg-gray-700 active:scale-95 transition-transform focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
               >
                 Cancel
               </button>

@@ -21,3 +21,21 @@ body {
 img {
   max-width: 100%;
 }
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Global keyboard focus indicator for elements that suppress the default outline */
+:focus-visible {
+  outline: 2px solid #9333ea;
+  outline-offset: 2px;
+}

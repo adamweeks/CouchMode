@@ -19,7 +19,7 @@ export function ShowCard({ show }: { show: Show }) {
   return (
     <Link
       to={`/shows/${show.id}`}
-      className="flex gap-3 bg-gray-900 rounded-2xl p-3 active:scale-[0.98] transition-transform"
+      className="flex gap-3 bg-gray-900 rounded-2xl p-3 active:scale-[0.98] transition-transform hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f17]"
     >
       <img
         src={show.poster_url ?? '/placeholder-poster.svg'}
@@ -41,10 +41,10 @@ export function ShowCard({ show }: { show: Show }) {
             </p>
           )}
           {lastCompleted?.completed_at && (
-            <p className="text-xs text-gray-500">Finished {formatMonthYear(lastCompleted.completed_at)}</p>
+            <p className="text-xs text-gray-400">Finished {formatMonthYear(lastCompleted.completed_at)}</p>
           )}
           {completedRewatches.length > 0 && (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-400">
               {completedRewatches.length} rewatch{completedRewatches.length !== 1 ? 'es' : ''}
             </p>
           )}
