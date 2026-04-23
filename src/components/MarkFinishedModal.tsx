@@ -5,12 +5,13 @@ import { getErrorMessage } from '../lib/progressLogic'
 interface Props {
   showId: string
   rewatchId: string
+  rewatchStartedAt: string
   onClose: () => void
 }
 
-export function MarkFinishedModal({ showId, rewatchId, onClose }: Props) {
+export function MarkFinishedModal({ showId, rewatchId, rewatchStartedAt, onClose }: Props) {
   const today = new Date().toISOString().split('T')[0]
-  const [startDate, setStartDate] = useState('')
+  const [startDate, setStartDate] = useState(rewatchStartedAt.split('T')[0])
   const [endDate, setEndDate] = useState(today)
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)

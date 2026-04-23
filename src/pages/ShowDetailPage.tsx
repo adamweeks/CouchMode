@@ -163,6 +163,7 @@ export function ShowDetailPage() {
         <MarkFinishedModal
           showId={show.id}
           rewatchId={activeRewatch.id}
+          rewatchStartedAt={activeRewatch.started_at}
           onClose={() => setShowFinishedModal(false)}
         />
       )}
