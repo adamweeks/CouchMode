@@ -5,6 +5,7 @@ import { useRewatches, useActiveRewatch } from '../hooks/useRewatches'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useRemoveShow } from '../hooks/useShows'
 import { LogProgressModal } from '../components/LogProgressModal'
+import { MarkFinishedModal } from '../components/MarkFinishedModal'
 import { StatusBadge } from '../components/StatusBadge'
 import { formatProgress, formatDuration, formatMonthYear } from '../lib/progressLogic'
 
@@ -24,6 +25,7 @@ export function ShowDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [showLogModal, setShowLogModal] = useState(false)
+  const [showFinishedModal, setShowFinishedModal] = useState(false)
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
 
   const { data: show, isLoading } = useShow(id!)
@@ -76,12 +78,20 @@ export function ShowDetailPage() {
             )}
             <p className="text-xs text-gray-500">{show.total_seasons} season{show.total_seasons !== 1 ? 's' : ''}</p>
           </div>
-          <button
-            onClick={() => setShowLogModal(true)}
-            className="px-4 py-2 bg-purple-600 text-white text-sm rounded-xl font-medium active:scale-95 transition-transform min-h-[44px]"
-          >
-            Log Progress
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowLogModal(true)}
+              className="px-4 py-2 bg-purple-600 text-white text-sm rounded-xl font-medium active:scale-95 transition-transform min-h-[44px]"
+            >
+              Log Progress
+            </button>
+            <button
+              onClick={() => setShowFinishedModal(true)}
+              className="px-4 py-2 bg-green-700 text-white text-sm rounded-xl font-medium active:scale-95 transition-transform min-h-[44px]"
+            >
+              Finished it
+            </button>
+          </div>
         </div>
       </div>
 
@@ -146,6 +156,14 @@ export function ShowDetailPage() {
           show={show}
           rewatchId={activeRewatch.id}
           onClose={() => setShowLogModal(false)}
+        />
+      )}
+
+      {showFinishedModal && activeRewatch && (
+        <MarkFinishedModal
+          showId={show.id}
+          rewatchId={activeRewatch.id}
+          onClose={() => setShowFinishedModal(false)}
         />
       )}
 

@@ -52,10 +52,10 @@ export async function createNewRewatch(showId: string, userId: string) {
   return data
 }
 
-export async function completeRewatch(rewatchId: string) {
+export async function completeRewatch(rewatchId: string, completedAt?: string) {
   const { error } = await supabase
     .from('rewatches')
-    .update({ completed_at: new Date().toISOString(), status: 'completed' })
+    .update({ completed_at: completedAt ?? new Date().toISOString(), status: 'completed' })
     .eq('id', rewatchId)
   if (error) throw error
 }

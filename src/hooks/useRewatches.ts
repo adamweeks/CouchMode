@@ -3,6 +3,13 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { completeRewatch, createNewRewatch } from './useProgressLogs'
 
+export interface MarkFinishedArgs {
+  rewatchId: string
+  showId: string
+  completedAt: string
+  note?: string
+}
+
 export function useRewatches(showId: string) {
   const { user } = useAuth()
   return useQuery({
@@ -35,6 +42,41 @@ export function useActiveRewatch(showId: string) {
       return data
     },
     enabled: !!user && !!showId,
+  })
+}
+
+export function useMarkSeriesFinished() {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ rewatchId, showId, completedAt, note }: MarkFinishedArgs) => {
+      if (!user) throw new Error('Not authenticated')
+
+      const { data: rewatch, error: fetchError } = await supabase
+        .from('rewatches')
+        .select('started_at')
+        .eq('id', rewatchId)
+        .single()
+      if (fetchError) throw fetchError
+
+      const updates: Record<string, string | null> = {
+        completed_at: completedAt,
+        status: 'completed',
+        note: note ?? null,
+      }
+      if (new Date(completedAt) < new Date(rewatch.started_at)) {
+        updates.started_at = completedAt
+      }
+
+      const { error } = await supabase.from('rewatches').update(updates).eq('id', rewatchId)
+      if (error) throw error
+
+      return createNewRewatch(showId, user.id)
+    },
+    onSuccess: (_data, { showId }) => {
+      queryClient.invalidateQueries({ queryKey: ['rewatches', showId] })
+    },
   })
 }
 
