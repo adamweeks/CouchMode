@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { completeRewatch, createNewRewatch } from './useProgressLogs'
+import { buildCompletionUpdates } from '../lib/progressLogic'
 
 export interface MarkFinishedArgs {
   rewatchId: string
@@ -61,22 +62,7 @@ export function useMarkSeriesFinished() {
         .single()
       if (fetchError) throw fetchError
 
-      const updates: {
-        completed_at: string
-        status: 'completed'
-        note: string | null
-        started_at?: string
-      } = {
-        completed_at: completedAt,
-        status: 'completed',
-        note: note ?? null,
-      }
-      if (startedAt) {
-        updates.started_at = startedAt
-      } else if (new Date(completedAt) < new Date(rewatch.started_at)) {
-        updates.started_at = completedAt
-      }
-
+      const updates = buildCompletionUpdates(completedAt, rewatch.started_at, startedAt, note)
       const { error } = await supabase.from('rewatches').update(updates).eq('id', rewatchId)
       if (error) throw error
 
