@@ -6,6 +6,7 @@ import { completeRewatch, createNewRewatch } from './useProgressLogs'
 export interface MarkFinishedArgs {
   rewatchId: string
   showId: string
+  startedAt?: string
   completedAt: string
   note?: string
 }
@@ -50,7 +51,7 @@ export function useMarkSeriesFinished() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ rewatchId, showId, completedAt, note }: MarkFinishedArgs) => {
+    mutationFn: async ({ rewatchId, showId, startedAt, completedAt, note }: MarkFinishedArgs) => {
       if (!user) throw new Error('Not authenticated')
 
       const { data: rewatch, error: fetchError } = await supabase
@@ -65,7 +66,9 @@ export function useMarkSeriesFinished() {
         status: 'completed',
         note: note ?? null,
       }
-      if (new Date(completedAt) < new Date(rewatch.started_at)) {
+      if (startedAt) {
+        updates.started_at = startedAt
+      } else if (new Date(completedAt) < new Date(rewatch.started_at)) {
         updates.started_at = completedAt
       }
 
