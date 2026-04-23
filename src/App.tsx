@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
@@ -6,6 +7,20 @@ import { LoginPage } from './pages/LoginPage'
 import { RotationPage } from './pages/RotationPage'
 import { ShowDetailPage } from './pages/ShowDetailPage'
 import { SearchPage } from './pages/SearchPage'
+import { supabase } from './lib/supabase'
+
+function OAuthRedirectHandler() {
+  const navigate = useNavigate()
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        navigate('/', { replace: true })
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [navigate])
+  return null
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,6 +36,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
+          <OAuthRedirectHandler />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route

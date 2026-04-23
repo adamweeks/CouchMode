@@ -45,9 +45,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signInWithGoogle() {
+    const siteUrl = import.meta.env.VITE_SITE_URL ?? window.location.origin
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: siteUrl },
     })
     if (error) throw error
   }
