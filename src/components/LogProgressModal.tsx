@@ -2,7 +2,7 @@ import { useState } from 'react'
 import ReactDOM from 'react-dom'
 import { EpisodePicker } from './EpisodePicker'
 import { useProgressLogs, useLogProgress } from '../hooks/useProgressLogs'
-import { getCurrentProgress, isRegression } from '../lib/progressLogic'
+import { getCurrentProgress, isRegression, formatProgress, getErrorMessage } from '../lib/progressLogic'
 
 interface LogProgressModalProps {
   show: {
@@ -31,7 +31,7 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
 
   const logProgress = useLogProgress()
 
-  async function handleSubmit() {
+  async function submitLog() {
     setStep('submitting')
     setError(null)
     try {
@@ -46,7 +46,7 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
       })
       onClose()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong')
+      setError(getErrorMessage(e))
       setStep('picking')
     }
   }
@@ -56,7 +56,7 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
       setStep('regression_confirm')
       return
     }
-    handleSubmit()
+    submitLog()
   }
 
   const modal = (
@@ -76,23 +76,13 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
         {step === 'regression_confirm' ? (
           <div className="p-6 space-y-4">
             <p className="text-center text-gray-300">
-              This is earlier than your current progress ({currentProgress ? `S${currentProgress.season} E${currentProgress.episode}` : ''}). What's happening?
+              This is earlier than your current progress
+              {currentProgress ? ` (${formatProgress(currentProgress.season, currentProgress.episode)})` : ''}.
+              What's happening?
             </p>
             <div className="space-y-3">
               <button
-                onClick={async () => {
-                  await logProgress.mutateAsync({
-                    rewatchId,
-                    showId: show.id,
-                    season: value.season,
-                    episode: value.episode,
-                    note: note || undefined,
-                    totalSeasons: show.total_seasons,
-                    episodesPerSeason: show.episodes_per_season,
-                    onSeriesComplete: () => {},
-                  })
-                  onClose()
-                }}
+                onClick={submitLog}
                 className="w-full py-3 rounded-xl bg-purple-600 text-white font-medium active:scale-95 transition-transform"
               >
                 I started over
@@ -134,7 +124,7 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
               disabled={step === 'submitting'}
               className="w-full py-3 rounded-xl bg-purple-600 text-white font-semibold disabled:opacity-50 active:scale-95 transition-transform"
             >
-              {step === 'submitting' ? 'Saving…' : `Log S${value.season} E${value.episode}`}
+              {step === 'submitting' ? 'Saving…' : `Log ${formatProgress(value.season, value.episode)}`}
             </button>
           </div>
         )}

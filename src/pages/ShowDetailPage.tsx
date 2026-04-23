@@ -6,7 +6,19 @@ import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useRemoveShow } from '../hooks/useShows'
 import { LogProgressModal } from '../components/LogProgressModal'
 import { StatusBadge } from '../components/StatusBadge'
-import { formatProgress, formatDuration } from '../lib/progressLogic'
+import { formatProgress, formatDuration, formatMonthYear } from '../lib/progressLogic'
+
+type Rewatch = { id: string; completed_at: string | null; started_at: string; note: string | null; status: string }
+
+function avgDaysBetweenRewatches(rewatches: Rewatch[]): number | null {
+  if (rewatches.length < 2) return null
+  const dates = rewatches
+    .map(r => new Date(r.completed_at!).getTime())
+    .sort((a, b) => a - b)
+  let total = 0
+  for (let i = 1; i < dates.length; i++) total += dates[i] - dates[i - 1]
+  return Math.round(total / (dates.length - 1) / (1000 * 60 * 60 * 24))
+}
 
 export function ShowDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -31,19 +43,8 @@ export function ShowDetailPage() {
   if (!show) return <div className="p-4 text-gray-400">Show not found</div>
 
   const completedRewatches = rewatches.filter(r => r.status === 'completed')
-  const status = !currentProgress ? 'not_started' : 'in_progress'
-
-  const avgDaysBetween = (() => {
-    if (completedRewatches.length < 2) return null
-    const dates = completedRewatches
-      .map(r => new Date(r.completed_at!).getTime())
-      .sort((a, b) => a - b)
-    const gaps: number[] = []
-    for (let i = 1; i < dates.length; i++) {
-      gaps.push((dates[i] - dates[i - 1]) / (1000 * 60 * 60 * 24))
-    }
-    return Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length)
-  })()
+  const status = currentProgress ? 'in_progress' : 'not_started'
+  const avgDays = avgDaysBetweenRewatches(completedRewatches)
 
   return (
     <div className="flex flex-col min-h-screen pb-[env(safe-area-inset-bottom)]">
@@ -66,12 +67,11 @@ export function ShowDetailPage() {
         <div className="flex flex-col justify-between py-1">
           <div className="space-y-2">
             <StatusBadge status={status} />
-            {currentProgress && (
+            {currentProgress ? (
               <p className="text-2xl font-bold text-white">
                 {formatProgress(currentProgress.season, currentProgress.episode)}
               </p>
-            )}
-            {!currentProgress && (
+            ) : (
               <p className="text-gray-500 text-sm">Not started yet</p>
             )}
             <p className="text-xs text-gray-500">{show.total_seasons} season{show.total_seasons !== 1 ? 's' : ''}</p>
@@ -87,15 +87,15 @@ export function ShowDetailPage() {
 
       <main className="flex-1 px-4 space-y-6 pb-8">
         {completedRewatches.length > 0 && (
-          <div className="bg-gray-900 rounded-2xl p-4 space-y-1">
+          <div className="bg-gray-900 rounded-2xl p-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="text-center">
                 <p className="text-2xl font-bold text-purple-400">{completedRewatches.length}</p>
                 <p className="text-xs text-gray-500">Rewatches</p>
               </div>
-              {avgDaysBetween !== null && (
+              {avgDays !== null && (
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-400">{avgDaysBetween}d</p>
+                  <p className="text-2xl font-bold text-purple-400">{avgDays}d</p>
                   <p className="text-xs text-gray-500">Avg between rewatches</p>
                 </div>
               )}
@@ -114,11 +114,7 @@ export function ShowDetailPage() {
                       Rewatch #{completedRewatches.length - i}
                     </p>
                     {rewatch.completed_at && (
-                      <p className="text-xs text-gray-500">
-                        {new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(
-                          new Date(rewatch.completed_at)
-                        )}
-                      </p>
+                      <p className="text-xs text-gray-500">{formatMonthYear(rewatch.completed_at)}</p>
                     )}
                   </div>
                   {rewatch.started_at && rewatch.completed_at && (

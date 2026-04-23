@@ -77,6 +77,14 @@ export function formatProgress(season: number, episode: number): string {
   return `S${season} E${episode}`
 }
 
+export function formatMonthYear(dateStr: string): string {
+  return new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(new Date(dateStr))
+}
+
+export function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Something went wrong'
+}
+
 export function formatDuration(startedAt: string, completedAt: string): string {
   const days = Math.round(
     (new Date(completedAt).getTime() - new Date(startedAt).getTime()) / (1000 * 60 * 60 * 24)

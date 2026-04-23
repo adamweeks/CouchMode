@@ -14,9 +14,10 @@ export function useProgressLogs(rewatchId: string | null | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('progress_logs')
-        .select('*')
+        .select('id, season, episode, logged_at')
         .eq('rewatch_id', rewatchId!)
-        .order('logged_at', { ascending: true })
+        .order('season', { ascending: false })
+        .order('episode', { ascending: false })
       if (error) throw error
       return data
     },
@@ -39,6 +40,24 @@ interface LogProgressArgs {
   totalSeasons: number
   episodesPerSeason: number[]
   onSeriesComplete?: (newRewatchId: string) => void
+}
+
+export async function createNewRewatch(showId: string, userId: string) {
+  const { data, error } = await supabase
+    .from('rewatches')
+    .insert({ show_id: showId, user_id: userId, status: 'in_progress' })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function completeRewatch(rewatchId: string) {
+  const { error } = await supabase
+    .from('rewatches')
+    .update({ completed_at: new Date().toISOString(), status: 'completed' })
+    .eq('id', rewatchId)
+  if (error) throw error
 }
 
 export function useLogProgress() {
@@ -70,12 +89,12 @@ export function useLogProgress() {
       const backfill = getBackfillEntries(season, episode, episodesPerSeason, existingSet, rewatchId, user.id, now)
 
       if (backfill.length > 0) {
-        const { error: backfillError } = await supabase.from('progress_logs').insert(backfill)
-        if (backfillError) throw backfillError
+        const { error } = await supabase.from('progress_logs').insert(backfill)
+        if (error) throw error
       }
 
       if (!existingSet.has(`${season}x${episode}`)) {
-        const { error: logError } = await supabase.from('progress_logs').insert({
+        const { error } = await supabase.from('progress_logs').insert({
           rewatch_id: rewatchId,
           user_id: user.id,
           season,
@@ -83,23 +102,12 @@ export function useLogProgress() {
           logged_at: now,
           note: note ?? null,
         })
-        if (logError) throw logError
+        if (error) throw error
       }
 
       if (isSeriesComplete(season, episode, totalSeasons, episodesPerSeason)) {
-        const { error: updateError } = await supabase
-          .from('rewatches')
-          .update({ completed_at: now, status: 'completed' })
-          .eq('id', rewatchId)
-        if (updateError) throw updateError
-
-        const { data: newRewatch, error: insertError } = await supabase
-          .from('rewatches')
-          .insert({ show_id: showId, user_id: user.id, status: 'in_progress' })
-          .select()
-          .single()
-        if (insertError) throw insertError
-
+        await completeRewatch(rewatchId)
+        const newRewatch = await createNewRewatch(showId, user.id)
         onSeriesComplete?.(newRewatch.id)
         return { completed: true, newRewatchId: newRewatch.id }
       }

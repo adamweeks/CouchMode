@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuth } from '../contexts/AuthContext'
+import { getErrorMessage } from '../lib/progressLogic'
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -31,7 +32,7 @@ export function LoginPage() {
       }
       navigate('/', { replace: true })
     } catch (e) {
-      setServerError(e instanceof Error ? e.message : 'An error occurred')
+      setServerError(getErrorMessage(e))
     }
   }
 
@@ -106,7 +107,7 @@ export function LoginPage() {
             try {
               await signInWithGoogle()
             } catch (e) {
-              setServerError(e instanceof Error ? e.message : 'Google sign-in failed')
+              setServerError(getErrorMessage(e))
             }
           }}
           className="w-full py-3 rounded-xl bg-gray-800 text-white font-medium flex items-center justify-center gap-2 active:scale-95 transition-transform min-h-[44px]"

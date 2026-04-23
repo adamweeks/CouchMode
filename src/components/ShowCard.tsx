@@ -1,30 +1,20 @@
 import { Link } from 'react-router-dom'
 import { StatusBadge } from './StatusBadge'
-import { formatProgress } from '../lib/progressLogic'
+import { formatProgress, formatMonthYear } from '../lib/progressLogic'
 import type { Database } from '../lib/database.types'
-import { useActiveRewatch } from '../hooks/useRewatches'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useRewatches } from '../hooks/useRewatches'
 
 type Show = Database['public']['Tables']['shows']['Row']
 
 export function ShowCard({ show }: { show: Show }) {
-  const { data: activeRewatch } = useActiveRewatch(show.id)
-  const currentProgress = useCurrentProgress(activeRewatch?.id)
   const { data: rewatches = [] } = useRewatches(show.id)
-
+  const activeRewatch = rewatches.find(r => r.status === 'in_progress') ?? null
   const completedRewatches = rewatches.filter(r => r.status === 'completed')
+  const currentProgress = useCurrentProgress(activeRewatch?.id)
+
+  const status = currentProgress ? 'in_progress' : 'not_started'
   const lastCompleted = completedRewatches[0]
-
-  const status = !currentProgress
-    ? 'not_started'
-    : 'in_progress'
-
-  const lastCompletedDate = lastCompleted?.completed_at
-    ? new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(
-        new Date(lastCompleted.completed_at)
-      )
-    : null
 
   return (
     <Link
@@ -50,8 +40,8 @@ export function ShowCard({ show }: { show: Show }) {
               {formatProgress(currentProgress.season, currentProgress.episode)}
             </p>
           )}
-          {lastCompletedDate && (
-            <p className="text-xs text-gray-500">Finished {lastCompletedDate}</p>
+          {lastCompleted?.completed_at && (
+            <p className="text-xs text-gray-500">Finished {formatMonthYear(lastCompleted.completed_at)}</p>
           )}
           {completedRewatches.length > 0 && (
             <p className="text-xs text-gray-500">
