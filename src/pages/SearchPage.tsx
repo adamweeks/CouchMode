@@ -51,7 +51,7 @@ export function SearchPage() {
             value={query}
             onIonInput={e => setQuery(e.detail.value ?? '')}
             placeholder="Search TV shows…"
-            autofocus
+            autoFocus
             debounce={0}
             animated
           />

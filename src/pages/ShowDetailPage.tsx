@@ -13,7 +13,6 @@ import {
   IonItem,
   IonLabel,
   IonSpinner,
-  IonProgressBar,
   useIonAlert,
 } from '@ionic/react'
 import { useShow } from '../hooks/useShows'

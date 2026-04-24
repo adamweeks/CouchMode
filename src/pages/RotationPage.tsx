@@ -57,7 +57,7 @@ export function RotationPage() {
           </div>
         ) : shows.length === 0 ? (
           <div className="flex flex-col items-center justify-center pt-20 text-center px-8 gap-4">
-            <TvIcon className="w-16 h-16" style={{ color: 'var(--ion-color-medium)' }} />
+            <TvIcon className="w-16 h-16 text-gray-500" />
             <h2 className="text-xl font-semibold">No shows yet</h2>
             <p className="text-sm max-w-xs" style={{ color: 'var(--ion-color-medium)' }}>
               Add the shows you rewatch regularly to start tracking your progress.
