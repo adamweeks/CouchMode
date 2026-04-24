@@ -1,45 +1,16 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import {
-  IonPage,
-  IonContent,
-  IonSegment,
-  IonSegmentButton,
-  IonLabel,
-  IonInput,
-  IonButton,
-  IonText,
-  useIonToast,
-} from '@ionic/react'
+import { IonPage, IonContent, IonButton, useIonToast } from '@ionic/react'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/progressLogic'
 
-const schema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-})
-type FormData = z.infer<typeof schema>
-
 export function LoginPage() {
-  const { signIn, signUp, signInWithGoogle } = useAuth()
+  const { signInWithGoogle } = useAuth()
   const navigate = useNavigate()
-  const [tab, setTab] = useState<'signin' | 'signup'>('signin')
   const [presentToast] = useIonToast()
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
-    resolver: zodResolver(schema),
-  })
-
-  async function onSubmit(data: FormData) {
+  async function handleGoogle() {
     try {
-      if (tab === 'signin') {
-        await signIn(data.email, data.password)
-      } else {
-        await signUp(data.email, data.password)
-      }
+      await signInWithGoogle()
       navigate('/', { replace: true })
     } catch (e) {
       presentToast({
@@ -53,108 +24,66 @@ export function LoginPage() {
 
   return (
     <IonPage>
-      <IonContent className="ion-padding">
-        <div className="flex flex-col items-center justify-center min-h-full gap-6">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold">Couchmode</h1>
-            <p style={{ color: 'var(--ion-color-medium)', fontSize: '0.875rem' }}>
-              Your TV rewatch tracker
-            </p>
-          </div>
-
-          <IonSegment
-            value={tab}
-            onIonChange={e => setTab(e.detail.value as 'signin' | 'signup')}
-            style={{ width: '100%', maxWidth: '384px' }}
-          >
-            <IonSegmentButton value="signin">
-              <IonLabel>Sign In</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="signup">
-              <IonLabel>Sign Up</IonLabel>
-            </IonSegmentButton>
-          </IonSegment>
-
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            noValidate
-            style={{ width: '100%', maxWidth: '384px', display: 'flex', flexDirection: 'column', gap: '12px' }}
-          >
-            <div>
-              <IonInput
-                {...register('email')}
-                type="email"
-                placeholder="Email"
-                autocomplete="email"
-                aria-label="Email address"
-                aria-invalid={!!errors.email}
-                fill="outline"
-              />
-              {errors.email && (
-                <IonText color="danger">
-                  <p role="alert" style={{ fontSize: '0.75rem', marginTop: '4px' }}>
-                    {errors.email.message}
-                  </p>
-                </IonText>
-              )}
-            </div>
-
-            <div>
-              <IonInput
-                {...register('password')}
-                type="password"
-                placeholder="Password"
-                autocomplete={tab === 'signup' ? 'new-password' : 'current-password'}
-                aria-label="Password"
-                aria-invalid={!!errors.password}
-                fill="outline"
-              />
-              {errors.password && (
-                <IonText color="danger">
-                  <p role="alert" style={{ fontSize: '0.75rem', marginTop: '4px' }}>
-                    {errors.password.message}
-                  </p>
-                </IonText>
-              )}
-            </div>
-
-            <IonButton expand="block" type="submit" disabled={isSubmitting}>
-              {isSubmitting
-                ? (tab === 'signin' ? 'Signing In…' : 'Creating Account…')
-                : (tab === 'signin' ? 'Sign In' : 'Create Account')}
-            </IonButton>
-          </form>
-
+      <IonContent>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100%',
+            padding: '48px 32px',
+            gap: '0',
+          }}
+        >
+          {/* Logo mark */}
           <div
             style={{
-              width: '100%',
-              maxWidth: '384px',
+              width: '80px',
+              height: '80px',
+              borderRadius: '20px',
+              background: 'linear-gradient(135deg, #3880ff 0%, #5260ff 100%)',
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
+              justifyContent: 'center',
+              fontSize: '40px',
+              marginBottom: '20px',
+              boxShadow: '0 8px 24px rgba(56, 128, 255, 0.35)',
             }}
           >
-            <div style={{ flex: 1, height: '1px', background: 'var(--ion-item-border-color)' }} />
-            <IonText style={{ fontSize: '0.75rem', color: 'var(--ion-color-medium)' }}>or</IonText>
-            <div style={{ flex: 1, height: '1px', background: 'var(--ion-item-border-color)' }} />
+            📺
           </div>
 
+          {/* Wordmark */}
+          <h1
+            style={{
+              fontSize: '32px',
+              fontWeight: 800,
+              letterSpacing: '-0.5px',
+              margin: '0 0 8px',
+              color: 'var(--ion-text-color)',
+            }}
+          >
+            Couchmode
+          </h1>
+          <p
+            style={{
+              fontSize: '15px',
+              color: 'var(--ion-color-medium)',
+              marginBottom: '48px',
+              textAlign: 'center',
+              lineHeight: 1.4,
+            }}
+          >
+            Track every rewatch of your favorite shows
+          </p>
+
+          {/* Google sign-in */}
           <IonButton
             expand="block"
             fill="outline"
-            style={{ width: '100%', maxWidth: '384px' }}
-            onClick={async () => {
-              try {
-                await signInWithGoogle()
-              } catch (e) {
-                presentToast({
-                  message: getErrorMessage(e),
-                  duration: 3000,
-                  color: 'danger',
-                  position: 'top',
-                })
-              }
-            }}
+            style={{ width: '100%', maxWidth: '320px' }}
+            onClick={handleGoogle}
           >
             <svg
               slot="start"
