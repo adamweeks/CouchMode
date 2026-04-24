@@ -12,9 +12,14 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@capacitor/cli": "^8.3.1",
+    "@capacitor/core": "^8.3.1",
     "@hookform/resolvers": "^5.2.2",
+    "@ionic/react": "^8.8.4",
+    "@ionic/react-router": "^8.8.4",
     "@supabase/supabase-js": "^2.104.0",
     "@tanstack/react-query": "^5.99.2",
+    "ionicons": "^8.0.13",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-hook-form": "^7.73.1",

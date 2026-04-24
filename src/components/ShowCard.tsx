@@ -1,55 +1,110 @@
-import { Link } from 'react-router-dom'
+import {
+  IonItem,
+  IonLabel,
+  IonThumbnail,
+  IonItemSliding,
+  IonItemOptions,
+  IonItemOption,
+  IonIcon,
+  useIonAlert,
+} from '@ionic/react'
+import { trash } from 'ionicons/icons'
+import { useNavigate } from 'react-router-dom'
 import { StatusBadge } from './StatusBadge'
 import { formatProgress, formatMonthYear } from '../lib/progressLogic'
 import type { Database } from '../lib/database.types'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useRewatches } from '../hooks/useRewatches'
+import { useRemoveShow } from '../hooks/useShows'
 
 type Show = Database['public']['Tables']['shows']['Row']
 
 export function ShowCard({ show }: { show: Show }) {
+  const navigate = useNavigate()
   const { data: rewatches = [] } = useRewatches(show.id)
   const activeRewatch = rewatches.find(r => r.status === 'in_progress') ?? null
   const completedRewatches = rewatches.filter(r => r.status === 'completed')
   const currentProgress = useCurrentProgress(activeRewatch?.id)
+  const removeShow = useRemoveShow()
+  const [presentAlert] = useIonAlert()
 
   const status = currentProgress ? 'in_progress' : 'not_started'
   const lastCompleted = completedRewatches[0]
 
+  function handleRemove() {
+    presentAlert({
+      header: `Remove ${show.title}?`,
+      message: 'All rewatch history will be permanently deleted.',
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Remove',
+          role: 'destructive',
+          handler: async () => {
+            await removeShow.mutateAsync(show.id)
+            navigate('/')
+          },
+        },
+      ],
+    })
+  }
+
   return (
-    <Link
-      to={`/shows/${show.id}`}
-      className="flex gap-3 bg-gray-900 rounded-2xl p-3 active:scale-[0.98] transition-transform hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f17]"
-    >
-      <img
-        src={show.poster_url ?? '/placeholder-poster.svg'}
-        alt={show.title}
-        className="w-16 h-24 rounded-lg object-cover flex-shrink-0 bg-gray-800"
-        loading="lazy"
-      />
-      <div className="flex flex-col justify-between min-w-0 py-0.5">
-        <div>
-          <h3 className="font-semibold text-white leading-tight line-clamp-2">{show.title}</h3>
-          <div className="mt-1">
+    <IonItemSliding>
+      <IonItem
+        button
+        detail={false}
+        lines="none"
+        onClick={() => navigate(`/shows/${show.id}`)}
+        style={{ '--border-radius': '16px', marginBottom: '12px' } as React.CSSProperties}
+      >
+        <IonThumbnail
+          slot="start"
+          style={
+            {
+              '--size': '64px',
+              '--border-radius': '8px',
+              height: '96px',
+              paddingTop: '8px',
+              paddingBottom: '8px',
+            } as React.CSSProperties
+          }
+        >
+          <img
+            src={show.poster_url ?? '/placeholder-poster.svg'}
+            alt={show.title}
+            style={{ objectFit: 'cover', height: '100%', width: '100%', borderRadius: '8px' }}
+            loading="lazy"
+          />
+        </IonThumbnail>
+
+        <IonLabel>
+          <h2 style={{ fontWeight: 600 }}>{show.title}</h2>
+          <p>
             <StatusBadge status={status} />
-          </div>
-        </div>
-        <div className="space-y-0.5">
+          </p>
           {currentProgress && (
-            <p className="text-sm text-purple-400 font-medium">
+            <p style={{ color: 'var(--ion-color-primary)', fontWeight: 500 }}>
               {formatProgress(currentProgress.season, currentProgress.episode)}
             </p>
           )}
           {lastCompleted?.completed_at && (
-            <p className="text-xs text-gray-400">Finished {formatMonthYear(lastCompleted.completed_at)}</p>
+            <p>Finished {formatMonthYear(lastCompleted.completed_at)}</p>
           )}
           {completedRewatches.length > 0 && (
-            <p className="text-xs text-gray-400">
-              {completedRewatches.length} rewatch{completedRewatches.length !== 1 ? 'es' : ''}
+            <p>
+              {completedRewatches.length} rewatch
+              {completedRewatches.length !== 1 ? 'es' : ''}
             </p>
           )}
-        </div>
-      </div>
-    </Link>
+        </IonLabel>
+      </IonItem>
+
+      <IonItemOptions side="end" onIonSwipe={handleRemove}>
+        <IonItemOption color="danger" expandable onClick={handleRemove}>
+          <IonIcon slot="icon-only" icon={trash} />
+        </IonItemOption>
+      </IonItemOptions>
+    </IonItemSliding>
   )
 }

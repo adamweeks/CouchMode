@@ -1,4 +1,18 @@
-import { Link } from 'react-router-dom'
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonList,
+  IonFab,
+  IonFabButton,
+  IonIcon,
+  IonSpinner,
+  IonButton,
+} from '@ionic/react'
+import { add } from 'ionicons/icons'
+import { useNavigate } from 'react-router-dom'
 import { useShows } from '../hooks/useShows'
 import { ShowCard } from '../components/ShowCard'
 
@@ -21,50 +35,51 @@ function TvIcon({ className }: { className?: string }) {
 }
 
 export function RotationPage() {
+  const navigate = useNavigate()
   const { data: shows = [], isLoading } = useShows()
 
   return (
-    <div className="flex flex-col min-h-screen pb-[env(safe-area-inset-bottom)]">
-      <header className="px-4 pt-12 pb-4">
-        <h1 className="text-2xl font-bold text-white">My Rotation</h1>
-      </header>
+    <IonPage>
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>My Rotation</IonTitle>
+        </IonToolbar>
+      </IonHeader>
 
-      <main className="flex-1 px-4 pb-24">
+      <IonContent fullscreen>
         {isLoading ? (
-          <div className="flex justify-center pt-16" role="status" aria-label="Loading shows">
-            <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+          <div
+            className="flex justify-center pt-16"
+            role="status"
+            aria-label="Loading shows"
+          >
+            <IonSpinner name="crescent" />
           </div>
         ) : shows.length === 0 ? (
-          <div className="flex flex-col items-center justify-center pt-20 text-center space-y-4">
-            <TvIcon className="w-16 h-16 text-gray-600" />
-            <h2 className="text-xl font-semibold text-white">No shows yet</h2>
-            <p className="text-gray-400 text-sm max-w-xs">
+          <div className="flex flex-col items-center justify-center pt-20 text-center px-8 gap-4">
+            <TvIcon className="w-16 h-16" style={{ color: 'var(--ion-color-medium)' }} />
+            <h2 className="text-xl font-semibold">No shows yet</h2>
+            <p className="text-sm max-w-xs" style={{ color: 'var(--ion-color-medium)' }}>
               Add the shows you rewatch regularly to start tracking your progress.
             </p>
-            <Link
-              to="/search"
-              className="mt-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-medium active:scale-95 transition-transform hover:bg-purple-700 min-h-[44px] flex items-center focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f17]"
-            >
+            <IonButton onClick={() => navigate('/search')} style={{ marginTop: '0.5rem' }}>
               Add Your First Show
-            </Link>
+            </IonButton>
           </div>
         ) : (
-          <div className="space-y-3">
+          <IonList lines="none" className="px-4 pt-2 pb-24" style={{ background: 'transparent' }}>
             {shows.map(show => (
               <ShowCard key={show.id} show={show} />
             ))}
-          </div>
+          </IonList>
         )}
-      </main>
 
-      <Link
-        to="/search"
-        className="fixed bottom-6 right-4 w-14 h-14 bg-purple-600 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform text-2xl hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f17]"
-        style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
-        aria-label="Add show"
-      >
-        <span aria-hidden="true">+</span>
-      </Link>
-    </div>
+        <IonFab vertical="bottom" horizontal="end" slot="fixed">
+          <IonFabButton onClick={() => navigate('/search')} aria-label="Add show">
+            <IonIcon icon={add} />
+          </IonFabButton>
+        </IonFab>
+      </IonContent>
+    </IonPage>
   )
 }

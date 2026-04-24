@@ -1,0 +1,78 @@
+:root {
+  --ion-background-color: #0f0f17;
+  --ion-background-color-rgb: 15, 15, 23;
+
+  --ion-text-color: #f3f4f6;
+  --ion-text-color-rgb: 243, 244, 246;
+
+  --ion-color-primary: #9333ea;
+  --ion-color-primary-rgb: 147, 51, 234;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #7c27cc;
+  --ion-color-primary-tint: #9e48ec;
+
+  --ion-color-secondary: #6b7280;
+  --ion-color-secondary-rgb: 107, 114, 128;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #5e6470;
+  --ion-color-secondary-tint: #7a8190;
+
+  --ion-color-success: #16a34a;
+  --ion-color-success-rgb: 22, 163, 74;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+  --ion-color-success-shade: #138f41;
+  --ion-color-success-tint: #2dac5c;
+
+  --ion-color-warning: #d97706;
+  --ion-color-warning-rgb: 217, 119, 6;
+  --ion-color-warning-contrast: #ffffff;
+  --ion-color-warning-contrast-rgb: 255, 255, 255;
+  --ion-color-warning-shade: #bf6905;
+  --ion-color-warning-tint: #dd851f;
+
+  --ion-color-danger: #dc2626;
+  --ion-color-danger-rgb: 220, 38, 38;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #c22121;
+  --ion-color-danger-tint: #e03c3c;
+
+  --ion-color-medium: #9ca3af;
+  --ion-color-medium-rgb: 156, 163, 175;
+  --ion-color-medium-contrast: #000000;
+  --ion-color-medium-contrast-rgb: 0, 0, 0;
+  --ion-color-medium-shade: #898f9a;
+  --ion-color-medium-tint: #a6acb7;
+
+  --ion-color-light: #1f2937;
+  --ion-color-light-rgb: 31, 41, 55;
+  --ion-color-light-contrast: #f3f4f6;
+  --ion-color-light-contrast-rgb: 243, 244, 246;
+  --ion-color-light-shade: #1b2431;
+  --ion-color-light-tint: #354250;
+
+  /* Toolbar */
+  --ion-toolbar-background: #0f0f17;
+  --ion-toolbar-color: #f3f4f6;
+  --ion-toolbar-border-color: transparent;
+
+  /* Items / Lists */
+  --ion-item-background: #111827;
+  --ion-item-border-color: #1f2937;
+
+  /* Cards */
+  --ion-card-background: #111827;
+
+  /* Tab bar */
+  --ion-tab-bar-background: #0f0f17;
+  --ion-tab-bar-color: #9ca3af;
+  --ion-tab-bar-color-selected: #9333ea;
+  --ion-tab-bar-border-color: #1f2937;
+
+  /* Modal sheet */
+  --ion-backdrop-color: #000000;
+  --ion-backdrop-opacity: 0.6;
+}
