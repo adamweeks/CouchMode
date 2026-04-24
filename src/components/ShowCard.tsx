@@ -1,110 +1,168 @@
-import {
-  IonItem,
-  IonLabel,
-  IonThumbnail,
-  IonItemSliding,
-  IonItemOptions,
-  IonItemOption,
-  IonIcon,
-  useIonAlert,
-} from '@ionic/react'
-import { trash } from 'ionicons/icons'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { StatusBadge } from './StatusBadge'
-import { formatProgress, formatMonthYear } from '../lib/progressLogic'
+import {
+  IonCard,
+  IonCardContent,
+  IonProgressBar,
+  IonChip,
+  IonIcon,
+  IonLabel,
+  IonButton,
+} from '@ionic/react'
+import { reloadOutline, playOutline } from 'ionicons/icons'
+import { formatMonthYear } from '../lib/progressLogic'
 import type { Database } from '../lib/database.types'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useRewatches } from '../hooks/useRewatches'
-import { useRemoveShow } from '../hooks/useShows'
+import { LogProgressModal } from './LogProgressModal'
 
 type Show = Database['public']['Tables']['shows']['Row']
 
-export function ShowCard({ show }: { show: Show }) {
+type FilterTab = 'all' | 'watching' | 'done'
+
+export function ShowCard({ show, filter = 'all' }: { show: Show; filter?: FilterTab }) {
   const navigate = useNavigate()
+  const [showLogModal, setShowLogModal] = useState(false)
+
   const { data: rewatches = [] } = useRewatches(show.id)
   const activeRewatch = rewatches.find(r => r.status === 'in_progress') ?? null
   const completedRewatches = rewatches.filter(r => r.status === 'completed')
   const currentProgress = useCurrentProgress(activeRewatch?.id)
-  const removeShow = useRemoveShow()
-  const [presentAlert] = useIonAlert()
 
-  const status = currentProgress ? 'in_progress' : 'not_started'
-  const lastCompleted = completedRewatches[0]
+  const isWatching = !!currentProgress
+  const isDone = !currentProgress && completedRewatches.length > 0
 
-  function handleRemove() {
-    presentAlert({
-      header: `Remove ${show.title}?`,
-      message: 'All rewatch history will be permanently deleted.',
-      buttons: [
-        { text: 'Cancel', role: 'cancel' },
-        {
-          text: 'Remove',
-          role: 'destructive',
-          handler: async () => {
-            await removeShow.mutateAsync(show.id)
-            navigate('/')
-          },
-        },
-      ],
-    })
-  }
+  if (filter === 'watching' && !isWatching) return null
+  if (filter === 'done' && !isDone) return null
+
+  const maxEpisodesInSeason = currentProgress
+    ? (show.episodes_per_season[currentProgress.season - 1] ?? 1)
+    : 1
+  const progressValue = currentProgress
+    ? currentProgress.episode / maxEpisodesInSeason
+    : 0
+  const rewatchNumber = completedRewatches.length + 1
 
   return (
-    <IonItemSliding>
-      <IonItem
-        button
-        detail={false}
-        lines="none"
-        onClick={() => navigate(`/shows/${show.id}`)}
-        style={{ '--border-radius': '16px', marginBottom: '12px' } as React.CSSProperties}
-      >
-        <IonThumbnail
-          slot="start"
-          style={
-            {
-              '--size': '64px',
-              '--border-radius': '8px',
-              height: '96px',
-              paddingTop: '8px',
-              paddingBottom: '8px',
-            } as React.CSSProperties
-          }
-        >
-          <img
-            src={show.poster_url ?? '/placeholder-poster.svg'}
-            alt={show.title}
-            style={{ objectFit: 'cover', height: '100%', width: '100%', borderRadius: '8px' }}
-            loading="lazy"
-          />
-        </IonThumbnail>
+    <>
+      <IonCard style={{ margin: '0 16px 12px' }}>
+        <IonCardContent style={{ padding: '14px 16px' }}>
+          {/* Poster + info row */}
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+            <img
+              src={show.poster_url ?? '/placeholder-poster.svg'}
+              alt={show.title}
+              loading="lazy"
+              style={{
+                width: '72px',
+                height: '96px',
+                borderRadius: '8px',
+                objectFit: 'cover',
+                flexShrink: 0,
+                background: 'var(--ion-color-light)',
+              }}
+            />
+            <div style={{ flex: 1, minWidth: 0, paddingTop: '2px' }}>
+              <h2
+                style={{
+                  fontWeight: 700,
+                  fontSize: '1rem',
+                  lineHeight: 1.25,
+                  marginBottom: '4px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                }}
+              >
+                {show.title}
+              </h2>
+              {currentProgress ? (
+                <p
+                  style={{
+                    color: 'var(--ion-color-medium)',
+                    fontSize: '0.875rem',
+                    marginBottom: '8px',
+                  }}
+                >
+                  Season {currentProgress.season} · Episode {currentProgress.episode}
+                </p>
+              ) : (
+                <p
+                  style={{
+                    color: 'var(--ion-color-medium)',
+                    fontSize: '0.875rem',
+                    marginBottom: '8px',
+                  }}
+                >
+                  {isDone
+                    ? `Last watched ${formatMonthYear(completedRewatches[0].completed_at!)}`
+                    : 'Not started yet'}
+                </p>
+              )}
+              <IonChip
+                outline
+                color="primary"
+                style={{ height: '26px', fontSize: '0.75rem', margin: 0, padding: '0 8px' }}
+              >
+                <IonIcon icon={reloadOutline} style={{ fontSize: '14px', marginRight: '4px' }} />
+                <IonLabel>Rewatch #{rewatchNumber}</IonLabel>
+              </IonChip>
+            </div>
+          </div>
 
-        <IonLabel>
-          <h2 style={{ fontWeight: 600 }}>{show.title}</h2>
-          <p>
-            <StatusBadge status={status} />
-          </p>
+          {/* Season progress bar */}
           {currentProgress && (
-            <p style={{ color: 'var(--ion-color-primary)', fontWeight: 500 }}>
-              {formatProgress(currentProgress.season, currentProgress.episode)}
-            </p>
+            <div style={{ marginTop: '14px' }}>
+              <IonProgressBar value={progressValue} color="primary" />
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginTop: '5px',
+                  fontSize: '0.75rem',
+                }}
+              >
+                <span style={{ color: 'var(--ion-color-primary)' }}>
+                  {Math.round(progressValue * 100)}% through season
+                </span>
+                <span style={{ color: 'var(--ion-color-medium)' }}>
+                  E{currentProgress.episode} of {maxEpisodesInSeason}
+                </span>
+              </div>
+            </div>
           )}
-          {lastCompleted?.completed_at && (
-            <p>Finished {formatMonthYear(lastCompleted.completed_at)}</p>
-          )}
-          {completedRewatches.length > 0 && (
-            <p>
-              {completedRewatches.length} rewatch
-              {completedRewatches.length !== 1 ? 'es' : ''}
-            </p>
-          )}
-        </IonLabel>
-      </IonItem>
 
-      <IonItemOptions side="end" onIonSwipe={handleRemove}>
-        <IonItemOption color="danger" expandable onClick={handleRemove}>
-          <IonIcon slot="icon-only" icon={trash} />
-        </IonItemOption>
-      </IonItemOptions>
-    </IonItemSliding>
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: '8px', marginTop: '14px' }}>
+            <IonButton
+              fill="solid"
+              style={{ flex: 1 }}
+              disabled={!activeRewatch}
+              onClick={() => setShowLogModal(true)}
+            >
+              <IonIcon slot="start" icon={playOutline} />
+              Log Episode
+            </IonButton>
+            <IonButton
+              fill="outline"
+              style={{ flex: 1 }}
+              onClick={() => navigate(`/shows/${show.id}`)}
+            >
+              Details
+            </IonButton>
+          </div>
+        </IonCardContent>
+
+        {showLogModal && activeRewatch && (
+          <LogProgressModal
+            show={show}
+            rewatchId={activeRewatch.id}
+            onClose={() => setShowLogModal(false)}
+          />
+        )}
+      </IonCard>
+    </>
   )
 }
