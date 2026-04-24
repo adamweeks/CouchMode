@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import ReactDOM from 'react-dom'
 import { EpisodePicker } from './EpisodePicker'
 import { useProgressLogs, useLogProgress } from '../hooks/useProgressLogs'
@@ -17,6 +17,24 @@ interface LogProgressModalProps {
 
 type ModalStep = 'picking' | 'regression_confirm' | 'submitting'
 
+function CloseIcon() {
+  return (
+    <svg
+      className="w-4 h-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  )
+}
+
 export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalProps) {
   const { data: logs = [] } = useProgressLogs(rewatchId)
   const currentProgress = getCurrentProgress(logs)
@@ -30,6 +48,19 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
   const [error, setError] = useState<string | null>(null)
 
   const logProgress = useLogProgress()
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    closeButtonRef.current?.focus()
+  }, [])
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   async function submitLog() {
     setStep('submitting')
@@ -60,16 +91,23 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
   }
 
   const modal = (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+    <div
+      className="fixed inset-0 z-50 flex flex-col justify-end"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="log-modal-title"
+    >
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden="true" />
       <div className="relative bg-gray-900 rounded-t-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b border-gray-800">
-          <h2 className="text-lg font-semibold">{show.title}</h2>
+          <h2 id="log-modal-title" className="text-lg font-semibold">{show.title}</h2>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 text-gray-400"
+            aria-label="Close"
+            className="w-11 h-11 flex items-center justify-center rounded-full bg-gray-800 text-gray-400 hover:bg-gray-700 active:scale-95 transition-transform focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
           >
-            ✕
+            <CloseIcon />
           </button>
         </div>
 
@@ -83,13 +121,13 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
             <div className="space-y-3">
               <button
                 onClick={submitLog}
-                className="w-full py-3 rounded-xl bg-purple-600 text-white font-medium active:scale-95 transition-transform"
+                className="w-full py-3 rounded-xl bg-purple-600 text-white font-medium active:scale-95 transition-transform min-h-[44px] hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
               >
                 I started over
               </button>
               <button
                 onClick={onClose}
-                className="w-full py-3 rounded-xl bg-gray-800 text-gray-300 font-medium"
+                className="w-full py-3 rounded-xl bg-gray-800 text-gray-300 font-medium min-h-[44px] hover:bg-gray-700 active:scale-95 transition-transform focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
               >
                 Cancel
               </button>
@@ -107,8 +145,9 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
             />
 
             <div className="space-y-1">
-              <label className="text-sm text-gray-400">Note (optional)</label>
+              <label htmlFor="progress-note" className="text-sm text-gray-400">Note (optional)</label>
               <textarea
+                id="progress-note"
                 value={note}
                 onChange={e => setNote(e.target.value)}
                 placeholder="e.g. started during holiday break"
@@ -117,12 +156,12 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
               />
             </div>
 
-            {error && <p className="text-sm text-red-400 text-center">{error}</p>}
+            {error && <p role="alert" className="text-sm text-red-300 text-center">{error}</p>}
 
             <button
               onClick={handlePickerSubmit}
               disabled={step === 'submitting'}
-              className="w-full py-3 rounded-xl bg-purple-600 text-white font-semibold disabled:opacity-50 active:scale-95 transition-transform"
+              className="w-full py-3 rounded-xl bg-purple-600 text-white font-semibold disabled:opacity-60 active:scale-95 transition-transform min-h-[44px] hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
             >
               {step === 'submitting' ? 'Saving…' : `Log ${formatProgress(value.season, value.episode)}`}
             </button>

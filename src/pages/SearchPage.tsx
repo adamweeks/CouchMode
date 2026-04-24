@@ -5,6 +5,23 @@ import { searchShows, posterUrl } from '../lib/tmdb'
 import { useShows, useAddShow } from '../hooks/useShows'
 import { useDebounce } from '../hooks/useDebounce'
 
+function BackArrowIcon() {
+  return (
+    <svg
+      className="w-5 h-5"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M19 12H5M12 5l-7 7 7 7" />
+    </svg>
+  )
+}
+
 export function SearchPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
@@ -26,15 +43,18 @@ export function SearchPage() {
       <header className="px-4 pt-12 pb-3 flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-800 text-gray-300"
+          aria-label="Go back"
+          className="w-11 h-11 flex items-center justify-center rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700 active:scale-95 transition-transform flex-shrink-0 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f17]"
         >
-          ←
+          <BackArrowIcon />
         </button>
         <h1 className="text-xl font-bold text-white">Add a Show</h1>
       </header>
 
       <div className="px-4 pb-3">
+        <label htmlFor="show-search" className="sr-only">Search TV shows</label>
         <input
+          id="show-search"
           type="search"
           value={query}
           onChange={e => setQuery(e.target.value)}
@@ -46,13 +66,13 @@ export function SearchPage() {
 
       <main className="flex-1 px-4">
         {isFetching && (
-          <div className="flex justify-center pt-8">
-            <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+          <div className="flex justify-center pt-8" role="status" aria-label="Searching">
+            <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
           </div>
         )}
 
         {!isFetching && debouncedQuery.length > 2 && results.length === 0 && (
-          <p className="text-center text-gray-500 pt-8">No results for "{debouncedQuery}"</p>
+          <p className="text-center text-gray-400 pt-8">No results for "{debouncedQuery}"</p>
         )}
 
         <div className="space-y-3">
@@ -69,11 +89,11 @@ export function SearchPage() {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-white leading-tight line-clamp-2">{result.name}</p>
                   {result.first_air_date && (
-                    <p className="text-xs text-gray-500 mt-0.5">{result.first_air_date.slice(0, 4)}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{result.first_air_date.slice(0, 4)}</p>
                   )}
                 </div>
                 {alreadyAdded ? (
-                  <span className="text-xs text-gray-500 flex-shrink-0">Added</span>
+                  <span className="text-xs text-gray-400 flex-shrink-0">Added</span>
                 ) : (
                   <button
                     onClick={async () => {
@@ -81,9 +101,10 @@ export function SearchPage() {
                       navigate('/')
                     }}
                     disabled={addShow.isPending}
-                    className="flex-shrink-0 px-4 py-2 bg-purple-600 text-white text-sm rounded-xl font-medium disabled:opacity-50 active:scale-95 transition-transform min-h-[44px]"
+                    aria-label={`Add ${result.name}`}
+                    className="flex-shrink-0 px-4 py-2 bg-purple-600 text-white text-sm rounded-xl font-medium disabled:opacity-60 active:scale-95 transition-transform min-h-[44px] hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
                   >
-                    {addShow.isPending ? '…' : 'Add'}
+                    {addShow.isPending ? 'Adding…' : 'Add'}
                   </button>
                 )}
               </div>

@@ -73,6 +73,29 @@ export function getBackfillEntries(
   return entries
 }
 
+export interface CompletionUpdates {
+  completed_at: string
+  status: 'completed'
+  note: string | null
+  started_at?: string
+}
+
+export function buildCompletionUpdates(
+  completedAt: string,
+  currentStartedAt: string,
+  startedAt?: string,
+  note?: string
+): CompletionUpdates {
+  const base: CompletionUpdates = {
+    completed_at: completedAt,
+    status: 'completed',
+    note: note ?? null,
+  }
+  if (startedAt) return { ...base, started_at: startedAt }
+  if (new Date(completedAt) < new Date(currentStartedAt)) return { ...base, started_at: completedAt }
+  return base
+}
+
 export function formatProgress(season: number, episode: number): string {
   return `S${season} E${episode}`
 }

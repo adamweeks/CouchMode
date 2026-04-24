@@ -2,6 +2,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { completeRewatch, createNewRewatch } from './useProgressLogs'
+import { buildCompletionUpdates } from '../lib/progressLogic'
+
+export interface MarkFinishedArgs {
+  rewatchId: string
+  showId: string
+  startedAt?: string
+  completedAt: string
+  note?: string
+}
 
 export function useRewatches(showId: string) {
   const { user } = useAuth()
@@ -35,6 +44,33 @@ export function useActiveRewatch(showId: string) {
       return data
     },
     enabled: !!user && !!showId,
+  })
+}
+
+export function useMarkSeriesFinished() {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ rewatchId, showId, startedAt, completedAt, note }: MarkFinishedArgs) => {
+      if (!user) throw new Error('Not authenticated')
+
+      const { data: rewatch, error: fetchError } = await supabase
+        .from('rewatches')
+        .select('started_at')
+        .eq('id', rewatchId)
+        .single()
+      if (fetchError) throw fetchError
+
+      const updates = buildCompletionUpdates(completedAt, rewatch.started_at, startedAt, note)
+      const { error } = await supabase.from('rewatches').update(updates).eq('id', rewatchId)
+      if (error) throw error
+
+      return createNewRewatch(showId, user.id)
+    },
+    onSuccess: (_data, { showId }) => {
+      queryClient.invalidateQueries({ queryKey: ['rewatches', showId] })
+    },
   })
 }
 
