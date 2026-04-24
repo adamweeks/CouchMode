@@ -1,26 +1,25 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonSearchbar,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonThumbnail,
+  IonButton,
+  IonSpinner,
+  IonButtons,
+  IonBackButton,
+} from '@ionic/react'
 import { searchShows, posterUrl } from '../lib/tmdb'
 import { useShows, useAddShow } from '../hooks/useShows'
 import { useDebounce } from '../hooks/useDebounce'
-
-function BackArrowIcon() {
-  return (
-    <svg
-      className="w-5 h-5"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M19 12H5M12 5l-7 7 7 7" />
-    </svg>
-  )
-}
 
 export function SearchPage() {
   const navigate = useNavigate()
@@ -39,79 +38,109 @@ export function SearchPage() {
   const addShow = useAddShow()
 
   return (
-    <div className="flex flex-col min-h-screen pb-[env(safe-area-inset-bottom)]">
-      <header className="px-4 pt-12 pb-3 flex items-center gap-3">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Go back"
-          className="w-11 h-11 flex items-center justify-center rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700 active:scale-95 transition-transform flex-shrink-0 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f17]"
-        >
-          <BackArrowIcon />
-        </button>
-        <h1 className="text-xl font-bold text-white">Add a Show</h1>
-      </header>
+    <IonPage>
+      <IonHeader>
+        <IonToolbar>
+          <IonButtons slot="start">
+            <IonBackButton defaultHref="/" />
+          </IonButtons>
+          <IonTitle>Add a Show</IonTitle>
+        </IonToolbar>
+        <IonToolbar>
+          <IonSearchbar
+            value={query}
+            onIonInput={e => setQuery(e.detail.value ?? '')}
+            placeholder="Search TV shows…"
+            autofocus
+            debounce={0}
+            animated
+          />
+        </IonToolbar>
+      </IonHeader>
 
-      <div className="px-4 pb-3">
-        <label htmlFor="show-search" className="sr-only">Search TV shows</label>
-        <input
-          id="show-search"
-          type="search"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="Search TV shows…"
-          autoFocus
-          className="w-full bg-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        />
-      </div>
-
-      <main className="flex-1 px-4">
+      <IonContent fullscreen>
         {isFetching && (
           <div className="flex justify-center pt-8" role="status" aria-label="Searching">
-            <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+            <IonSpinner name="crescent" />
           </div>
         )}
 
         {!isFetching && debouncedQuery.length > 2 && results.length === 0 && (
-          <p className="text-center text-gray-400 pt-8">No results for "{debouncedQuery}"</p>
+          <p
+            className="text-center pt-8 px-4"
+            style={{ color: 'var(--ion-color-medium)' }}
+          >
+            No results for "{debouncedQuery}"
+          </p>
         )}
 
-        <div className="space-y-3">
-          {results.map(result => {
-            const alreadyAdded = myTmdbIds.has(String(result.id))
-            return (
-              <div key={result.id} className="flex gap-3 items-center bg-gray-900 rounded-2xl p-3">
-                <img
-                  src={posterUrl(result.poster_path)}
-                  alt={result.name}
-                  className="w-12 h-16 rounded-lg object-cover flex-shrink-0 bg-gray-800"
-                  loading="lazy"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white leading-tight line-clamp-2">{result.name}</p>
-                  {result.first_air_date && (
-                    <p className="text-xs text-gray-400 mt-0.5">{result.first_air_date.slice(0, 4)}</p>
-                  )}
-                </div>
-                {alreadyAdded ? (
-                  <span className="text-xs text-gray-400 flex-shrink-0">Added</span>
-                ) : (
-                  <button
-                    onClick={async () => {
-                      await addShow.mutateAsync(result)
-                      navigate('/')
-                    }}
-                    disabled={addShow.isPending}
-                    aria-label={`Add ${result.name}`}
-                    className="flex-shrink-0 px-4 py-2 bg-purple-600 text-white text-sm rounded-xl font-medium disabled:opacity-60 active:scale-95 transition-transform min-h-[44px] hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+        {results.length > 0 && (
+          <IonList lines="none" className="px-4 pt-2" style={{ background: 'transparent' }}>
+            {results.map(result => {
+              const alreadyAdded = myTmdbIds.has(String(result.id))
+              return (
+                <IonItem
+                  key={result.id}
+                  lines="none"
+                  style={
+                    {
+                      '--border-radius': '16px',
+                      marginBottom: '12px',
+                    } as React.CSSProperties
+                  }
+                >
+                  <IonThumbnail
+                    slot="start"
+                    style={
+                      {
+                        '--size': '48px',
+                        '--border-radius': '8px',
+                        height: '64px',
+                        paddingTop: '8px',
+                        paddingBottom: '8px',
+                      } as React.CSSProperties
+                    }
                   >
-                    {addShow.isPending ? 'Adding…' : 'Add'}
-                  </button>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </main>
-    </div>
+                    <img
+                      src={posterUrl(result.poster_path)}
+                      alt={result.name}
+                      style={{ objectFit: 'cover', height: '100%', width: '100%', borderRadius: '8px' }}
+                      loading="lazy"
+                    />
+                  </IonThumbnail>
+
+                  <IonLabel>
+                    <h2 style={{ fontWeight: 600 }}>{result.name}</h2>
+                    {result.first_air_date && (
+                      <p>{result.first_air_date.slice(0, 4)}</p>
+                    )}
+                  </IonLabel>
+
+                  {alreadyAdded ? (
+                    <p slot="end" style={{ color: 'var(--ion-color-medium)', fontSize: '0.875rem' }}>
+                      Added
+                    </p>
+                  ) : (
+                    <IonButton
+                      slot="end"
+                      fill="solid"
+                      size="small"
+                      disabled={addShow.isPending}
+                      aria-label={`Add ${result.name}`}
+                      onClick={async () => {
+                        await addShow.mutateAsync(result)
+                        navigate('/')
+                      }}
+                    >
+                      {addShow.isPending ? 'Adding…' : 'Add'}
+                    </IonButton>
+                  )}
+                </IonItem>
+              )
+            })}
+          </IonList>
+        )}
+      </IonContent>
+    </IonPage>
   )
 }
