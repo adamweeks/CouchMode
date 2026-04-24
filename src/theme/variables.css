@@ -1,4 +1,7 @@
 :root {
+  /* Force light-mode for all Ionic components regardless of system preference */
+  color-scheme: light;
+
   /* ── Primary: Ionic Blue ── */
   --ion-color-primary: #3880ff;
   --ion-color-primary-rgb: 56, 128, 255;
