@@ -1,78 +1,134 @@
 :root {
-  --ion-background-color: #0f0f17;
-  --ion-background-color-rgb: 15, 15, 23;
-
-  --ion-text-color: #f3f4f6;
-  --ion-text-color-rgb: 243, 244, 246;
-
-  --ion-color-primary: #9333ea;
-  --ion-color-primary-rgb: 147, 51, 234;
+  /* ── Primary: Ionic Blue ── */
+  --ion-color-primary: #3880ff;
+  --ion-color-primary-rgb: 56, 128, 255;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #7c27cc;
-  --ion-color-primary-tint: #9e48ec;
+  --ion-color-primary-shade: #3171e0;
+  --ion-color-primary-tint: #4c8dff;
 
-  --ion-color-secondary: #6b7280;
-  --ion-color-secondary-rgb: 107, 114, 128;
+  /* ── Secondary ── */
+  --ion-color-secondary: #5260ff;
+  --ion-color-secondary-rgb: 82, 96, 255;
   --ion-color-secondary-contrast: #ffffff;
-  --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #5e6470;
-  --ion-color-secondary-tint: #7a8190;
+  --ion-color-secondary-shade: #4854e0;
+  --ion-color-secondary-tint: #6370ff;
 
-  --ion-color-success: #16a34a;
-  --ion-color-success-rgb: 22, 163, 74;
+  /* ── Success / Danger ── */
+  --ion-color-success: #2dd36f;
+  --ion-color-success-rgb: 45, 211, 111;
   --ion-color-success-contrast: #ffffff;
-  --ion-color-success-contrast-rgb: 255, 255, 255;
-  --ion-color-success-shade: #138f41;
-  --ion-color-success-tint: #2dac5c;
+  --ion-color-success-shade: #28ba62;
+  --ion-color-success-tint: #42d77d;
 
-  --ion-color-warning: #d97706;
-  --ion-color-warning-rgb: 217, 119, 6;
-  --ion-color-warning-contrast: #ffffff;
-  --ion-color-warning-contrast-rgb: 255, 255, 255;
-  --ion-color-warning-shade: #bf6905;
-  --ion-color-warning-tint: #dd851f;
-
-  --ion-color-danger: #dc2626;
-  --ion-color-danger-rgb: 220, 38, 38;
+  --ion-color-danger: #eb445a;
+  --ion-color-danger-rgb: 235, 68, 90;
   --ion-color-danger-contrast: #ffffff;
-  --ion-color-danger-contrast-rgb: 255, 255, 255;
-  --ion-color-danger-shade: #c22121;
-  --ion-color-danger-tint: #e03c3c;
+  --ion-color-danger-shade: #cf3c4f;
+  --ion-color-danger-tint: #ed576b;
 
-  --ion-color-medium: #9ca3af;
-  --ion-color-medium-rgb: 156, 163, 175;
-  --ion-color-medium-contrast: #000000;
-  --ion-color-medium-contrast-rgb: 0, 0, 0;
-  --ion-color-medium-shade: #898f9a;
-  --ion-color-medium-tint: #a6acb7;
+  /* ── Medium / Light ── */
+  --ion-color-medium: #92949c;
+  --ion-color-medium-rgb: 146, 148, 156;
+  --ion-color-medium-contrast: #ffffff;
+  --ion-color-medium-shade: #808289;
+  --ion-color-medium-tint: #9d9fa6;
 
-  --ion-color-light: #1f2937;
-  --ion-color-light-rgb: 31, 41, 55;
-  --ion-color-light-contrast: #f3f4f6;
-  --ion-color-light-contrast-rgb: 243, 244, 246;
-  --ion-color-light-shade: #1b2431;
-  --ion-color-light-tint: #354250;
+  --ion-color-light: #f4f5f8;
+  --ion-color-light-rgb: 244, 245, 248;
+  --ion-color-light-contrast: #000000;
+  --ion-color-light-shade: #d7d8da;
+  --ion-color-light-tint: #f5f6f9;
 
-  /* Toolbar */
-  --ion-toolbar-background: #0f0f17;
-  --ion-toolbar-color: #f3f4f6;
-  --ion-toolbar-border-color: transparent;
+  /* ── App surfaces ── */
+  --ion-background-color: #ffffff;
+  --ion-background-color-rgb: 255, 255, 255;
 
-  /* Items / Lists */
-  --ion-item-background: #111827;
-  --ion-item-border-color: #1f2937;
+  --ion-text-color: #1a1a1a;
+  --ion-text-color-rgb: 26, 26, 26;
 
-  /* Cards */
-  --ion-card-background: #111827;
+  --ion-item-background: #ffffff;
+  --ion-item-border-color: rgba(0, 0, 0, 0.1);
 
-  /* Tab bar */
-  --ion-tab-bar-background: #0f0f17;
-  --ion-tab-bar-color: #9ca3af;
-  --ion-tab-bar-color-selected: #9333ea;
-  --ion-tab-bar-border-color: #1f2937;
+  --ion-card-background: #ffffff;
 
-  /* Modal sheet */
+  /* ── Toolbar (default white for non-gradient pages) ── */
+  --ion-toolbar-background: #ffffff;
+  --ion-toolbar-color: #1a1a1a;
+  --ion-toolbar-border-color: rgba(0, 0, 0, 0.08);
+
+  /* ── Tab bar ── */
+  --ion-tab-bar-background: #ffffff;
+  --ion-tab-bar-color: #92949c;
+  --ion-tab-bar-color-selected: #3880ff;
+  --ion-tab-bar-border-color: rgba(0, 0, 0, 0.08);
+
+  /* ── Modals / overlays ── */
   --ion-backdrop-color: #000000;
-  --ion-backdrop-opacity: 0.6;
+  --ion-backdrop-opacity: 0.5;
+}
+
+/* ── Gradient header used on all tab pages ── */
+.gradient-header {
+  background: linear-gradient(135deg, #3880ff 0%, #5260ff 100%);
+}
+
+.gradient-header ion-toolbar {
+  --background: transparent;
+  --color: #ffffff;
+  --border-color: transparent;
+  --ion-color-base: transparent;
+}
+
+/* Segment sits in the gradient so its buttons need inverted contrast */
+.gradient-header ion-segment {
+  --background: rgba(255, 255, 255, 0.15);
+  margin: 4px 12px 8px;
+}
+
+.gradient-header ion-segment-button {
+  --color: rgba(255, 255, 255, 0.65);
+  --color-checked: #3880ff;
+  --background-checked: #ffffff;
+  --indicator-color: transparent;
+  --border-radius: 6px;
+  min-height: 30px;
+  font-size: 13px;
+}
+
+/* Icon buttons in gradient header */
+.gradient-header ion-button {
+  --color: rgba(255, 255, 255, 0.9);
+}
+
+/* Searchbar embedded inside gradient header */
+.gradient-searchbar {
+  --background: rgba(255, 255, 255, 0.2);
+  --placeholder-color: rgba(255, 255, 255, 0.7);
+  --icon-color: rgba(255, 255, 255, 0.7);
+  --color: #ffffff;
+  --border-radius: 10px;
+  padding-top: 0;
+  padding-bottom: 8px;
+}
+
+/* FAB – use Ionic blue */
+ion-fab-button {
+  --background: #3880ff;
+  --background-activated: #3171e0;
+  --box-shadow: 0 4px 16px rgba(56, 128, 255, 0.45);
+}
+
+/* Inset list shadow to match design */
+ion-list.inset-shadow {
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* IonContent alt background */
+ion-content {
+  --background: #f4f5f8;
+}
+
+ion-content.white-bg {
+  --background: #ffffff;
 }
