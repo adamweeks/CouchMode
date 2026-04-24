@@ -1,20 +1,27 @@
+import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
-  IonList,
+  IonSearchbar,
+  IonSegment,
+  IonSegmentButton,
+  IonLabel,
   IonFab,
   IonFabButton,
   IonIcon,
   IonSpinner,
   IonButton,
+  IonButtons,
+  IonFooter,
 } from '@ionic/react'
 import { add } from 'ionicons/icons'
-import { useNavigate } from 'react-router-dom'
 import { useShows } from '../hooks/useShows'
 import { ShowCard } from '../components/ShowCard'
+import { AppTabBar } from '../components/AppTabBar'
 
 function TvIcon({ className }: { className?: string }) {
   return (
@@ -34,25 +41,61 @@ function TvIcon({ className }: { className?: string }) {
   )
 }
 
+type FilterTab = 'all' | 'watching' | 'done'
+
 export function RotationPage() {
   const navigate = useNavigate()
   const { data: shows = [], isLoading } = useShows()
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<FilterTab>('all')
+
+  const filteredShows = useMemo(() => {
+    if (!search.trim()) return shows
+    const q = search.toLowerCase()
+    return shows.filter(s => s.title.toLowerCase().includes(q))
+  }, [shows, search])
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
           <IonTitle>My Rotation</IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={() => navigate('/search')} aria-label="Add show">
+              <IonIcon slot="icon-only" icon={add} />
+            </IonButton>
+          </IonButtons>
+        </IonToolbar>
+        <IonToolbar>
+          <IonSearchbar
+            value={search}
+            onIonInput={e => setSearch(e.detail.value ?? '')}
+            placeholder="Search your shows…"
+            debounce={150}
+            animated={false}
+          />
+        </IonToolbar>
+        <IonToolbar>
+          <IonSegment
+            value={filter}
+            onIonChange={e => setFilter(e.detail.value as FilterTab)}
+          >
+            <IonSegmentButton value="all">
+              <IonLabel>All</IonLabel>
+            </IonSegmentButton>
+            <IonSegmentButton value="watching">
+              <IonLabel>Watching</IonLabel>
+            </IonSegmentButton>
+            <IonSegmentButton value="done">
+              <IonLabel>Done</IonLabel>
+            </IonSegmentButton>
+          </IonSegment>
         </IonToolbar>
       </IonHeader>
 
       <IonContent fullscreen>
         {isLoading ? (
-          <div
-            className="flex justify-center pt-16"
-            role="status"
-            aria-label="Loading shows"
-          >
+          <div className="flex justify-center pt-16" role="status" aria-label="Loading shows">
             <IonSpinner name="crescent" />
           </div>
         ) : shows.length === 0 ? (
@@ -66,12 +109,16 @@ export function RotationPage() {
               Add Your First Show
             </IonButton>
           </div>
+        ) : filteredShows.length === 0 ? (
+          <p className="text-center pt-8 px-4" style={{ color: 'var(--ion-color-medium)' }}>
+            No shows matching "{search}"
+          </p>
         ) : (
-          <IonList lines="none" className="px-4 pt-2 pb-24" style={{ background: 'transparent' }}>
-            {shows.map(show => (
-              <ShowCard key={show.id} show={show} />
+          <div className="pt-2 pb-6">
+            {filteredShows.map(show => (
+              <ShowCard key={show.id} show={show} filter={filter} />
             ))}
-          </IonList>
+          </div>
         )}
 
         <IonFab vertical="bottom" horizontal="end" slot="fixed">
@@ -80,6 +127,10 @@ export function RotationPage() {
           </IonFabButton>
         </IonFab>
       </IonContent>
+
+      <IonFooter>
+        <AppTabBar />
+      </IonFooter>
     </IonPage>
   )
 }

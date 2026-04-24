@@ -16,8 +16,10 @@ import {
   IonSpinner,
   IonButtons,
   IonBackButton,
+  IonFooter,
 } from '@ionic/react'
 import { searchShows, posterUrl } from '../lib/tmdb'
+import { AppTabBar } from '../components/AppTabBar'
 import { useShows, useAddShow } from '../hooks/useShows'
 import { useDebounce } from '../hooks/useDebounce'
 
@@ -141,6 +143,9 @@ export function SearchPage() {
           </IonList>
         )}
       </IonContent>
+      <IonFooter>
+        <AppTabBar />
+      </IonFooter>
     </IonPage>
   )
 }
