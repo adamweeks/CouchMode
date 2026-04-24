@@ -41,7 +41,7 @@ export function SearchPage() {
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="gradient-header">
         <IonToolbar>
           <IonButtons slot="start">
             <IonBackButton defaultHref="/" />
@@ -50,17 +50,18 @@ export function SearchPage() {
         </IonToolbar>
         <IonToolbar>
           <IonSearchbar
+            className="gradient-searchbar"
             value={query}
             onIonInput={e => setQuery(e.detail.value ?? '')}
             placeholder="Search TV shows…"
             autoFocus
             debounce={0}
-            animated
+            animated={false}
           />
         </IonToolbar>
       </IonHeader>
 
-      <IonContent fullscreen>
+      <IonContent>
         {isFetching && (
           <div className="flex justify-center pt-8" role="status" aria-label="Searching">
             <IonSpinner name="crescent" />
@@ -68,36 +69,42 @@ export function SearchPage() {
         )}
 
         {!isFetching && debouncedQuery.length > 2 && results.length === 0 && (
-          <p
-            className="text-center pt-8 px-4"
-            style={{ color: 'var(--ion-color-medium)' }}
-          >
+          <p className="text-center pt-8 px-4" style={{ color: 'var(--ion-color-medium)' }}>
             No results for "{debouncedQuery}"
           </p>
         )}
 
+        {!isFetching && debouncedQuery.length <= 2 && (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              paddingTop: '48px',
+              paddingBottom: '24px',
+              color: 'var(--ion-color-medium)',
+              textAlign: 'center',
+              gap: '8px',
+            }}
+          >
+            <span style={{ fontSize: '40px', opacity: 0.3 }}>🔍</span>
+            <p style={{ fontSize: '14px' }}>Search for a show to add to your rotation</p>
+          </div>
+        )}
+
         {results.length > 0 && (
-          <IonList lines="none" className="px-4 pt-2" style={{ background: 'transparent' }}>
+          <IonList inset className="inset-shadow" style={{ marginTop: '10px' }}>
             {results.map(result => {
               const alreadyAdded = myTmdbIds.has(String(result.id))
               return (
-                <IonItem
-                  key={result.id}
-                  lines="none"
-                  style={
-                    {
-                      '--border-radius': '16px',
-                      marginBottom: '12px',
-                    } as React.CSSProperties
-                  }
-                >
+                <IonItem key={result.id}>
                   <IonThumbnail
                     slot="start"
                     style={
                       {
-                        '--size': '48px',
-                        '--border-radius': '8px',
-                        height: '64px',
+                        '--size': '44px',
+                        '--border-radius': '6px',
+                        height: '58px',
                         paddingTop: '8px',
                         paddingBottom: '8px',
                       } as React.CSSProperties
@@ -106,22 +113,31 @@ export function SearchPage() {
                     <img
                       src={posterUrl(result.poster_path)}
                       alt={result.name}
-                      style={{ objectFit: 'cover', height: '100%', width: '100%', borderRadius: '8px' }}
+                      style={{ objectFit: 'cover', height: '100%', width: '100%', borderRadius: '6px' }}
                       loading="lazy"
                     />
                   </IonThumbnail>
 
                   <IonLabel>
-                    <h2 style={{ fontWeight: 600 }}>{result.name}</h2>
+                    <h2 style={{ fontWeight: 600, fontSize: '15px' }}>{result.name}</h2>
                     {result.first_air_date && (
-                      <p>{result.first_air_date.slice(0, 4)}</p>
+                      <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)' }}>
+                        {result.first_air_date.slice(0, 4)}
+                      </p>
                     )}
                   </IonLabel>
 
                   {alreadyAdded ? (
-                    <p slot="end" style={{ color: 'var(--ion-color-medium)', fontSize: '0.875rem' }}>
+                    <span
+                      slot="end"
+                      style={{
+                        fontSize: '12px',
+                        color: 'var(--ion-color-medium)',
+                        fontWeight: 500,
+                      }}
+                    >
                       Added
-                    </p>
+                    </span>
                   ) : (
                     <IonButton
                       slot="end"
@@ -143,6 +159,7 @@ export function SearchPage() {
           </IonList>
         )}
       </IonContent>
+
       <IonFooter>
         <AppTabBar />
       </IonFooter>
