@@ -9,7 +9,7 @@ import './index.css'
 import { setupIonicReact } from '@ionic/react'
 import App from './App.tsx'
 
-setupIonicReact()
+setupIonicReact({ mode: 'ios' })
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

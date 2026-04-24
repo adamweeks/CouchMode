@@ -8,6 +8,8 @@ import { LoginPage } from './pages/LoginPage'
 import { RotationPage } from './pages/RotationPage'
 import { ShowDetailPage } from './pages/ShowDetailPage'
 import { SearchPage } from './pages/SearchPage'
+import { HistoryPage } from './pages/HistoryPage'
+import { SettingsPage } from './pages/SettingsPage'
 import { supabase } from './lib/supabase'
 
 function OAuthRedirectHandler() {
@@ -62,6 +64,22 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <SearchPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/history"
+                element={
+                  <ProtectedRoute>
+                    <HistoryPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <SettingsPage />
                   </ProtectedRoute>
                 }
               />
