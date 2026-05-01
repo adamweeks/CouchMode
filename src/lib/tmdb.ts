@@ -19,6 +19,18 @@ export interface TMDBShowDetails {
   seasons: TMDBSeason[]
 }
 
+export interface TMDBEpisode {
+  episode_number: number
+  name: string
+  still_path: string | null
+  overview: string
+}
+
+export interface TMDBSeasonDetails {
+  season_number: number
+  episodes: TMDBEpisode[]
+}
+
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w300'
 
 export function posterUrl(path: string | null | undefined): string {
@@ -39,6 +51,12 @@ export async function searchShows(query: string): Promise<TMDBSearchResult[]> {
 export async function fetchShowDetails(tmdbId: number): Promise<TMDBShowDetails> {
   const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?tmdb_id=${tmdbId}`)
   if (!res.ok) throw new Error('TMDB fetch failed')
+  return res.json()
+}
+
+export async function fetchSeasonDetails(tmdbId: string, season: number): Promise<TMDBSeasonDetails> {
+  const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?tmdb_id=${tmdbId}&season=${season}`)
+  if (!res.ok) throw new Error('TMDB season fetch failed')
   return res.json()
 }
 

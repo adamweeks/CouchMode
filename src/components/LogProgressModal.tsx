@@ -13,11 +13,13 @@ import {
 } from '@ionic/react'
 import { EpisodePicker } from './EpisodePicker'
 import { useProgressLogs, useLogProgress } from '../hooks/useProgressLogs'
+import { useTMDBSeason, getEpisodeDetails } from '../hooks/useTMDBSeason'
 import { getCurrentProgress, isRegression, formatProgress, getErrorMessage } from '../lib/progressLogic'
 
 interface LogProgressModalProps {
   show: {
     id: string
+    tmdb_id: string
     title: string
     total_seasons: number
     episodes_per_season: number[]
@@ -40,6 +42,9 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
   const [presentAlert] = useIonAlert()
 
   const logProgress = useLogProgress()
+
+  const { data: seasonData, isLoading: isLoadingSeason } = useTMDBSeason(show.tmdb_id, value.season)
+  const episodeDetails = getEpisodeDetails(seasonData?.episodes, value.episode)
 
   async function submitLog() {
     setIsSubmitting(true)
@@ -84,8 +89,8 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
     <IonModal
       isOpen={true}
       onDidDismiss={onClose}
-      initialBreakpoint={0.75}
-      breakpoints={[0, 0.75, 1]}
+      initialBreakpoint={0.85}
+      breakpoints={[0, 0.85, 1]}
       handle={true}
     >
       <IonHeader>
@@ -110,6 +115,9 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
           episodesPerSeason={show.episodes_per_season}
           value={value}
           onChange={setValue}
+          episodeName={episodeDetails?.name}
+          episodeStillPath={episodeDetails?.still_path}
+          isLoadingEpisode={isLoadingSeason}
         />
 
         <IonTextarea

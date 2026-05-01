@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   IonItem,
@@ -13,6 +14,7 @@ import type { Database } from '../lib/database.types'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useRewatches } from '../hooks/useRewatches'
 import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
+import { LogProgressModal } from './LogProgressModal'
 
 type Show = Database['public']['Tables']['shows']['Row']
 
@@ -20,6 +22,7 @@ type FilterTab = 'all' | 'watching' | 'done'
 
 export function ShowCard({ show, filter = 'all' }: { show: Show; filter?: FilterTab }) {
   const navigate = useNavigate()
+  const [logModalOpen, setLogModalOpen] = useState(false)
 
   const { data: rewatches = [] } = useRewatches(show.id)
   const activeRewatch = rewatches.find(r => r.status === 'in_progress') ?? null
@@ -29,7 +32,12 @@ export function ShowCard({ show, filter = 'all' }: { show: Show; filter?: Filter
   const isWatching = !!currentProgress
   const isDone = !currentProgress && completedRewatches.length > 0
 
-  const { present: presentLogSheet } = useLogEpisodeSheet(show, activeRewatch?.id, currentProgress)
+  const { present: presentLogSheet } = useLogEpisodeSheet(
+    show,
+    activeRewatch?.id,
+    currentProgress,
+    activeRewatch ? () => setLogModalOpen(true) : undefined,
+  )
 
   if (filter === 'watching' && !isWatching) return null
   if (filter === 'done' && !isDone) return null
@@ -50,104 +58,114 @@ export function ShowCard({ show, filter = 'all' }: { show: Show; filter?: Filter
     : 'Not started'
 
   return (
-    <IonItemSliding>
-      <IonItem
-        button
-        detail
-        onClick={() => navigate(`/shows/${show.id}`)}
-      >
-        <IonThumbnail
-          slot="start"
-          style={
-            {
-              '--size': '44px',
-              '--border-radius': '6px',
-              height: '58px',
-              paddingTop: '8px',
-              paddingBottom: '8px',
-            } as React.CSSProperties
-          }
+    <>
+      <IonItemSliding>
+        <IonItem
+          button
+          detail
+          onClick={() => navigate(`/shows/${show.id}`)}
         >
-          <img
-            src={show.poster_url ?? '/placeholder-poster.svg'}
-            alt={show.title}
-            loading="lazy"
-            style={{ objectFit: 'cover', height: '100%', width: '100%', borderRadius: '6px' }}
-          />
-        </IonThumbnail>
+          <IonThumbnail
+            slot="start"
+            style={
+              {
+                '--size': '44px',
+                '--border-radius': '6px',
+                height: '58px',
+                paddingTop: '8px',
+                paddingBottom: '8px',
+              } as React.CSSProperties
+            }
+          >
+            <img
+              src={show.poster_url ?? '/placeholder-poster.svg'}
+              alt={show.title}
+              loading="lazy"
+              style={{ objectFit: 'cover', height: '100%', width: '100%', borderRadius: '6px' }}
+            />
+          </IonThumbnail>
 
-        <IonLabel>
-          <h2 style={{ fontWeight: 600, fontSize: '15px', marginBottom: '2px' }}>{show.title}</h2>
-          <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', marginBottom: '6px' }}>
-            {episodeText}
-          </p>
-          {currentProgress && (
-            <>
-              {/* Thin 3px progress bar — custom div for precise control */}
-              <div
-                style={{
-                  height: '3px',
-                  background: 'var(--ion-color-light)',
-                  borderRadius: '2px',
-                  overflow: 'hidden',
-                  marginBottom: '4px',
-                }}
-              >
+          <IonLabel>
+            <h2 style={{ fontWeight: 600, fontSize: '15px', marginBottom: '2px' }}>{show.title}</h2>
+            <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', marginBottom: '6px' }}>
+              {episodeText}
+            </p>
+            {currentProgress && (
+              <>
+                {/* Thin 3px progress bar — custom div for precise control */}
                 <div
                   style={{
-                    height: '100%',
-                    width: `${progressPct}%`,
-                    background: 'var(--ion-color-primary)',
+                    height: '3px',
+                    background: 'var(--ion-color-light)',
                     borderRadius: '2px',
+                    overflow: 'hidden',
+                    marginBottom: '4px',
                   }}
-                />
-              </div>
-              <p style={{ fontSize: '11px', color: 'var(--ion-color-primary)', fontWeight: 600 }}>
-                {progressPct}% through season
-              </p>
-            </>
-          )}
-        </IonLabel>
+                >
+                  <div
+                    style={{
+                      height: '100%',
+                      width: `${progressPct}%`,
+                      background: 'var(--ion-color-primary)',
+                      borderRadius: '2px',
+                    }}
+                  />
+                </div>
+                <p style={{ fontSize: '11px', color: 'var(--ion-color-primary)', fontWeight: 600 }}>
+                  {progressPct}% through season
+                </p>
+              </>
+            )}
+          </IonLabel>
 
-        {/* Rewatch badge */}
-        <div slot="end" style={{ display: 'flex', alignItems: 'center', paddingRight: '4px' }}>
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '3px',
-              background: '#ebf3ff',
-              color: 'var(--ion-color-primary)',
-              borderRadius: '20px',
-              padding: '3px 8px',
-              fontSize: '11px',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <IonIcon icon={reloadOutline} style={{ fontSize: '11px' }} />
-            #{rewatchNumber}
-          </span>
-        </div>
-      </IonItem>
-
-      {/* Swipe-to-log */}
-      <IonItemOptions side="end" onIonSwipe={presentLogSheet}>
-        <IonItemOption color="primary" expandable onClick={presentLogSheet}>
-          <div
-            slot="icon-only"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '3px',
-            }}
-          >
-            <IonIcon icon={playOutline} style={{ fontSize: '18px' }} />
-            <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px' }}>LOG</span>
+          {/* Rewatch badge */}
+          <div slot="end" style={{ display: 'flex', alignItems: 'center', paddingRight: '4px' }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '3px',
+                background: '#ebf3ff',
+                color: 'var(--ion-color-primary)',
+                borderRadius: '20px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <IonIcon icon={reloadOutline} style={{ fontSize: '11px' }} />
+              #{rewatchNumber}
+            </span>
           </div>
-        </IonItemOption>
-      </IonItemOptions>
-    </IonItemSliding>
+        </IonItem>
+
+        {/* Swipe-to-log */}
+        <IonItemOptions side="end" onIonSwipe={presentLogSheet}>
+          <IonItemOption color="primary" expandable onClick={presentLogSheet}>
+            <div
+              slot="icon-only"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '3px',
+              }}
+            >
+              <IonIcon icon={playOutline} style={{ fontSize: '18px' }} />
+              <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px' }}>LOG</span>
+            </div>
+          </IonItemOption>
+        </IonItemOptions>
+      </IonItemSliding>
+
+      {logModalOpen && activeRewatch && (
+        <LogProgressModal
+          show={show}
+          rewatchId={activeRewatch.id}
+          onClose={() => setLogModalOpen(false)}
+        />
+      )}
+    </>
   )
 }

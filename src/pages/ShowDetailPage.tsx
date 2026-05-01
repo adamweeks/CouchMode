@@ -22,6 +22,7 @@ import { useRewatches, useActiveRewatch } from '../hooks/useRewatches'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
 import { MarkFinishedModal } from '../components/MarkFinishedModal'
+import { LogProgressModal } from '../components/LogProgressModal'
 import { formatProgress, formatDuration, formatMonthYear } from '../lib/progressLogic'
 
 type Rewatch = { id: string; completed_at: string | null; started_at: string; note: string | null; status: string }
@@ -40,13 +41,19 @@ export function ShowDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [showFinishedModal, setShowFinishedModal] = useState(false)
+  const [showLogModal, setShowLogModal] = useState(false)
   const [presentAlert] = useIonAlert()
 
   const { data: show, isLoading } = useShow(id!)
   const { data: rewatches = [] } = useRewatches(id!)
   const { data: activeRewatch } = useActiveRewatch(id!)
   const currentProgress = useCurrentProgress(activeRewatch?.id)
-  const { present: presentLogSheet } = useLogEpisodeSheet(show ?? null, activeRewatch?.id, currentProgress)
+  const { present: presentLogSheet } = useLogEpisodeSheet(
+    show ?? null,
+    activeRewatch?.id,
+    currentProgress,
+    activeRewatch ? () => setShowLogModal(true) : undefined,
+  )
   const removeShow = useRemoveShow()
 
   if (isLoading) {
@@ -269,6 +276,14 @@ export function ShowDetailPage() {
           rewatchId={activeRewatch.id}
           rewatchStartedAt={activeRewatch.started_at}
           onClose={() => setShowFinishedModal(false)}
+        />
+      )}
+
+      {showLogModal && activeRewatch && (
+        <LogProgressModal
+          show={show}
+          rewatchId={activeRewatch.id}
+          onClose={() => setShowLogModal(false)}
         />
       )}
     </IonPage>
