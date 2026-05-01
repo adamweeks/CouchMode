@@ -55,7 +55,7 @@ export async function fetchShowDetails(tmdbId: number): Promise<TMDBShowDetails>
 }
 
 export async function fetchSeasonDetails(tmdbId: string, season: number): Promise<TMDBSeasonDetails> {
-  const res = await fetch(`/api/tmdb-season?tmdb_id=${tmdbId}&season=${season}`)
+  const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?tmdb_id=${tmdbId}&season=${season}`)
   if (!res.ok) throw new Error('TMDB season fetch failed')
   return res.json()
 }
