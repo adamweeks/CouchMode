@@ -7,6 +7,7 @@ import {
   IonItemOptions,
   IonItemOption,
   IonIcon,
+  IonReorder,
 } from '@ionic/react'
 import { playOutline, reloadOutline } from 'ionicons/icons'
 import type { Database } from '../lib/database.types'
@@ -18,7 +19,15 @@ type Show = Database['public']['Tables']['shows']['Row']
 
 type FilterTab = 'all' | 'watching' | 'done'
 
-export function ShowCard({ show, filter = 'all' }: { show: Show; filter?: FilterTab }) {
+export function ShowCard({
+  show,
+  filter = 'all',
+  reorderMode = false,
+}: {
+  show: Show
+  filter?: FilterTab
+  reorderMode?: boolean
+}) {
   const navigate = useNavigate()
 
   const { data: rewatches = [] } = useRewatches(show.id)
@@ -49,67 +58,65 @@ export function ShowCard({ show, filter = 'all' }: { show: Show; filter?: Filter
     ? 'Completed'
     : 'Not started'
 
-  return (
-    <IonItemSliding>
-      <IonItem
-        button
-        detail
-        onClick={() => navigate(`/shows/${show.id}`)}
+  const item = (
+    <IonItem
+      button={!reorderMode}
+      detail={!reorderMode}
+      onClick={reorderMode ? undefined : () => navigate(`/shows/${show.id}`)}
+    >
+      <IonThumbnail
+        slot="start"
+        style={
+          {
+            '--size': '44px',
+            '--border-radius': '6px',
+            height: '58px',
+            paddingTop: '8px',
+            paddingBottom: '8px',
+          } as React.CSSProperties
+        }
       >
-        <IonThumbnail
-          slot="start"
-          style={
-            {
-              '--size': '44px',
-              '--border-radius': '6px',
-              height: '58px',
-              paddingTop: '8px',
-              paddingBottom: '8px',
-            } as React.CSSProperties
-          }
-        >
-          <img
-            src={show.poster_url ?? '/placeholder-poster.svg'}
-            alt={show.title}
-            loading="lazy"
-            style={{ objectFit: 'cover', height: '100%', width: '100%', borderRadius: '6px' }}
-          />
-        </IonThumbnail>
+        <img
+          src={show.poster_url ?? '/placeholder-poster.svg'}
+          alt={show.title}
+          loading="lazy"
+          style={{ objectFit: 'cover', height: '100%', width: '100%', borderRadius: '6px' }}
+        />
+      </IonThumbnail>
 
-        <IonLabel>
-          <h2 style={{ fontWeight: 600, fontSize: '15px', marginBottom: '2px' }}>{show.title}</h2>
-          <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', marginBottom: '6px' }}>
-            {episodeText}
-          </p>
-          {currentProgress && (
-            <>
-              {/* Thin 3px progress bar — custom div for precise control */}
+      <IonLabel>
+        <h2 style={{ fontWeight: 600, fontSize: '15px', marginBottom: '2px' }}>{show.title}</h2>
+        <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', marginBottom: '6px' }}>
+          {episodeText}
+        </p>
+        {currentProgress && (
+          <>
+            <div
+              style={{
+                height: '3px',
+                background: 'var(--ion-color-light)',
+                borderRadius: '2px',
+                overflow: 'hidden',
+                marginBottom: '4px',
+              }}
+            >
               <div
                 style={{
-                  height: '3px',
-                  background: 'var(--ion-color-light)',
+                  height: '100%',
+                  width: `${progressPct}%`,
+                  background: 'var(--ion-color-primary)',
                   borderRadius: '2px',
-                  overflow: 'hidden',
-                  marginBottom: '4px',
                 }}
-              >
-                <div
-                  style={{
-                    height: '100%',
-                    width: `${progressPct}%`,
-                    background: 'var(--ion-color-primary)',
-                    borderRadius: '2px',
-                  }}
-                />
-              </div>
-              <p style={{ fontSize: '11px', color: 'var(--ion-color-primary)', fontWeight: 600 }}>
-                {progressPct}% through season
-              </p>
-            </>
-          )}
-        </IonLabel>
+              />
+            </div>
+            <p style={{ fontSize: '11px', color: 'var(--ion-color-primary)', fontWeight: 600 }}>
+              {progressPct}% through season
+            </p>
+          </>
+        )}
+      </IonLabel>
 
-        {/* Rewatch badge */}
+      {!reorderMode && (
         <div slot="end" style={{ display: 'flex', alignItems: 'center', paddingRight: '4px' }}>
           <span
             style={{
@@ -129,9 +136,19 @@ export function ShowCard({ show, filter = 'all' }: { show: Show; filter?: Filter
             #{rewatchNumber}
           </span>
         </div>
-      </IonItem>
+      )}
 
-      {/* Swipe-to-log */}
+      {reorderMode && <IonReorder slot="end" />}
+    </IonItem>
+  )
+
+  if (reorderMode) {
+    return item
+  }
+
+  return (
+    <IonItemSliding>
+      {item}
       <IonItemOptions side="end" onIonSwipe={presentLogSheet}>
         <IonItemOption color="primary" expandable onClick={presentLogSheet}>
           <div
