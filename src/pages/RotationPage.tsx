@@ -1,70 +1,107 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonSegment,
+  IonSegmentButton,
+  IonLabel,
+  IonFab,
+  IonFabButton,
+  IonIcon,
+  IonSpinner,
+  IonButton,
+  IonButtons,
+  IonList,
+  IonFooter,
+} from '@ionic/react'
+import { add, searchOutline, ellipsisHorizontalOutline } from 'ionicons/icons'
 import { useShows } from '../hooks/useShows'
 import { ShowCard } from '../components/ShowCard'
+import { AppTabBar } from '../components/AppTabBar'
 
-function TvIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="2" y="7" width="20" height="15" rx="2" />
-      <polyline points="17 2 12 7 7 2" />
-    </svg>
-  )
-}
+type FilterTab = 'all' | 'watching' | 'done'
 
 export function RotationPage() {
+  const navigate = useNavigate()
   const { data: shows = [], isLoading } = useShows()
+  const [filter, setFilter] = useState<FilterTab>('all')
 
   return (
-    <div className="flex flex-col min-h-screen pb-[env(safe-area-inset-bottom)]">
-      <header className="px-4 pt-12 pb-4">
-        <h1 className="text-2xl font-bold text-white">My Rotation</h1>
-      </header>
+    <IonPage>
+      <IonHeader className="gradient-header">
+        <IonToolbar>
+          <IonTitle>My Rotation</IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={() => navigate('/search')} aria-label="Search shows">
+              <IonIcon slot="icon-only" icon={searchOutline} />
+            </IonButton>
+            <IonButton aria-label="More options">
+              <IonIcon slot="icon-only" icon={ellipsisHorizontalOutline} />
+            </IonButton>
+          </IonButtons>
+        </IonToolbar>
+        <IonSegment
+          value={filter}
+          onIonChange={e => setFilter(e.detail.value as FilterTab)}
+        >
+          <IonSegmentButton value="all">
+            <IonLabel>All</IonLabel>
+          </IonSegmentButton>
+          <IonSegmentButton value="watching">
+            <IonLabel>Watching</IonLabel>
+          </IonSegmentButton>
+          <IonSegmentButton value="done">
+            <IonLabel>Done</IonLabel>
+          </IonSegmentButton>
+        </IonSegment>
+      </IonHeader>
 
-      <main className="flex-1 px-4 pb-24">
+      <IonContent>
         {isLoading ? (
           <div className="flex justify-center pt-16" role="status" aria-label="Loading shows">
-            <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+            <IonSpinner name="crescent" />
           </div>
         ) : shows.length === 0 ? (
-          <div className="flex flex-col items-center justify-center pt-20 text-center space-y-4">
-            <TvIcon className="w-16 h-16 text-gray-600" />
-            <h2 className="text-xl font-semibold text-white">No shows yet</h2>
-            <p className="text-gray-400 text-sm max-w-xs">
-              Add the shows you rewatch regularly to start tracking your progress.
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              padding: '48px 24px',
+              textAlign: 'center',
+            }}
+          >
+            <span style={{ fontSize: '48px', opacity: 0.3, marginBottom: '12px' }}>📺</span>
+            <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No shows yet</h2>
+            <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', lineHeight: 1.5, marginBottom: '20px' }}>
+              Add a show you love rewatching and start tracking your progress.
             </p>
-            <Link
-              to="/search"
-              className="mt-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-medium active:scale-95 transition-transform hover:bg-purple-700 min-h-[44px] flex items-center focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f17]"
-            >
-              Add Your First Show
-            </Link>
+            <IonButton onClick={() => navigate('/search')}>Find a Show</IonButton>
           </div>
         ) : (
-          <div className="space-y-3">
+          <IonList inset className="inset-shadow" style={{ marginTop: '10px' }}>
             {shows.map(show => (
-              <ShowCard key={show.id} show={show} />
+              <ShowCard key={show.id} show={show} filter={filter} />
             ))}
-          </div>
+          </IonList>
         )}
-      </main>
 
-      <Link
-        to="/search"
-        className="fixed bottom-6 right-4 w-14 h-14 bg-purple-600 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform text-2xl hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f17]"
-        style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
-        aria-label="Add show"
-      >
-        <span aria-hidden="true">+</span>
-      </Link>
-    </div>
+        <IonFab vertical="bottom" horizontal="end" slot="fixed">
+          <IonFabButton onClick={() => navigate('/search')} aria-label="Add show">
+            <IonIcon icon={add} />
+          </IonFabButton>
+        </IonFab>
+      </IonContent>
+
+      <IonFooter>
+        <AppTabBar />
+      </IonFooter>
+    </IonPage>
   )
 }
