@@ -40,7 +40,7 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
   const logProgress = useLogProgress()
 
   // Fetch selected season in background so it's ready when the user drills in
-  const { data: seasonData, isLoading: isLoadingEpisodes } = useTMDBSeason(show.tmdb_id, selectedSeason)
+  const { data: seasonData, isLoading: isLoadingEpisodes, isError: isEpisodeError } = useTMDBSeason(show.tmdb_id, selectedSeason)
 
   async function doLog(season: number, episode: number) {
     setIsSubmitting(true)
@@ -113,6 +113,7 @@ export function LogProgressModal({ show, rewatchId, onClose }: LogProgressModalP
             totalSeasons={show.total_seasons}
             episodes={seasonData?.episodes}
             isLoading={isLoadingEpisodes}
+            isError={isEpisodeError}
             currentProgress={currentProgress}
             disabled={isSubmitting}
             onSeasonChange={setSelectedSeason}
@@ -186,6 +187,7 @@ function EpisodeList({
   totalSeasons,
   episodes,
   isLoading,
+  isError,
   currentProgress,
   disabled,
   onSeasonChange,
@@ -195,6 +197,7 @@ function EpisodeList({
   totalSeasons: number
   episodes: { episode_number: number; name: string; still_path: string | null; overview: string }[] | undefined
   isLoading: boolean
+  isError: boolean
   currentProgress: { season: number; episode: number } | null | undefined
   disabled: boolean
   onSeasonChange: (s: number) => void
@@ -236,6 +239,10 @@ function EpisodeList({
         <div style={{ display: 'flex', justifyContent: 'center', padding: '48px' }}>
           <IonSpinner name="crescent" />
         </div>
+      ) : isError ? (
+        <p style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--ion-color-medium)', fontSize: '14px' }}>
+          Couldn't load episode list. Check your connection and try again.
+        </p>
       ) : (
         episodes?.map(ep => {
           const isCurrent = season === currentProgress?.season && ep.episode_number === currentProgress?.episode
