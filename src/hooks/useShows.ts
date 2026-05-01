@@ -4,15 +4,24 @@ import { fetchShowDetails, extractEpisodesPerSeason, posterUrl } from '../lib/tm
 import type { TMDBSearchResult } from '../lib/tmdb'
 import { useAuth } from '../contexts/AuthContext'
 
-export function useShows() {
+export type SortOption = 'added_at' | 'title' | 'manual'
+
+export function useShows(sort: SortOption = 'added_at') {
   const { user } = useAuth()
   return useQuery({
-    queryKey: ['shows', user?.id],
+    queryKey: ['shows', user?.id, sort],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('shows')
-        .select('*')
-        .order('added_at', { ascending: false })
+      let query = supabase.from('shows').select('*')
+      if (sort === 'title') {
+        query = query.order('title', { ascending: true })
+      } else if (sort === 'manual') {
+        query = query
+          .order('sort_order', { ascending: true, nullsFirst: false })
+          .order('added_at', { ascending: false })
+      } else {
+        query = query.order('added_at', { ascending: false })
+      }
+      const { data, error } = await query
       if (error) throw error
       return data
     },
@@ -90,6 +99,24 @@ export function useRemoveShow() {
         .delete()
         .eq('id', showId)
       if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shows', user?.id] })
+    },
+  })
+}
+
+export function useUpdateShowOrder() {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (updates: { id: string; sort_order: number }[]) => {
+      await Promise.all(
+        updates.map(({ id, sort_order }) =>
+          supabase.from('shows').update({ sort_order }).eq('id', id)
+        )
+      )
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shows', user?.id] })
