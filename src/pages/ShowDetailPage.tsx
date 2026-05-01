@@ -21,9 +21,12 @@ import { useShow, useRemoveShow } from '../hooks/useShows'
 import { useRewatches, useActiveRewatch } from '../hooks/useRewatches'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
+import { useTMDBShow } from '../hooks/useTMDBShow'
+import { useTMDBSeason } from '../hooks/useTMDBSeason'
 import { MarkFinishedModal } from '../components/MarkFinishedModal'
 import { LogProgressModal } from '../components/LogProgressModal'
 import { formatProgress, formatDuration, formatMonthYear } from '../lib/progressLogic'
+import { posterUrl } from '../lib/tmdb'
 
 type Rewatch = { id: string; completed_at: string | null; started_at: string; note: string | null; status: string }
 
@@ -37,6 +40,23 @@ function avgDaysBetweenRewatches(rewatches: Rewatch[]): number | null {
   return Math.round(total / (dates.length - 1) / (1000 * 60 * 60 * 24))
 }
 
+const card: React.CSSProperties = {
+  background: 'var(--ion-item-background)',
+  margin: '0 16px 12px',
+  borderRadius: '14px',
+  boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+  overflow: 'hidden',
+}
+
+const sectionLabel: React.CSSProperties = {
+  padding: '0 20px 6px',
+  fontSize: '12px',
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
+  color: 'var(--ion-color-medium)',
+}
+
 export function ShowDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -48,6 +68,16 @@ export function ShowDetailPage() {
   const { data: rewatches = [] } = useRewatches(id!)
   const { data: activeRewatch } = useActiveRewatch(id!)
   const currentProgress = useCurrentProgress(activeRewatch?.id)
+
+  const { data: tmdbShow } = useTMDBShow(show?.tmdb_id)
+  const { data: currentSeasonData } = useTMDBSeason(
+    show?.tmdb_id ?? null,
+    currentProgress?.season ?? 1,
+  )
+  const currentEpisode = currentSeasonData?.episodes?.find(
+    e => e.episode_number === currentProgress?.episode,
+  )
+
   const { present: presentLogSheet } = useLogEpisodeSheet(
     show ?? null,
     activeRewatch?.id,
@@ -81,6 +111,10 @@ export function ShowDetailPage() {
   const completedRewatches = rewatches.filter(r => r.status === 'completed')
   const avgDays = avgDaysBetweenRewatches(completedRewatches)
 
+  const year = tmdbShow?.first_air_date?.slice(0, 4)
+  const genres = tmdbShow?.genres?.slice(0, 2).map(g => g.name).join(' · ')
+  const ended = tmdbShow?.status === 'Ended' || tmdbShow?.status === 'Canceled'
+
   function handleRemove() {
     presentAlert({
       header: `Remove ${show!.title}?`,
@@ -111,18 +145,8 @@ export function ShowDetailPage() {
       </IonHeader>
 
       <IonContent>
-        {/* Hero: poster + current position */}
-        <div
-          style={{
-            background: 'var(--ion-item-background)',
-            margin: '12px 16px',
-            borderRadius: '14px',
-            padding: '16px',
-            display: 'flex',
-            gap: '16px',
-            boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
-          }}
-        >
+        {/* Hero: poster + title + progress + actions */}
+        <div style={{ ...card, margin: '12px 16px 12px', padding: '16px', display: 'flex', gap: '16px' }}>
           <img
             src={show.poster_url ?? '/placeholder-poster.svg'}
             alt={show.title}
@@ -137,22 +161,28 @@ export function ShowDetailPage() {
           />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <h2 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 4px' }}>{show.title}</h2>
-              <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', margin: '0 0 12px' }}>
-                {show.total_seasons} season{show.total_seasons !== 1 ? 's' : ''}
-                {completedRewatches.length > 0 && ` · ${completedRewatches.length} rewatch${completedRewatches.length !== 1 ? 'es' : ''}`}
+              <h2 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 2px' }}>{show.title}</h2>
+              <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: '0 0 8px' }}>
+                {[year, `${show.total_seasons} season${show.total_seasons !== 1 ? 's' : ''}`, genres, ended ? 'Ended' : null]
+                  .filter(Boolean).join(' · ')}
               </p>
               {currentProgress ? (
                 <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--ion-color-primary)', margin: 0 }}>
                   {formatProgress(currentProgress.season, currentProgress.episode)}
+                  {currentEpisode && (
+                    <span style={{ fontWeight: 400, color: 'var(--ion-color-medium)', fontSize: '13px' }}>
+                      {' '}· {currentEpisode.name}
+                    </span>
+                  )}
                 </p>
               ) : (
-                <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', margin: 0 }}>Not started</p>
+                <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', margin: 0 }}>
+                  {completedRewatches.length > 0 ? `Completed ${completedRewatches.length} time${completedRewatches.length !== 1 ? 's' : ''}` : 'Not started'}
+                </p>
               )}
             </div>
 
-            {/* Action buttons */}
-            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
               {activeRewatch && (
                 <IonButton size="small" onClick={presentLogSheet}>
                   <IonIcon slot="start" icon={playOutline} />
@@ -169,64 +199,88 @@ export function ShowDetailPage() {
           </div>
         </div>
 
+        {/* Current episode */}
+        {currentProgress && currentEpisode && (
+          <>
+            <p style={sectionLabel}>Now Watching</p>
+            <div style={card}>
+              {currentEpisode.still_path && (
+                <img
+                  src={posterUrl(currentEpisode.still_path)}
+                  alt=""
+                  aria-hidden="true"
+                  style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }}
+                />
+              )}
+              <div style={{ padding: '12px 14px' }}>
+                <p style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 4px' }}>
+                  {formatProgress(currentProgress.season, currentProgress.episode)} · {currentEpisode.name}
+                </p>
+                {currentEpisode.overview && (
+                  <p style={{
+                    fontSize: '12px',
+                    color: 'var(--ion-color-medium)',
+                    margin: 0,
+                    lineHeight: 1.5,
+                    overflow: 'hidden',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical' as const,
+                  }}>
+                    {currentEpisode.overview}
+                  </p>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Show overview */}
+        {tmdbShow?.overview && (
+          <>
+            <p style={sectionLabel}>About</p>
+            <div style={{ ...card, padding: '12px 14px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', margin: 0, lineHeight: 1.6 }}>
+                {tmdbShow.overview}
+              </p>
+            </div>
+          </>
+        )}
+
         {/* Stats row */}
         {completedRewatches.length > 0 && (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: avgDays !== null ? '1fr 1fr' : '1fr',
-              gap: '12px',
-              margin: '0 16px 12px',
-            }}
-          >
+          <>
+            <p style={sectionLabel}>Stats</p>
             <div
               style={{
-                background: 'var(--ion-item-background)',
-                borderRadius: '14px',
-                padding: '14px',
-                textAlign: 'center',
-                boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+                display: 'grid',
+                gridTemplateColumns: avgDays !== null ? '1fr 1fr' : '1fr',
+                gap: '12px',
+                margin: '0 16px 12px',
               }}
             >
-              <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ion-color-primary)', margin: 0 }}>
-                {completedRewatches.length}
-              </p>
-              <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: '2px 0 0' }}>Rewatches</p>
-            </div>
-            {avgDays !== null && (
-              <div
-                style={{
-                  background: 'var(--ion-item-background)',
-                  borderRadius: '14px',
-                  padding: '14px',
-                  textAlign: 'center',
-                  boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
-                }}
-              >
+              <div style={{ background: 'var(--ion-item-background)', borderRadius: '14px', padding: '14px', textAlign: 'center', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
                 <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ion-color-primary)', margin: 0 }}>
-                  {avgDays}d
+                  {completedRewatches.length}
                 </p>
-                <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: '2px 0 0' }}>Avg between rewatches</p>
+                <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: '2px 0 0' }}>Rewatches</p>
               </div>
-            )}
-          </div>
+              {avgDays !== null && (
+                <div style={{ background: 'var(--ion-item-background)', borderRadius: '14px', padding: '14px', textAlign: 'center', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+                  <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ion-color-primary)', margin: 0 }}>
+                    {avgDays}d
+                  </p>
+                  <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: '2px 0 0' }}>Avg between rewatches</p>
+                </div>
+              )}
+            </div>
+          </>
         )}
 
         {/* Rewatch history */}
         {completedRewatches.length > 0 && (
           <>
-            <p
-              style={{
-                padding: '0 20px 6px',
-                fontSize: '12px',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                color: 'var(--ion-color-medium)',
-              }}
-            >
-              Rewatch History
-            </p>
+            <p style={sectionLabel}>Rewatch History</p>
             <IonList inset className="inset-shadow">
               {completedRewatches.map((rewatch, i) => (
                 <IonItem key={rewatch.id}>
@@ -235,19 +289,14 @@ export function ShowDetailPage() {
                       Rewatch #{completedRewatches.length - i}
                     </h3>
                     {rewatch.started_at && rewatch.completed_at && (
-                      <p style={{ fontSize: '12px' }}>
-                        {formatDuration(rewatch.started_at, rewatch.completed_at)}
-                      </p>
+                      <p style={{ fontSize: '12px' }}>{formatDuration(rewatch.started_at, rewatch.completed_at)}</p>
                     )}
                     {rewatch.note && (
                       <p style={{ fontSize: '12px', fontStyle: 'italic' }}>"{rewatch.note}"</p>
                     )}
                   </IonLabel>
                   {rewatch.completed_at && (
-                    <p
-                      slot="end"
-                      style={{ color: 'var(--ion-color-medium)', fontSize: '12px', margin: 0 }}
-                    >
+                    <p slot="end" style={{ color: 'var(--ion-color-medium)', fontSize: '12px', margin: 0 }}>
                       {formatMonthYear(rewatch.completed_at)}
                     </p>
                   )}
@@ -259,12 +308,7 @@ export function ShowDetailPage() {
 
         {/* Remove show */}
         <div style={{ padding: '8px 16px 32px' }}>
-          <IonButton
-            expand="block"
-            fill="outline"
-            color="danger"
-            onClick={handleRemove}
-          >
+          <IonButton expand="block" fill="outline" color="danger" onClick={handleRemove}>
             Remove from Rotation
           </IonButton>
         </div>

@@ -17,6 +17,10 @@ export interface TMDBShowDetails {
   poster_path: string | null
   number_of_seasons: number
   seasons: TMDBSeason[]
+  overview: string
+  first_air_date: string
+  status: string
+  genres: { id: number; name: string }[]
 }
 
 export interface TMDBEpisode {
