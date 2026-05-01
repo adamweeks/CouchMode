@@ -51,13 +51,11 @@ export function ShowCard({
   if (filter === 'watching' && !isWatching) return null
   if (filter === 'done' && !isDone) return null
 
-  const maxEpisodesInSeason = currentProgress
-    ? (show.episodes_per_season[currentProgress.season - 1] ?? 1)
-    : 1
-  const progressValue = currentProgress
-    ? currentProgress.episode / maxEpisodesInSeason
+  const totalEpisodes = show.episodes_per_season.reduce((sum, n) => sum + n, 0)
+  const episodesWatched = currentProgress
+    ? show.episodes_per_season.slice(0, currentProgress.season - 1).reduce((sum, n) => sum + n, 0) + currentProgress.episode
     : 0
-  const progressPct = Math.round(progressValue * 100)
+  const progressPct = totalEpisodes > 0 ? Math.round((episodesWatched / totalEpisodes) * 100) : 0
   const rewatchNumber = completedRewatches.length + 1
 
   const episodeText = currentProgress
@@ -118,7 +116,7 @@ export function ShowCard({
               />
             </div>
             <p style={{ fontSize: '11px', color: 'var(--ion-color-primary)', fontWeight: 600 }}>
-              {progressPct}% through season
+              {progressPct}% through show
             </p>
           </>
         )}
