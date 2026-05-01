@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   IonItem,
@@ -14,6 +15,7 @@ import type { Database } from '../lib/database.types'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useRewatches } from '../hooks/useRewatches'
 import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
+import { LogProgressModal } from './LogProgressModal'
 
 type Show = Database['public']['Tables']['shows']['Row']
 
@@ -29,6 +31,7 @@ export function ShowCard({
   reorderMode?: boolean
 }) {
   const navigate = useNavigate()
+  const [logModalOpen, setLogModalOpen] = useState(false)
 
   const { data: rewatches = [] } = useRewatches(show.id)
   const activeRewatch = rewatches.find(r => r.status === 'in_progress') ?? null
@@ -38,7 +41,12 @@ export function ShowCard({
   const isWatching = !!currentProgress
   const isDone = !currentProgress && completedRewatches.length > 0
 
-  const { present: presentLogSheet } = useLogEpisodeSheet(show, activeRewatch?.id, currentProgress)
+  const { present: presentLogSheet } = useLogEpisodeSheet(
+    show,
+    activeRewatch?.id,
+    currentProgress,
+    activeRewatch ? () => setLogModalOpen(true) : undefined,
+  )
 
   if (filter === 'watching' && !isWatching) return null
   if (filter === 'done' && !isDone) return null
@@ -147,24 +155,34 @@ export function ShowCard({
   }
 
   return (
-    <IonItemSliding>
-      {item}
-      <IonItemOptions side="end" onIonSwipe={presentLogSheet}>
-        <IonItemOption color="primary" expandable onClick={presentLogSheet}>
-          <div
-            slot="icon-only"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '3px',
-            }}
-          >
-            <IonIcon icon={playOutline} style={{ fontSize: '18px' }} />
-            <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px' }}>LOG</span>
-          </div>
-        </IonItemOption>
-      </IonItemOptions>
-    </IonItemSliding>
+    <>
+      <IonItemSliding>
+        {item}
+        <IonItemOptions side="end" onIonSwipe={presentLogSheet}>
+          <IonItemOption color="primary" expandable onClick={presentLogSheet}>
+            <div
+              slot="icon-only"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '3px',
+              }}
+            >
+              <IonIcon icon={playOutline} style={{ fontSize: '18px' }} />
+              <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px' }}>LOG</span>
+            </div>
+          </IonItemOption>
+        </IonItemOptions>
+      </IonItemSliding>
+
+      {logModalOpen && activeRewatch && (
+        <LogProgressModal
+          show={show}
+          rewatchId={activeRewatch.id}
+          onClose={() => setLogModalOpen(false)}
+        />
+      )}
+    </>
   )
 }

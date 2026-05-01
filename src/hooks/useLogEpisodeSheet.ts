@@ -16,6 +16,7 @@ export function useLogEpisodeSheet(
   show: Show | null,
   activeRewatchId: string | null | undefined,
   currentProgress: { season: number; episode: number } | null | undefined,
+  onPickSpecific?: () => void,
 ) {
   const navigate = useNavigate()
   const [presentActionSheet] = useIonActionSheet()
@@ -87,38 +88,42 @@ export function useLogEpisodeSheet(
           text: 'Pick Specific Episode',
           icon: listOutline,
           handler: () => {
-            presentAlert({
-              header: 'Pick Episode',
-              message: 'Enter the season and episode you just watched.',
-              inputs: [
-                {
-                  name: 'season',
-                  type: 'number',
-                  placeholder: 'Season',
-                  value: String(currentProgress?.season ?? 1),
-                  min: 1,
-                  max: show.total_seasons,
-                },
-                {
-                  name: 'episode',
-                  type: 'number',
-                  placeholder: 'Episode',
-                  value: String((currentProgress?.episode ?? 0) + 1),
-                  min: 1,
-                },
-              ],
-              buttons: [
-                { text: 'Cancel', role: 'cancel' },
-                {
-                  text: 'Log It',
-                  handler: (data) => {
-                    const s = parseInt(data.season, 10)
-                    const ep = parseInt(data.episode, 10)
-                    if (!isNaN(s) && !isNaN(ep) && s >= 1 && ep >= 1) doLog(s, ep)
+            if (onPickSpecific) {
+              onPickSpecific()
+            } else {
+              presentAlert({
+                header: 'Pick Episode',
+                message: 'Enter the season and episode you just watched.',
+                inputs: [
+                  {
+                    name: 'season',
+                    type: 'number',
+                    placeholder: 'Season',
+                    value: String(currentProgress?.season ?? 1),
+                    min: 1,
+                    max: show.total_seasons,
                   },
-                },
-              ],
-            })
+                  {
+                    name: 'episode',
+                    type: 'number',
+                    placeholder: 'Episode',
+                    value: String((currentProgress?.episode ?? 0) + 1),
+                    min: 1,
+                  },
+                ],
+                buttons: [
+                  { text: 'Cancel', role: 'cancel' },
+                  {
+                    text: 'Log It',
+                    handler: (data) => {
+                      const s = parseInt(data.season, 10)
+                      const ep = parseInt(data.episode, 10)
+                      if (!isNaN(s) && !isNaN(ep) && s >= 1 && ep >= 1) doLog(s, ep)
+                    },
+                  },
+                ],
+              })
+            }
           },
         },
         {

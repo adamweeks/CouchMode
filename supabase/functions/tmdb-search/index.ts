@@ -19,7 +19,11 @@ serve(async (req) => {
     const tmdbId = url.searchParams.get('tmdb_id')
 
     if (tmdbId) {
-      const res = await fetch(`${TMDB_BASE}/tv/${tmdbId}?api_key=${TMDB_KEY}`)
+      const season = url.searchParams.get('season')
+      const tmdbUrl = season
+        ? `${TMDB_BASE}/tv/${tmdbId}/season/${season}?api_key=${TMDB_KEY}`
+        : `${TMDB_BASE}/tv/${tmdbId}?api_key=${TMDB_KEY}`
+      const res = await fetch(tmdbUrl)
       const data = await res.json()
       return new Response(JSON.stringify(data), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
