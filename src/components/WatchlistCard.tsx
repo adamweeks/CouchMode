@@ -38,6 +38,7 @@ export function WatchlistCard({ show, queuePosition }: { show: Show; queuePositi
                 height: '58px',
                 paddingTop: '8px',
                 paddingBottom: '8px',
+                marginRight: '12px',
               } as React.CSSProperties
             }
           >
