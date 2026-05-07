@@ -166,7 +166,7 @@ export function HistoryPage() {
                         key={rewatch.id}
                         button
                         detail
-                        onClick={() => navigate(`/shows/${show.id}`)}
+                        onClick={() => navigate(`/tmdb/${show.tmdb_id}`)}
                       >
                         <IonThumbnail
                           slot="start"

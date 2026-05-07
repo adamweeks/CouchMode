@@ -137,7 +137,7 @@ export function useLogEpisodeSheet(
           text: 'View Show Details',
           icon: informationCircleOutline,
           handler: () => {
-            navigate(`/shows/${show.id}`)
+            navigate(`/tmdb/${show.tmdb_id}`)
           },
         },
         { text: 'Cancel', role: 'cancel' },
