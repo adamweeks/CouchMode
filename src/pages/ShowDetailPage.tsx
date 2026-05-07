@@ -16,7 +16,7 @@ import {
   useIonAlert,
   IonIcon,
 } from '@ionic/react'
-import { playOutline, checkmarkDoneOutline } from 'ionicons/icons'
+import { playOutline, checkmarkDoneOutline, listOutline } from 'ionicons/icons'
 import { useShow, useRemoveShow } from '../hooks/useShows'
 import { useRewatches, useActiveRewatch } from '../hooks/useRewatches'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
@@ -78,7 +78,7 @@ export function ShowDetailPage() {
     e => e.episode_number === currentProgress?.episode,
   )
 
-  const { present: presentLogSheet } = useLogEpisodeSheet(
+  const { present: presentLogSheet, nextEp, logNext } = useLogEpisodeSheet(
     show ?? null,
     activeRewatch?.id,
     currentProgress,
@@ -183,10 +183,16 @@ export function ShowDetailPage() {
             </div>
 
             <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-              {activeRewatch && (
-                <IonButton size="small" onClick={presentLogSheet}>
+              {activeRewatch && logNext && nextEp && (
+                <IonButton size="small" onClick={logNext}>
                   <IonIcon slot="start" icon={playOutline} />
-                  Log Episode
+                  Log S{nextEp.season} E{nextEp.episode}
+                </IonButton>
+              )}
+              {activeRewatch && (
+                <IonButton size="small" fill="outline" onClick={() => setShowLogModal(true)}>
+                  <IonIcon slot="start" icon={listOutline} />
+                  Pick Episode
                 </IonButton>
               )}
               {activeRewatch && (
@@ -202,7 +208,7 @@ export function ShowDetailPage() {
         {/* Current episode */}
         {currentProgress && currentEpisode && (
           <>
-            <p style={sectionLabel}>Now Watching</p>
+            <p style={sectionLabel}>Last Watched</p>
             <div style={card}>
               {currentEpisode.still_path && (
                 <img
@@ -231,18 +237,6 @@ export function ShowDetailPage() {
                   </p>
                 )}
               </div>
-            </div>
-          </>
-        )}
-
-        {/* Show overview */}
-        {tmdbShow?.overview && (
-          <>
-            <p style={sectionLabel}>About</p>
-            <div style={{ ...card, padding: '12px 14px' }}>
-              <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', margin: 0, lineHeight: 1.6 }}>
-                {tmdbShow.overview}
-              </p>
             </div>
           </>
         )}
