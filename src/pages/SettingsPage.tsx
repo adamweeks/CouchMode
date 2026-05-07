@@ -95,6 +95,22 @@ export function SettingsPage() {
           </IonItem>
         </IonList>
 
+        {/* TMDB attribution */}
+        <IonList inset>
+          <IonItem lines="none">
+            <div style={{ width: '100%', padding: '8px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <img
+                src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
+                alt="The Movie Database"
+                style={{ height: '20px', width: 'auto' }}
+              />
+              <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: 0, lineHeight: '1.5' }}>
+                This product uses the TMDB API but is not endorsed or certified by TMDB.
+              </p>
+            </div>
+          </IonItem>
+        </IonList>
+
         {/* Sign out */}
         <div style={{ padding: '8px 16px 32px' }}>
           <IonButton
