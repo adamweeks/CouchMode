@@ -78,7 +78,7 @@ export function ShowDetailPage() {
     e => e.episode_number === currentProgress?.episode,
   )
 
-  const { present: presentLogSheet, nextEp, logNext } = useLogEpisodeSheet(
+  const { nextEp, logNext } = useLogEpisodeSheet(
     show ?? null,
     activeRewatch?.id,
     currentProgress,
