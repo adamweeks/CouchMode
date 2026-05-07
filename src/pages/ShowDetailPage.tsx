@@ -154,45 +154,64 @@ export function ShowDetailPage() {
       </IonHeader>
 
       <IonContent>
-        {/* Hero: poster + title + progress + actions */}
-        <div style={{ ...card, margin: '12px 16px 12px', padding: '16px', display: 'flex', gap: '16px' }}>
-          <img
-            src={show.poster_url ?? '/placeholder-poster.svg'}
-            alt={show.title}
-            style={{
-              width: '88px',
-              height: '132px',
-              borderRadius: '10px',
-              objectFit: 'cover',
-              flexShrink: 0,
-              background: 'var(--ion-color-light)',
-            }}
-          />
-          <div style={{ flex: 1 }}>
-            <div>
-              <h2 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 2px' }}>{show.title}</h2>
-              <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: '0 0 8px' }}>
-                {[year, `${show.total_seasons} season${show.total_seasons !== 1 ? 's' : ''}`, genres, ended ? 'Ended' : null]
-                  .filter(Boolean).join(' · ')}
-              </p>
-              {currentProgress ? (
-                <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--ion-color-primary)', margin: 0 }}>
-                  {formatProgress(currentProgress.season, currentProgress.episode)}
-                  {currentEpisode && (
-                    <span style={{ fontWeight: 400, color: 'var(--ion-color-medium)', fontSize: '13px' }}>
-                      {' '}· {currentEpisode.name}
-                    </span>
+        {/* Hero: poster + title + progress bar */}
+        {(() => {
+          const totalEps = show.episodes_per_season.reduce((s, n) => s + n, 0)
+          const watchedEps = currentProgress
+            ? show.episodes_per_season.slice(0, currentProgress.season - 1).reduce((s, n) => s + n, 0) + currentProgress.episode
+            : 0
+          const pct = totalEps > 0 ? Math.round((watchedEps / totalEps) * 100) : 0
+          return (
+            <div style={{ ...card, margin: '12px 16px 12px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', gap: '12px', padding: '12px 12px 10px' }}>
+                <img
+                  src={show.poster_url ?? '/placeholder-poster.svg'}
+                  alt={show.title}
+                  style={{
+                    width: '56px',
+                    height: '84px',
+                    borderRadius: '8px',
+                    objectFit: 'cover',
+                    flexShrink: 0,
+                    background: 'var(--ion-color-light)',
+                  }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h2 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{show.title}</h2>
+                  <p style={{ fontSize: '11px', color: 'var(--ion-color-medium)', margin: '0 0 6px' }}>
+                    {[year, `${show.total_seasons} season${show.total_seasons !== 1 ? 's' : ''}`, genres, ended ? 'Ended' : null]
+                      .filter(Boolean).join(' · ')}
+                  </p>
+                  {currentProgress ? (
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ion-color-primary)', margin: 0 }}>
+                      {formatProgress(currentProgress.season, currentProgress.episode)}
+                      {currentEpisode && (
+                        <span style={{ fontWeight: 400, color: 'var(--ion-color-medium)', fontSize: '12px' }}>
+                          {' '}· {currentEpisode.name}
+                        </span>
+                      )}
+                    </p>
+                  ) : (
+                    <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: 0 }}>
+                      {completedRewatches.length > 0 ? `Completed ${completedRewatches.length} time${completedRewatches.length !== 1 ? 's' : ''}` : 'Not started'}
+                    </p>
                   )}
-                </p>
-              ) : (
-                <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', margin: 0 }}>
-                  {completedRewatches.length > 0 ? `Completed ${completedRewatches.length} time${completedRewatches.length !== 1 ? 's' : ''}` : 'Not started'}
-                </p>
+                </div>
+              </div>
+              {currentProgress && totalEps > 0 && (
+                <div style={{ padding: '0 12px 12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--ion-color-medium)' }}>Series progress</span>
+                    <span style={{ fontSize: '10px', color: 'var(--ion-color-medium)' }}>Ep {watchedEps} of {totalEps} · {pct}%</span>
+                  </div>
+                  <div style={{ height: '4px', borderRadius: '2px', background: 'var(--ion-color-light)' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, borderRadius: '2px', background: 'var(--ion-color-primary)' }} />
+                  </div>
+                </div>
               )}
             </div>
-
-          </div>
-        </div>
+          )
+        })()}
 
         {/* Current episode */}
         {currentProgress && currentEpisode && (
