@@ -117,6 +117,7 @@ export function useLogProgress() {
     onSuccess: (_data, { showId, rewatchId }) => {
       queryClient.invalidateQueries({ queryKey: ['progress_logs', rewatchId] })
       queryClient.invalidateQueries({ queryKey: ['rewatches', showId] })
+      queryClient.invalidateQueries({ queryKey: ['shows', user?.id] })
     },
   })
 }

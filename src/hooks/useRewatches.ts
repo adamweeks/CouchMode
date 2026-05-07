@@ -70,6 +70,7 @@ export function useMarkSeriesFinished() {
     },
     onSuccess: (_data, { showId }) => {
       queryClient.invalidateQueries({ queryKey: ['rewatches', showId] })
+      queryClient.invalidateQueries({ queryKey: ['shows', user?.id] })
     },
   })
 }
@@ -86,6 +87,7 @@ export function useCompleteRewatch() {
     },
     onSuccess: (_data, { showId }) => {
       queryClient.invalidateQueries({ queryKey: ['rewatches', showId] })
+      queryClient.invalidateQueries({ queryKey: ['shows', user?.id] })
     },
   })
 }
