@@ -70,3 +70,17 @@ Tailwind CSS v4 via `@tailwindcss/vite`. Dark-mode-first design (`#0f0f17` backg
 ### Deployment
 
 Configured for both Vercel (`vercel.json`) and Netlify (`netlify.toml`) with SPA rewrite rules so client-side routing works. Local Supabase emulation requires Docker (`supabase start`).
+
+## Pull Requests
+
+PR titles must follow the [Conventional Commits](https://www.conventionalcommits.org/) format — the `semantic-pr` CI check enforces this. Always prefix the title with a type:
+
+```
+feat: add episode quick-log buttons
+fix: correct progress backfill edge case
+chore: update dependencies
+refactor: extract progress logic into hook
+docs: update CLAUDE.md
+```
+
+Common types: `feat`, `fix`, `chore`, `refactor`, `test`, `docs`, `style`, `perf`.
