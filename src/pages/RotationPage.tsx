@@ -19,9 +19,10 @@ import {
   IonFooter,
   IonActionSheet,
   IonReorderGroup,
+  IonSearchbar,
 } from '@ionic/react'
 import type { ItemReorderEventDetail } from '@ionic/core'
-import { add, searchOutline, ellipsisHorizontalOutline } from 'ionicons/icons'
+import { add, ellipsisHorizontalOutline } from 'ionicons/icons'
 import { useShows, useUpdateShowOrder } from '../hooks/useShows'
 import type { SortOption } from '../hooks/useShows'
 import { ShowCard } from '../components/ShowCard'
@@ -42,12 +43,17 @@ export function RotationPage() {
     return (localStorage.getItem('couchmode:sort') as SortOption) ?? 'added_at'
   })
   const [showSortSheet, setShowSortSheet] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const { data: shows = [], isLoading } = useShows(sortOption)
   const { mutate: updateOrder } = useUpdateShowOrder()
 
   // Manual mode always shows all shows so IonReorderGroup indices stay consistent
   const activeFilter: FilterTab = sortOption === 'manual' ? 'all' : filter
+
+  const filteredShows = searchQuery.trim()
+    ? shows.filter(show => show.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    : shows
 
   function handleSortChange(newSort: SortOption) {
     if (newSort === 'manual' && sortOption !== 'manual') {
@@ -68,13 +74,20 @@ export function RotationPage() {
         <IonToolbar>
           <IonTitle>My Rotation</IonTitle>
           <IonButtons slot="end">
-            <IonButton onClick={() => navigate('/search')} aria-label="Search shows">
-              <IonIcon slot="icon-only" icon={searchOutline} />
-            </IonButton>
             <IonButton onClick={() => setShowSortSheet(true)} aria-label="Sort options">
               <IonIcon slot="icon-only" icon={ellipsisHorizontalOutline} />
             </IonButton>
           </IonButtons>
+        </IonToolbar>
+        <IonToolbar>
+          <IonSearchbar
+            className="gradient-searchbar"
+            placeholder="Filter shows…"
+            value={searchQuery}
+            onIonInput={e => setSearchQuery(e.detail.value ?? '')}
+            onIonClear={() => setSearchQuery('')}
+            debounce={150}
+          />
         </IonToolbar>
         <IonSegment
           value={activeFilter}
@@ -129,13 +142,31 @@ export function RotationPage() {
             </p>
             <IonButton onClick={() => navigate('/search')}>Find a Show</IonButton>
           </div>
+        ) : filteredShows.length === 0 ? (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              padding: '48px 24px',
+              textAlign: 'center',
+            }}
+          >
+            <span style={{ fontSize: '48px', opacity: 0.3, marginBottom: '12px' }}>🔍</span>
+            <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No matches</h2>
+            <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', lineHeight: 1.5 }}>
+              No shows match "{searchQuery}".
+            </p>
+          </div>
         ) : (
           <IonList inset className="inset-shadow" style={{ marginTop: '10px' }}>
             <IonReorderGroup
               disabled={sortOption !== 'manual'}
               onIonItemReorder={handleReorder}
             >
-              {shows.map(show => (
+              {filteredShows.map(show => (
                 <ShowCard
                   key={show.id}
                   show={show}
