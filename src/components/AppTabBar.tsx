@@ -14,7 +14,7 @@ export function AppTabBar() {
         onClick={() => navigate('/')}
       >
         <IonIcon icon={tvOutline} />
-        <IonLabel>Rotation</IonLabel>
+        <IonLabel>My Shows</IonLabel>
       </IonTabButton>
       <IonTabButton
         tab="search"

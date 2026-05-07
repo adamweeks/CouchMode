@@ -6,9 +6,6 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
-  IonSegment,
-  IonSegmentButton,
-  IonLabel,
   IonFab,
   IonFabButton,
   IonIcon,
@@ -16,56 +13,57 @@ import {
   IonButton,
   IonButtons,
   IonList,
+  IonListHeader,
   IonItem,
   IonFooter,
   IonActionSheet,
   IonReorderGroup,
   IonSearchbar,
+  IonLabel,
 } from '@ionic/react'
 import type { ItemReorderEventDetail } from '@ionic/core'
 import { add, ellipsisHorizontalOutline, searchOutline } from 'ionicons/icons'
-import { useShows, useUpdateShowOrder } from '../hooks/useShows'
-import type { SortOption } from '../hooks/useShows'
+import { useShowGroups, useUpdateShowOrder } from '../hooks/useShows'
+import type { GroupSortOption } from '../hooks/useShows'
 import { ShowCard } from '../components/ShowCard'
+import { WatchlistCard } from '../components/WatchlistCard'
 import { AppTabBar } from '../components/AppTabBar'
 
-type FilterTab = 'all' | 'watching' | 'done'
-
-const SORT_LABELS: Record<SortOption, string> = {
+const SORT_LABELS: Record<GroupSortOption, string> = {
   added_at: 'Date Added',
   title: 'Title A–Z',
-  manual: 'Custom Order',
 }
 
 export function RotationPage() {
   const navigate = useNavigate()
-  const [filter, setFilter] = useState<FilterTab>('all')
-  const [sortOption, setSortOption] = useState<SortOption>(() => {
-    return (localStorage.getItem('couchmode:sort') as SortOption) ?? 'added_at'
+  const [sortOption, setSortOption] = useState<GroupSortOption>(() => {
+    const stored = localStorage.getItem('couchmode:sort')
+    return stored === 'title' ? 'title' : 'added_at'
   })
   const [showSortSheet, setShowSortSheet] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
-  const { data: shows = [], isLoading } = useShows(sortOption)
+  const { data, isLoading } = useShowGroups(sortOption)
   const { mutate: updateOrder } = useUpdateShowOrder()
 
-  // Manual mode always shows all shows so IonReorderGroup indices stay consistent
-  const activeFilter: FilterTab = sortOption === 'manual' ? 'all' : filter
+  const watching = data?.watching ?? []
+  const queue = data?.queue ?? []
+  const done = data?.done ?? []
+  const totalShows = watching.length + queue.length + done.length
 
-  const filteredShows = searchQuery.trim()
-    ? shows.filter(show => show.title.toLowerCase().includes(searchQuery.toLowerCase()))
-    : shows
+  const q = searchQuery.toLowerCase().trim()
+  const filteredWatching = q ? watching.filter(s => s.title.toLowerCase().includes(q)) : watching
+  const filteredQueue = q ? queue.filter(s => s.title.toLowerCase().includes(q)) : queue
+  const filteredDone = q ? done.filter(s => s.title.toLowerCase().includes(q)) : done
+  const filteredTotal = filteredWatching.length + filteredQueue.length + filteredDone.length
 
-  function handleSortChange(newSort: SortOption) {
-    if (newSort === 'manual' && sortOption !== 'manual') {
-      updateOrder(shows.map((show, i) => ({ id: show.id, sort_order: i })))
-    }
+  function handleSortChange(newSort: GroupSortOption) {
     setSortOption(newSort)
     localStorage.setItem('couchmode:sort', newSort)
   }
 
-  function handleReorder(event: CustomEvent<ItemReorderEventDetail>) {
-    const reordered = event.detail.complete(shows) as typeof shows
+  function handleQueueReorder(event: CustomEvent<ItemReorderEventDetail>) {
+    const reordered = event.detail.complete(queue) as typeof queue
     updateOrder(reordered.map((show, i) => ({ id: show.id, sort_order: i })))
   }
 
@@ -73,7 +71,7 @@ export function RotationPage() {
     <IonPage>
       <IonHeader className="gradient-header">
         <IonToolbar>
-          <IonTitle>My Rotation</IonTitle>
+          <IonTitle>My Shows</IonTitle>
           <IonButtons slot="end">
             <IonButton onClick={() => setShowSortSheet(true)} aria-label="Sort options">
               <IonIcon slot="icon-only" icon={ellipsisHorizontalOutline} />
@@ -90,21 +88,6 @@ export function RotationPage() {
             debounce={150}
           />
         </IonToolbar>
-        <IonSegment
-          value={activeFilter}
-          onIonChange={e => setFilter(e.detail.value as FilterTab)}
-          disabled={sortOption === 'manual'}
-        >
-          <IonSegmentButton value="all">
-            <IonLabel>All</IonLabel>
-          </IonSegmentButton>
-          <IonSegmentButton value="watching">
-            <IonLabel>Watching</IonLabel>
-          </IonSegmentButton>
-          <IonSegmentButton value="done">
-            <IonLabel>Done</IonLabel>
-          </IonSegmentButton>
-        </IonSegment>
         {sortOption !== 'added_at' && (
           <div
             style={{
@@ -124,7 +107,7 @@ export function RotationPage() {
           <div className="flex justify-center pt-16" role="status" aria-label="Loading shows">
             <IonSpinner name="crescent" />
           </div>
-        ) : shows.length === 0 ? (
+        ) : totalShows === 0 ? (
           <div
             style={{
               display: 'flex',
@@ -139,11 +122,11 @@ export function RotationPage() {
             <span style={{ fontSize: '48px', opacity: 0.3, marginBottom: '12px' }}>📺</span>
             <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No shows yet</h2>
             <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', lineHeight: 1.5, marginBottom: '20px' }}>
-              Add a show you love rewatching and start tracking your progress.
+              Add a show to start tracking your rewatches or build your queue.
             </p>
             <IonButton onClick={() => navigate('/search')}>Find a Show</IonButton>
           </div>
-        ) : filteredShows.length === 0 ? (
+        ) : filteredTotal === 0 ? (
           <>
             <div
               style={{
@@ -158,7 +141,7 @@ export function RotationPage() {
               <span style={{ fontSize: '48px', opacity: 0.3, marginBottom: '12px' }}>🔍</span>
               <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No matches</h2>
               <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', lineHeight: 1.5 }}>
-                No shows in your rotation match "{searchQuery}".
+                No shows match "{searchQuery}".
               </p>
             </div>
             <IonList inset className="inset-shadow">
@@ -170,22 +153,48 @@ export function RotationPage() {
           </>
         ) : (
           <>
-            <IonList inset className="inset-shadow" style={{ marginTop: '10px' }}>
-              <IonReorderGroup
-                disabled={sortOption !== 'manual'}
-                onIonItemReorder={handleReorder}
-              >
-                {filteredShows.map(show => (
-                  <ShowCard
-                    key={show.id}
-                    show={show}
-                    filter={activeFilter}
-                    reorderMode={sortOption === 'manual'}
-                  />
-                ))}
-              </IonReorderGroup>
-            </IonList>
-            {searchQuery.trim() && (
+            {filteredWatching.length > 0 && (
+              <>
+                <IonListHeader style={{ paddingTop: '10px' }}>
+                  <IonLabel>Watching</IonLabel>
+                </IonListHeader>
+                <IonList inset className="inset-shadow">
+                  {filteredWatching.map(show => (
+                    <ShowCard key={show.id} show={show} />
+                  ))}
+                </IonList>
+              </>
+            )}
+
+            {filteredQueue.length > 0 && (
+              <>
+                <IonListHeader style={{ paddingTop: filteredWatching.length > 0 ? '4px' : '10px' }}>
+                  <IonLabel>Up Next</IonLabel>
+                </IonListHeader>
+                <IonList inset className="inset-shadow">
+                  <IonReorderGroup disabled={!!q} onIonItemReorder={handleQueueReorder}>
+                    {filteredQueue.map((show, i) => (
+                      <WatchlistCard key={show.id} show={show} queuePosition={i + 1} />
+                    ))}
+                  </IonReorderGroup>
+                </IonList>
+              </>
+            )}
+
+            {filteredDone.length > 0 && (
+              <>
+                <IonListHeader style={{ paddingTop: filteredWatching.length > 0 || filteredQueue.length > 0 ? '4px' : '10px' }}>
+                  <IonLabel>Done</IonLabel>
+                </IonListHeader>
+                <IonList inset className="inset-shadow">
+                  {filteredDone.map(show => (
+                    <ShowCard key={show.id} show={show} />
+                  ))}
+                </IonList>
+              </>
+            )}
+
+            {q && (
               <IonList inset className="inset-shadow">
                 <IonItem button detail onClick={() => navigate('/search', { state: { query: searchQuery } })}>
                   <IonIcon slot="start" icon={searchOutline} style={{ color: 'var(--ion-color-medium)' }} />
@@ -219,10 +228,6 @@ export function RotationPage() {
           {
             text: `Title A–Z${sortOption === 'title' ? ' ✓' : ''}`,
             handler: () => handleSortChange('title'),
-          },
-          {
-            text: `Custom Order${sortOption === 'manual' ? ' ✓' : ''}`,
-            handler: () => handleSortChange('manual'),
           },
           {
             text: 'Cancel',
