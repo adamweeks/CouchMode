@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   IonPage,
@@ -25,7 +25,8 @@ import { useDebounce } from '../hooks/useDebounce'
 
 export function SearchPage() {
   const navigate = useNavigate()
-  const [query, setQuery] = useState('')
+  const location = useLocation()
+  const [query, setQuery] = useState<string>((location.state as { query?: string } | null)?.query ?? '')
   const debouncedQuery = useDebounce(query, 300)
 
   const { data: myShows = [] } = useShows()

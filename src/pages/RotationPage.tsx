@@ -16,13 +16,14 @@ import {
   IonButton,
   IonButtons,
   IonList,
+  IonItem,
   IonFooter,
   IonActionSheet,
   IonReorderGroup,
   IonSearchbar,
 } from '@ionic/react'
 import type { ItemReorderEventDetail } from '@ionic/core'
-import { add, ellipsisHorizontalOutline } from 'ionicons/icons'
+import { add, ellipsisHorizontalOutline, searchOutline } from 'ionicons/icons'
 import { useShows, useUpdateShowOrder } from '../hooks/useShows'
 import type { SortOption } from '../hooks/useShows'
 import { ShowCard } from '../components/ShowCard'
@@ -143,39 +144,56 @@ export function RotationPage() {
             <IonButton onClick={() => navigate('/search')}>Find a Show</IonButton>
           </div>
         ) : filteredShows.length === 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              padding: '48px 24px',
-              textAlign: 'center',
-            }}
-          >
-            <span style={{ fontSize: '48px', opacity: 0.3, marginBottom: '12px' }}>🔍</span>
-            <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No matches</h2>
-            <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', lineHeight: 1.5 }}>
-              No shows match "{searchQuery}".
-            </p>
-          </div>
-        ) : (
-          <IonList inset className="inset-shadow" style={{ marginTop: '10px' }}>
-            <IonReorderGroup
-              disabled={sortOption !== 'manual'}
-              onIonItemReorder={handleReorder}
+          <>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '48px 24px 24px',
+                textAlign: 'center',
+              }}
             >
-              {filteredShows.map(show => (
-                <ShowCard
-                  key={show.id}
-                  show={show}
-                  filter={activeFilter}
-                  reorderMode={sortOption === 'manual'}
-                />
-              ))}
-            </IonReorderGroup>
-          </IonList>
+              <span style={{ fontSize: '48px', opacity: 0.3, marginBottom: '12px' }}>🔍</span>
+              <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No matches</h2>
+              <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', lineHeight: 1.5 }}>
+                No shows in your rotation match "{searchQuery}".
+              </p>
+            </div>
+            <IonList inset className="inset-shadow">
+              <IonItem button detail onClick={() => navigate('/search', { state: { query: searchQuery } })}>
+                <IonIcon slot="start" icon={searchOutline} style={{ color: 'var(--ion-color-medium)' }} />
+                <span>Search <strong>"{searchQuery}"</strong> on TMDB</span>
+              </IonItem>
+            </IonList>
+          </>
+        ) : (
+          <>
+            <IonList inset className="inset-shadow" style={{ marginTop: '10px' }}>
+              <IonReorderGroup
+                disabled={sortOption !== 'manual'}
+                onIonItemReorder={handleReorder}
+              >
+                {filteredShows.map(show => (
+                  <ShowCard
+                    key={show.id}
+                    show={show}
+                    filter={activeFilter}
+                    reorderMode={sortOption === 'manual'}
+                  />
+                ))}
+              </IonReorderGroup>
+            </IonList>
+            {searchQuery.trim() && (
+              <IonList inset className="inset-shadow">
+                <IonItem button detail onClick={() => navigate('/search', { state: { query: searchQuery } })}>
+                  <IonIcon slot="start" icon={searchOutline} style={{ color: 'var(--ion-color-medium)' }} />
+                  <span>Search <strong>"{searchQuery}"</strong> on TMDB</span>
+                </IonItem>
+              </IonList>
+            )}
+          </>
         )}
 
         <IonFab vertical="bottom" horizontal="end" slot="fixed">
