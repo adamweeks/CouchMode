@@ -19,7 +19,7 @@ import {
 } from '@ionic/react'
 import { searchShows, posterUrl } from '../lib/tmdb'
 import { AppTabBar } from '../components/AppTabBar'
-import { useShows, useAddShow } from '../hooks/useShows'
+import { useShows } from '../hooks/useShows'
 import { useDebounce } from '../hooks/useDebounce'
 
 export function SearchPage() {
@@ -36,8 +36,6 @@ export function SearchPage() {
     queryFn: () => searchShows(debouncedQuery),
     enabled: debouncedQuery.length > 2,
   })
-
-  const addShow = useAddShow()
 
   return (
     <IonPage>
@@ -101,15 +99,7 @@ export function SearchPage() {
                   key={result.id}
                   button
                   detail
-                  disabled={addShow.isPending}
-                  onClick={async () => {
-                    if (existing) {
-                      navigate(`/shows/${existing.id}`)
-                    } else {
-                      const show = await addShow.mutateAsync(result)
-                      navigate(`/shows/${show.id}`)
-                    }
-                  }}
+                  onClick={() => navigate(`/tmdb/${result.id}`, { state: { result } })}
                 >
                   <IonThumbnail
                     slot="start"

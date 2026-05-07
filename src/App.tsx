@@ -8,6 +8,7 @@ import { LoginPage } from './pages/LoginPage'
 import { RotationPage } from './pages/RotationPage'
 import { ShowDetailPage } from './pages/ShowDetailPage'
 import { SearchPage } from './pages/SearchPage'
+import { TMDBPreviewPage } from './pages/TMDBPreviewPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { supabase } from './lib/supabase'
@@ -64,6 +65,14 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <SearchPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tmdb/:tmdbId"
+                element={
+                  <ProtectedRoute>
+                    <TMDBPreviewPage />
                   </ProtectedRoute>
                 }
               />
