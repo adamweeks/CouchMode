@@ -19,36 +19,24 @@ import {
   IonLabel,
   IonThumbnail,
   IonFooter,
-  IonActionSheet,
   IonReorderGroup,
   IonSearchbar,
 } from '@ionic/react'
 import type { ItemReorderEventDetail } from '@ionic/core'
-import { add, ellipsisHorizontalOutline, searchOutline, arrowBackOutline } from 'ionicons/icons'
+import { add, searchOutline, arrowBackOutline } from 'ionicons/icons'
 import { useShowGroups, useUpdateShowOrder } from '../hooks/useShows'
-import type { GroupSortOption } from '../hooks/useShows'
 import { ShowCard } from '../components/ShowCard'
 import { WatchlistCard } from '../components/WatchlistCard'
 import { AppTabBar } from '../components/AppTabBar'
 import { searchShows, posterUrl } from '../lib/tmdb'
 import { useDebounce } from '../hooks/useDebounce'
 
-const SORT_LABELS: Record<GroupSortOption, string> = {
-  added_at: 'Date Added',
-  title: 'Title A–Z',
-}
-
 export function RotationPage() {
   const navigate = useNavigate()
-  const [sortOption, setSortOption] = useState<GroupSortOption>(() => {
-    const stored = localStorage.getItem('couchmode:sort')
-    return stored === 'title' ? 'title' : 'added_at'
-  })
-  const [showSortSheet, setShowSortSheet] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [tmdbMode, setTmdbMode] = useState(false)
 
-  const { data, isLoading } = useShowGroups(sortOption)
+  const { data, isLoading } = useShowGroups()
   const { mutate: updateOrder } = useUpdateShowOrder()
 
   const watching = data?.watching ?? []
@@ -76,11 +64,6 @@ export function RotationPage() {
     if (!searchQuery) setTmdbMode(false)
   }, [searchQuery])
 
-  function handleSortChange(newSort: GroupSortOption) {
-    setSortOption(newSort)
-    localStorage.setItem('couchmode:sort', newSort)
-  }
-
   function handleQueueReorder(event: CustomEvent<ItemReorderEventDetail>) {
     const reordered = event.detail.complete(queue) as typeof queue
     updateOrder(reordered.map((show, i) => ({ id: show.id, sort_order: i })))
@@ -107,13 +90,6 @@ export function RotationPage() {
             </IonButtons>
           )}
           <IonTitle>{tmdbMode ? 'Add a Show' : 'My Shows'}</IonTitle>
-          {!tmdbMode && (
-            <IonButtons slot="end">
-              <IonButton onClick={() => setShowSortSheet(true)} aria-label="Sort options">
-                <IonIcon slot="icon-only" icon={ellipsisHorizontalOutline} />
-              </IonButton>
-            </IonButtons>
-          )}
         </IonToolbar>
         <IonToolbar>
           <IonSearchbar
@@ -125,18 +101,6 @@ export function RotationPage() {
             debounce={150}
           />
         </IonToolbar>
-        {!tmdbMode && sortOption !== 'added_at' && (
-          <div
-            style={{
-              textAlign: 'center',
-              fontSize: '11px',
-              color: 'var(--ion-color-medium)',
-              paddingBottom: '4px',
-            }}
-          >
-            Sorted by: {SORT_LABELS[sortOption]}
-          </div>
-        )}
       </IonHeader>
 
       <IonContent>
@@ -364,25 +328,6 @@ export function RotationPage() {
         <AppTabBar />
       </IonFooter>
 
-      <IonActionSheet
-        isOpen={showSortSheet}
-        onDidDismiss={() => setShowSortSheet(false)}
-        header="Sort Shows"
-        buttons={[
-          {
-            text: `Date Added${sortOption === 'added_at' ? ' ✓' : ''}`,
-            handler: () => handleSortChange('added_at'),
-          },
-          {
-            text: `Title A–Z${sortOption === 'title' ? ' ✓' : ''}`,
-            handler: () => handleSortChange('title'),
-          },
-          {
-            text: 'Cancel',
-            role: 'cancel',
-          },
-        ]}
-      />
     </IonPage>
   )
 }
