@@ -81,7 +81,7 @@ export function RotationPage() {
         <IonToolbar>
           <IonSearchbar
             className="gradient-searchbar"
-            placeholder="Filter shows…"
+            placeholder="Find a show…"
             value={searchQuery}
             onIonInput={e => setSearchQuery(e.detail.value ?? '')}
             onIonClear={() => setSearchQuery('')}
