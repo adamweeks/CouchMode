@@ -84,3 +84,9 @@ docs: update CLAUDE.md
 ```
 
 Common types: `feat`, `fix`, `chore`, `refactor`, `test`, `docs`, `style`, `perf`.
+
+### semantic-release impact
+
+Only `feat:` and `fix:` (and breaking changes via `BREAKING CHANGE:` footer) trigger a release. All other types (`refactor:`, `chore:`, `docs:`, `style:`, `test:`, `perf:`) produce **no release**.
+
+Rule of thumb: if a user can observe the change (new UI, new behaviour, bug gone), use `feat:` or `fix:`. If it is purely internal (code cleanup, tooling, tests), use any other type.
