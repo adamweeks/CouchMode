@@ -84,6 +84,15 @@ export function ShowDetailPage() {
     currentProgress,
     activeRewatch ? () => setShowLogModal(true) : undefined,
   )
+  const { data: nextSeasonData } = useTMDBSeason(
+    show?.tmdb_id ?? null,
+    nextEp?.season ?? 0,
+  )
+  const nextEpisode = nextEp
+    ? (nextEp.season === (currentProgress?.season ?? 0)
+        ? currentSeasonData?.episodes?.find(e => e.episode_number === nextEp.episode)
+        : nextSeasonData?.episodes?.find(e => e.episode_number === nextEp.episode))
+    : undefined
   const removeShow = useRemoveShow()
 
   if (isLoading) {
@@ -159,7 +168,7 @@ export function ShowDetailPage() {
               background: 'var(--ion-color-light)',
             }}
           />
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div style={{ flex: 1 }}>
             <div>
               <h2 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 2px' }}>{show.title}</h2>
               <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: '0 0 8px' }}>
@@ -182,26 +191,6 @@ export function ShowDetailPage() {
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-              {activeRewatch && logNext && nextEp && (
-                <IonButton size="small" onClick={logNext}>
-                  <IonIcon slot="start" icon={playOutline} />
-                  Log S{nextEp.season} E{nextEp.episode}
-                </IonButton>
-              )}
-              {activeRewatch && (
-                <IonButton size="small" fill="outline" onClick={() => setShowLogModal(true)}>
-                  <IonIcon slot="start" icon={listOutline} />
-                  Pick Episode
-                </IonButton>
-              )}
-              {activeRewatch && (
-                <IonButton size="small" color="success" fill="outline" onClick={() => setShowFinishedModal(true)}>
-                  <IonIcon slot="start" icon={checkmarkDoneOutline} />
-                  Finished
-                </IonButton>
-              )}
-            </div>
           </div>
         </div>
 
@@ -237,6 +226,59 @@ export function ShowDetailPage() {
                   </p>
                 )}
               </div>
+            </div>
+          </>
+        )}
+
+        {/* Up next */}
+        {activeRewatch && nextEp && (
+          <>
+            <p style={sectionLabel}>Up Next</p>
+            <div style={card}>
+              {nextEpisode?.still_path && (
+                <img
+                  src={posterUrl(nextEpisode.still_path)}
+                  alt=""
+                  aria-hidden="true"
+                  style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }}
+                />
+              )}
+              <div style={{ padding: '12px 14px' }}>
+                <p style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 4px' }}>
+                  {formatProgress(nextEp.season, nextEp.episode)}
+                  {nextEpisode?.name && (
+                    <span style={{ fontWeight: 400, color: 'var(--ion-color-medium)' }}> · {nextEpisode.name}</span>
+                  )}
+                </p>
+                {nextEpisode?.overview && (
+                  <p style={{
+                    fontSize: '12px',
+                    color: 'var(--ion-color-medium)',
+                    margin: '0 0 12px',
+                    lineHeight: 1.5,
+                    overflow: 'hidden',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical' as const,
+                  }}>
+                    {nextEpisode.overview}
+                  </p>
+                )}
+                <IonButton expand="block" onClick={logNext ?? undefined}>
+                  <IonIcon slot="start" icon={playOutline} />
+                  Log {formatProgress(nextEp.season, nextEp.episode)}
+                </IonButton>
+              </div>
+            </div>
+            <div style={{ margin: '0 16px 12px', display: 'flex', gap: '8px' }}>
+              <IonButton expand="block" fill="outline" style={{ flex: 1 }} onClick={() => setShowLogModal(true)}>
+                <IonIcon slot="start" icon={listOutline} />
+                Pick Episode
+              </IonButton>
+              <IonButton expand="block" fill="outline" color="success" style={{ flex: 1 }} onClick={() => setShowFinishedModal(true)}>
+                <IonIcon slot="start" icon={checkmarkDoneOutline} />
+                Finished
+              </IonButton>
             </div>
           </>
         )}
