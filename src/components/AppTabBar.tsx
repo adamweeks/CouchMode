@@ -1,5 +1,5 @@
 import { IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/react'
-import { tvOutline, searchOutline, bookOutline, settingsOutline } from 'ionicons/icons'
+import { tvOutline, bookOutline, settingsOutline } from 'ionicons/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 export function AppTabBar() {
@@ -15,14 +15,6 @@ export function AppTabBar() {
       >
         <IonIcon icon={tvOutline} />
         <IonLabel>My Shows</IonLabel>
-      </IonTabButton>
-      <IonTabButton
-        tab="search"
-        selected={pathname === '/search'}
-        onClick={() => navigate('/search')}
-      >
-        <IonIcon icon={searchOutline} />
-        <IonLabel>Search</IonLabel>
       </IonTabButton>
       <IonTabButton
         tab="history"
