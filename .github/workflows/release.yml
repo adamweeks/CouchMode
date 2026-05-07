@@ -24,12 +24,14 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Bootstrap v0.1.0 tag if missing
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if ! git tag | grep -q "^v0.1.0$"; then
             git tag -a v0.1.0 a9ced1a72813cc315c3f353ab4ea0c66b0b84065 -m "chore(release): 0.1.0"
-            git push origin v0.1.0
+            git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" v0.1.0
           fi
       - run: npx semantic-release
         env:
