@@ -16,7 +16,7 @@ import {
   useIonAlert,
   IonIcon,
 } from '@ionic/react'
-import { playOutline, checkmarkDoneOutline } from 'ionicons/icons'
+import { playOutline, checkmarkDoneOutline, listOutline } from 'ionicons/icons'
 import { useShow, useRemoveShow } from '../hooks/useShows'
 import { useRewatches, useActiveRewatch } from '../hooks/useRewatches'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
@@ -78,12 +78,21 @@ export function ShowDetailPage() {
     e => e.episode_number === currentProgress?.episode,
   )
 
-  const { present: presentLogSheet } = useLogEpisodeSheet(
+  const { nextEp, logNext } = useLogEpisodeSheet(
     show ?? null,
     activeRewatch?.id,
     currentProgress,
     activeRewatch ? () => setShowLogModal(true) : undefined,
   )
+  const { data: nextSeasonData } = useTMDBSeason(
+    show?.tmdb_id ?? null,
+    nextEp?.season ?? 0,
+  )
+  const nextEpisode = nextEp
+    ? (nextEp.season === (currentProgress?.season ?? 0)
+        ? currentSeasonData?.episodes?.find(e => e.episode_number === nextEp.episode)
+        : nextSeasonData?.episodes?.find(e => e.episode_number === nextEp.episode))
+    : undefined
   const removeShow = useRemoveShow()
 
   if (isLoading) {
@@ -145,64 +154,69 @@ export function ShowDetailPage() {
       </IonHeader>
 
       <IonContent>
-        {/* Hero: poster + title + progress + actions */}
-        <div style={{ ...card, margin: '12px 16px 12px', padding: '16px', display: 'flex', gap: '16px' }}>
-          <img
-            src={show.poster_url ?? '/placeholder-poster.svg'}
-            alt={show.title}
-            style={{
-              width: '88px',
-              height: '132px',
-              borderRadius: '10px',
-              objectFit: 'cover',
-              flexShrink: 0,
-              background: 'var(--ion-color-light)',
-            }}
-          />
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <h2 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 2px' }}>{show.title}</h2>
-              <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: '0 0 8px' }}>
-                {[year, `${show.total_seasons} season${show.total_seasons !== 1 ? 's' : ''}`, genres, ended ? 'Ended' : null]
-                  .filter(Boolean).join(' · ')}
-              </p>
-              {currentProgress ? (
-                <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--ion-color-primary)', margin: 0 }}>
-                  {formatProgress(currentProgress.season, currentProgress.episode)}
-                  {currentEpisode && (
-                    <span style={{ fontWeight: 400, color: 'var(--ion-color-medium)', fontSize: '13px' }}>
-                      {' '}· {currentEpisode.name}
-                    </span>
+        {/* Hero: poster + title + progress bar */}
+        {(() => {
+          const totalEps = show.episodes_per_season.reduce((s, n) => s + n, 0)
+          const watchedEps = currentProgress
+            ? show.episodes_per_season.slice(0, currentProgress.season - 1).reduce((s, n) => s + n, 0) + currentProgress.episode
+            : 0
+          const pct = totalEps > 0 ? Math.round((watchedEps / totalEps) * 100) : 0
+          return (
+            <div style={{ ...card, margin: '12px 16px 12px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', gap: '12px', padding: '12px 12px 10px' }}>
+                <img
+                  src={show.poster_url ?? '/placeholder-poster.svg'}
+                  alt={show.title}
+                  style={{
+                    width: '56px',
+                    height: '84px',
+                    borderRadius: '8px',
+                    objectFit: 'cover',
+                    flexShrink: 0,
+                    background: 'var(--ion-color-light)',
+                  }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h2 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{show.title}</h2>
+                  <p style={{ fontSize: '11px', color: 'var(--ion-color-medium)', margin: '0 0 6px' }}>
+                    {[year, `${show.total_seasons} season${show.total_seasons !== 1 ? 's' : ''}`, genres, ended ? 'Ended' : null]
+                      .filter(Boolean).join(' · ')}
+                  </p>
+                  {currentProgress ? (
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ion-color-primary)', margin: 0 }}>
+                      {formatProgress(currentProgress.season, currentProgress.episode)}
+                      {currentEpisode && (
+                        <span style={{ fontWeight: 400, color: 'var(--ion-color-medium)', fontSize: '12px' }}>
+                          {' '}· {currentEpisode.name}
+                        </span>
+                      )}
+                    </p>
+                  ) : (
+                    <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: 0 }}>
+                      {completedRewatches.length > 0 ? `Completed ${completedRewatches.length} time${completedRewatches.length !== 1 ? 's' : ''}` : 'Not started'}
+                    </p>
                   )}
-                </p>
-              ) : (
-                <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', margin: 0 }}>
-                  {completedRewatches.length > 0 ? `Completed ${completedRewatches.length} time${completedRewatches.length !== 1 ? 's' : ''}` : 'Not started'}
-                </p>
+                </div>
+              </div>
+              {currentProgress && totalEps > 0 && (
+                <div style={{ padding: '0 12px 12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--ion-color-medium)' }}>Series progress</span>
+                    <span style={{ fontSize: '10px', color: 'var(--ion-color-medium)' }}>Ep {watchedEps} of {totalEps} · {pct}%</span>
+                  </div>
+                  <div style={{ height: '4px', borderRadius: '2px', background: 'var(--ion-color-light)' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, borderRadius: '2px', background: 'var(--ion-color-primary)' }} />
+                  </div>
+                </div>
               )}
             </div>
-
-            <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-              {activeRewatch && (
-                <IonButton size="small" onClick={presentLogSheet}>
-                  <IonIcon slot="start" icon={playOutline} />
-                  Log Episode
-                </IonButton>
-              )}
-              {activeRewatch && (
-                <IonButton size="small" color="success" fill="outline" onClick={() => setShowFinishedModal(true)}>
-                  <IonIcon slot="start" icon={checkmarkDoneOutline} />
-                  Finished
-                </IonButton>
-              )}
-            </div>
-          </div>
-        </div>
+          )
+        })()}
 
         {/* Current episode */}
         {currentProgress && currentEpisode && (
           <>
-            <p style={sectionLabel}>Now Watching</p>
+            <p style={sectionLabel}>Last Watched</p>
             <div style={card}>
               {currentEpisode.still_path && (
                 <img
@@ -235,14 +249,55 @@ export function ShowDetailPage() {
           </>
         )}
 
-        {/* Show overview */}
-        {tmdbShow?.overview && (
+        {/* Up next */}
+        {activeRewatch && nextEp && (
           <>
-            <p style={sectionLabel}>About</p>
-            <div style={{ ...card, padding: '12px 14px' }}>
-              <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', margin: 0, lineHeight: 1.6 }}>
-                {tmdbShow.overview}
-              </p>
+            <p style={sectionLabel}>Up Next</p>
+            <div style={card}>
+              {nextEpisode?.still_path && (
+                <img
+                  src={posterUrl(nextEpisode.still_path)}
+                  alt=""
+                  aria-hidden="true"
+                  style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }}
+                />
+              )}
+              <div style={{ padding: '12px 14px' }}>
+                <p style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 4px' }}>
+                  {formatProgress(nextEp.season, nextEp.episode)}
+                  {nextEpisode?.name && (
+                    <span style={{ fontWeight: 400, color: 'var(--ion-color-medium)' }}> · {nextEpisode.name}</span>
+                  )}
+                </p>
+                {nextEpisode?.overview && (
+                  <p style={{
+                    fontSize: '12px',
+                    color: 'var(--ion-color-medium)',
+                    margin: '0 0 12px',
+                    lineHeight: 1.5,
+                    overflow: 'hidden',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical' as const,
+                  }}>
+                    {nextEpisode.overview}
+                  </p>
+                )}
+                <IonButton expand="block" onClick={logNext ?? undefined}>
+                  <IonIcon slot="start" icon={playOutline} />
+                  Log {formatProgress(nextEp.season, nextEp.episode)}
+                </IonButton>
+              </div>
+            </div>
+            <div style={{ margin: '0 16px 12px', display: 'flex', gap: '8px' }}>
+              <IonButton expand="block" fill="outline" style={{ flex: 1 }} onClick={() => setShowLogModal(true)}>
+                <IonIcon slot="start" icon={listOutline} />
+                Pick Episode
+              </IonButton>
+              <IonButton expand="block" fill="outline" color="success" style={{ flex: 1 }} onClick={() => setShowFinishedModal(true)}>
+                <IonIcon slot="start" icon={checkmarkDoneOutline} />
+                Finished
+              </IonButton>
             </div>
           </>
         )}

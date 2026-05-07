@@ -145,5 +145,10 @@ export function useLogEpisodeSheet(
     })
   }
 
-  return { present }
+  const nextEp = getNextEp()
+  return {
+    present,
+    nextEp,
+    logNext: nextEp ? () => doLog(nextEp.season, nextEp.episode) : null,
+  }
 }
