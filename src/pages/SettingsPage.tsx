@@ -19,7 +19,7 @@ export function SettingsPage() {
 
   const displayName = user?.user_metadata?.full_name ?? user?.email ?? 'User'
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined
-  const version = '1.0.0'
+  const version = __APP_VERSION__
 
   return (
     <IonPage>
