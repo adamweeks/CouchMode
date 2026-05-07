@@ -52,7 +52,7 @@ export default function App() {
                 }
               />
               <Route
-                path="/shows/:id"
+                path="/tmdb/:tmdbId"
                 element={
                   <ProtectedRoute>
                     <ShowDetailPage />

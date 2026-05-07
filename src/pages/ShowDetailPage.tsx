@@ -15,9 +15,10 @@ import {
   IonSpinner,
   useIonAlert,
   IonIcon,
+  IonFooter,
 } from '@ionic/react'
 import { playOutline, checkmarkDoneOutline, listOutline } from 'ionicons/icons'
-import { useShow, useRemoveShow } from '../hooks/useShows'
+import { useShows, useAddShow, useRemoveShow } from '../hooks/useShows'
 import { useRewatches, useActiveRewatch } from '../hooks/useRewatches'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
@@ -25,6 +26,7 @@ import { useTMDBShow } from '../hooks/useTMDBShow'
 import { useTMDBSeason } from '../hooks/useTMDBSeason'
 import { MarkFinishedModal } from '../components/MarkFinishedModal'
 import { LogProgressModal } from '../components/LogProgressModal'
+import { AppTabBar } from '../components/AppTabBar'
 import { formatProgress, formatDuration, formatMonthYear } from '../lib/progressLogic'
 import { posterUrl } from '../lib/tmdb'
 
@@ -58,20 +60,26 @@ const sectionLabel: React.CSSProperties = {
 }
 
 export function ShowDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const { tmdbId } = useParams<{ tmdbId: string }>()
   const navigate = useNavigate()
   const [showFinishedModal, setShowFinishedModal] = useState(false)
   const [showLogModal, setShowLogModal] = useState(false)
   const [presentAlert] = useIonAlert()
 
-  const { data: show, isLoading } = useShow(id!)
-  const { data: rewatches = [] } = useRewatches(id!)
-  const { data: activeRewatch } = useActiveRewatch(id!)
+  // TMDB data — always loaded
+  const { data: tmdbShow, isLoading: isLoadingTMDB } = useTMDBShow(tmdbId)
+
+  // Rotation membership
+  const { data: myShows = [], isLoading: isLoadingShows } = useShows()
+  const show = myShows.find(s => s.tmdb_id === tmdbId) ?? null
+
+  // Watchlist hooks — enabled guards inside each hook handle null/empty id
+  const { data: rewatches = [] } = useRewatches(show?.id ?? '')
+  const { data: activeRewatch } = useActiveRewatch(show?.id ?? '')
   const currentProgress = useCurrentProgress(activeRewatch?.id)
 
-  const { data: tmdbShow } = useTMDBShow(show?.tmdb_id)
   const { data: currentSeasonData } = useTMDBSeason(
-    show?.tmdb_id ?? null,
+    tmdbId ?? null,
     currentProgress?.season ?? 1,
   )
   const currentEpisode = currentSeasonData?.episodes?.find(
@@ -79,13 +87,13 @@ export function ShowDetailPage() {
   )
 
   const { nextEp, logNext } = useLogEpisodeSheet(
-    show ?? null,
+    show,
     activeRewatch?.id,
     currentProgress,
     activeRewatch ? () => setShowLogModal(true) : undefined,
   )
   const { data: nextSeasonData } = useTMDBSeason(
-    show?.tmdb_id ?? null,
+    tmdbId ?? null,
     nextEp?.season ?? 0,
   )
   const nextEpisode = nextEp
@@ -93,36 +101,26 @@ export function ShowDetailPage() {
         ? currentSeasonData?.episodes?.find(e => e.episode_number === nextEp.episode)
         : nextSeasonData?.episodes?.find(e => e.episode_number === nextEp.episode))
     : undefined
+
+  const addShow = useAddShow()
   const removeShow = useRemoveShow()
 
-  if (isLoading) {
-    return (
-      <IonPage>
-        <IonContent>
-          <div className="flex justify-center pt-16" role="status" aria-label="Loading show details">
-            <IonSpinner name="crescent" />
-          </div>
-        </IonContent>
-      </IonPage>
-    )
-  }
-
-  if (!show) {
-    return (
-      <IonPage>
-        <IonContent>
-          <p className="p-4" style={{ color: 'var(--ion-color-medium)' }}>Show not found</p>
-        </IonContent>
-      </IonPage>
-    )
-  }
-
-  const completedRewatches = rewatches.filter(r => r.status === 'completed')
-  const avgDays = avgDaysBetweenRewatches(completedRewatches)
-
+  // Derived TMDB metadata
+  const title = tmdbShow?.name ?? show?.title ?? ''
   const year = tmdbShow?.first_air_date?.slice(0, 4)
   const genres = tmdbShow?.genres?.slice(0, 2).map(g => g.name).join(' · ')
   const ended = tmdbShow?.status === 'Ended' || tmdbShow?.status === 'Canceled'
+  const tmdbSeasons = tmdbShow ? tmdbShow.seasons.filter(s => s.season_number > 0) : []
+  const totalTmdbEps = tmdbSeasons.reduce((sum, s) => sum + s.episode_count, 0)
+
+  // Progress calculations
+  const totalEpisodes = show?.episodes_per_season.reduce((s, n) => s + n, 0) ?? 0
+  const watchedEps = currentProgress && show
+    ? show.episodes_per_season.slice(0, currentProgress.season - 1).reduce((s, n) => s + n, 0) + currentProgress.episode
+    : 0
+  const pct = totalEpisodes > 0 ? Math.round((watchedEps / totalEpisodes) * 100) : 0
+  const completedRewatches = rewatches.filter(r => r.status === 'completed')
+  const avgDays = avgDaysBetweenRewatches(completedRewatches)
 
   function handleRemove() {
     presentAlert({
@@ -135,11 +133,28 @@ export function ShowDetailPage() {
           role: 'destructive',
           handler: async () => {
             await removeShow.mutateAsync(show!.id)
-            navigate('/')
+            navigate('/', { replace: true })
           },
         },
       ],
     })
+  }
+
+  if (isLoadingTMDB || isLoadingShows) {
+    return (
+      <IonPage>
+        <IonHeader className="gradient-header">
+          <IonToolbar>
+            <IonButtons slot="start"><IonBackButton defaultHref="/" /></IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent>
+          <div className="flex justify-center pt-16" role="status" aria-label="Loading">
+            <IonSpinner name="crescent" />
+          </div>
+        </IonContent>
+      </IonPage>
+    )
   }
 
   return (
@@ -149,72 +164,69 @@ export function ShowDetailPage() {
           <IonButtons slot="start">
             <IonBackButton defaultHref="/" />
           </IonButtons>
-          <IonTitle>{show.title}</IonTitle>
+          <IonTitle>{title}</IonTitle>
         </IonToolbar>
       </IonHeader>
 
       <IonContent>
-        {/* Hero: poster + title + progress bar */}
-        {(() => {
-          const totalEps = show.episodes_per_season.reduce((s, n) => s + n, 0)
-          const watchedEps = currentProgress
-            ? show.episodes_per_season.slice(0, currentProgress.season - 1).reduce((s, n) => s + n, 0) + currentProgress.episode
-            : 0
-          const pct = totalEps > 0 ? Math.round((watchedEps / totalEps) * 100) : 0
-          return (
-            <div style={{ ...card, margin: '12px 16px 12px', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', gap: '12px', padding: '12px 12px 10px' }}>
-                <img
-                  src={show.poster_url ?? '/placeholder-poster.svg'}
-                  alt={show.title}
-                  style={{
-                    width: '56px',
-                    height: '84px',
-                    borderRadius: '8px',
-                    objectFit: 'cover',
-                    flexShrink: 0,
-                    background: 'var(--ion-color-light)',
-                  }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h2 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{show.title}</h2>
-                  <p style={{ fontSize: '11px', color: 'var(--ion-color-medium)', margin: '0 0 6px' }}>
-                    {[year, `${show.total_seasons} season${show.total_seasons !== 1 ? 's' : ''}`, genres, ended ? 'Ended' : null]
-                      .filter(Boolean).join(' · ')}
-                  </p>
-                  {currentProgress ? (
-                    <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ion-color-primary)', margin: 0 }}>
-                      {formatProgress(currentProgress.season, currentProgress.episode)}
-                      {currentEpisode && (
-                        <span style={{ fontWeight: 400, color: 'var(--ion-color-medium)', fontSize: '12px' }}>
-                          {' '}· {currentEpisode.name}
-                        </span>
-                      )}
-                    </p>
-                  ) : (
-                    <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: 0 }}>
-                      {completedRewatches.length > 0 ? `Completed ${completedRewatches.length} time${completedRewatches.length !== 1 ? 's' : ''}` : 'Not started'}
-                    </p>
-                  )}
-                </div>
-              </div>
-              {currentProgress && totalEps > 0 && (
-                <div style={{ padding: '0 12px 12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '10px', color: 'var(--ion-color-medium)' }}>Series progress</span>
-                    <span style={{ fontSize: '10px', color: 'var(--ion-color-medium)' }}>Ep {watchedEps} of {totalEps} · {pct}%</span>
-                  </div>
-                  <div style={{ height: '4px', borderRadius: '2px', background: 'var(--ion-color-light)' }}>
-                    <div style={{ height: '100%', width: `${pct}%`, borderRadius: '2px', background: 'var(--ion-color-primary)' }} />
-                  </div>
-                </div>
+        {/* Hero: poster + title + metadata */}
+        <div style={{ ...card, margin: '12px 16px 12px' }}>
+          <div style={{ display: 'flex', gap: '12px', padding: '12px 12px 10px' }}>
+            <img
+              src={posterUrl(tmdbShow?.poster_path ?? show?.poster_url)}
+              alt={title}
+              style={{
+                width: '72px',
+                height: '108px',
+                borderRadius: '8px',
+                objectFit: 'cover',
+                flexShrink: 0,
+                background: 'var(--ion-color-light)',
+              }}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 2px', lineHeight: 1.3 }}>{title}</h2>
+              <p style={{ fontSize: '11px', color: 'var(--ion-color-medium)', margin: '0 0 6px' }}>
+                {[year, genres, ended ? 'Ended' : tmdbShow ? 'Ongoing' : null].filter(Boolean).join(' · ')}
+              </p>
+              {tmdbSeasons.length > 0 && (
+                <p style={{ fontSize: '11px', color: 'var(--ion-color-medium)', margin: '0 0 6px' }}>
+                  {tmdbSeasons.length} season{tmdbSeasons.length !== 1 ? 's' : ''} · {totalTmdbEps} episodes
+                </p>
               )}
+              {show && currentProgress ? (
+                <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ion-color-primary)', margin: 0 }}>
+                  {formatProgress(currentProgress.season, currentProgress.episode)}
+                  {currentEpisode && (
+                    <span style={{ fontWeight: 400, color: 'var(--ion-color-medium)', fontSize: '12px' }}>
+                      {' '}· {currentEpisode.name}
+                    </span>
+                  )}
+                </p>
+              ) : show ? (
+                <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: 0 }}>
+                  {completedRewatches.length > 0
+                    ? `Completed ${completedRewatches.length} time${completedRewatches.length !== 1 ? 's' : ''}`
+                    : 'Not started'}
+                </p>
+              ) : null}
             </div>
-          )
-        })()}
+          </div>
+          {show && currentProgress && totalEpisodes > 0 && (
+            <div style={{ padding: '0 12px 12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span style={{ fontSize: '10px', color: 'var(--ion-color-medium)' }}>Series progress</span>
+                <span style={{ fontSize: '10px', color: 'var(--ion-color-medium)' }}>Ep {watchedEps} of {totalEpisodes} · {pct}%</span>
+              </div>
+              <div style={{ height: '4px', borderRadius: '2px', background: 'var(--ion-color-light)' }}>
+                <div style={{ height: '100%', width: `${pct}%`, borderRadius: '2px', background: 'var(--ion-color-primary)' }} />
+              </div>
+            </div>
+          )}
+        </div>
 
-        {/* Current episode */}
-        {currentProgress && currentEpisode && (
+        {/* Watchlist-only: current episode */}
+        {show && currentProgress && currentEpisode && (
           <>
             <p style={sectionLabel}>Last Watched</p>
             <div style={card}>
@@ -249,8 +261,8 @@ export function ShowDetailPage() {
           </>
         )}
 
-        {/* Up next */}
-        {activeRewatch && nextEp && (
+        {/* Watchlist-only: up next + action buttons */}
+        {show && activeRewatch && nextEp && (
           <>
             <p style={sectionLabel}>Up Next</p>
             <div style={card}>
@@ -302,8 +314,44 @@ export function ShowDetailPage() {
           </>
         )}
 
-        {/* Stats row */}
-        {completedRewatches.length > 0 && (
+        {/* Overview — always */}
+        {tmdbShow?.overview && (
+          <>
+            <p style={sectionLabel}>Overview</p>
+            <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--ion-color-medium)', margin: '0 16px 16px' }}>
+              {tmdbShow.overview}
+            </p>
+          </>
+        )}
+
+        {/* Season breakdown — always */}
+        {tmdbSeasons.length > 0 && (
+          <>
+            <p style={sectionLabel}>Seasons</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', margin: '0 16px 16px' }}>
+              {tmdbSeasons.map(s => (
+                <div
+                  key={s.season_number}
+                  style={{
+                    background: 'var(--ion-item-background)',
+                    borderRadius: '8px',
+                    padding: '6px 10px',
+                    fontSize: '12px',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                  }}
+                >
+                  <span style={{ fontWeight: 600 }}>S{s.season_number}</span>
+                  <span style={{ color: 'var(--ion-color-medium)', marginLeft: '4px' }}>
+                    {s.episode_count} ep{s.episode_count !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Watchlist-only: stats */}
+        {show && completedRewatches.length > 0 && (
           <>
             <p style={sectionLabel}>Stats</p>
             <div
@@ -332,8 +380,8 @@ export function ShowDetailPage() {
           </>
         )}
 
-        {/* Rewatch history */}
-        {completedRewatches.length > 0 && (
+        {/* Watchlist-only: rewatch history */}
+        {show && completedRewatches.length > 0 && (
           <>
             <p style={sectionLabel}>Rewatch History</p>
             <IonList inset className="inset-shadow">
@@ -361,15 +409,38 @@ export function ShowDetailPage() {
           </>
         )}
 
-        {/* Remove show */}
+        {/* CTA */}
         <div style={{ padding: '8px 16px 32px' }}>
-          <IonButton expand="block" fill="outline" color="danger" onClick={handleRemove}>
-            Remove from Rotation
-          </IonButton>
+          {show ? (
+            <IonButton expand="block" fill="outline" color="danger" onClick={handleRemove}>
+              Remove from Rotation
+            </IonButton>
+          ) : (
+            <IonButton
+              expand="block"
+              disabled={addShow.isPending || !tmdbShow}
+              onClick={async () => {
+                if (!tmdbShow) return
+                await addShow.mutateAsync({
+                  id: tmdbShow.id,
+                  name: tmdbShow.name,
+                  poster_path: tmdbShow.poster_path,
+                  first_air_date: tmdbShow.first_air_date,
+                  overview: tmdbShow.overview,
+                })
+              }}
+            >
+              {addShow.isPending ? 'Adding…' : 'Add to Rotation'}
+            </IonButton>
+          )}
         </div>
       </IonContent>
 
-      {showFinishedModal && activeRewatch && (
+      <IonFooter>
+        <AppTabBar />
+      </IonFooter>
+
+      {showFinishedModal && activeRewatch && show && (
         <MarkFinishedModal
           showId={show.id}
           rewatchId={activeRewatch.id}
@@ -378,7 +449,7 @@ export function ShowDetailPage() {
         />
       )}
 
-      {showLogModal && activeRewatch && (
+      {showLogModal && activeRewatch && show && (
         <LogProgressModal
           show={show}
           rewatchId={activeRewatch.id}

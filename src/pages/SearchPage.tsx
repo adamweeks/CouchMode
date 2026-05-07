@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   IonPage,
@@ -12,7 +12,6 @@ import {
   IonItem,
   IonLabel,
   IonThumbnail,
-  IonButton,
   IonSpinner,
   IonButtons,
   IonBackButton,
@@ -20,24 +19,23 @@ import {
 } from '@ionic/react'
 import { searchShows, posterUrl } from '../lib/tmdb'
 import { AppTabBar } from '../components/AppTabBar'
-import { useShows, useAddShow } from '../hooks/useShows'
+import { useShows } from '../hooks/useShows'
 import { useDebounce } from '../hooks/useDebounce'
 
 export function SearchPage() {
   const navigate = useNavigate()
-  const [query, setQuery] = useState('')
+  const location = useLocation()
+  const [query, setQuery] = useState<string>((location.state as { query?: string } | null)?.query ?? '')
   const debouncedQuery = useDebounce(query, 300)
 
   const { data: myShows = [] } = useShows()
-  const myTmdbIds = new Set(myShows.map(s => s.tmdb_id))
+  const myShowsByTmdbId = new Map(myShows.map(s => [s.tmdb_id, s]))
 
   const { data: results = [], isFetching } = useQuery({
     queryKey: ['tmdb-search', debouncedQuery],
     queryFn: () => searchShows(debouncedQuery),
     enabled: debouncedQuery.length > 2,
   })
-
-  const addShow = useAddShow()
 
   return (
     <IonPage>
@@ -95,9 +93,14 @@ export function SearchPage() {
         {results.length > 0 && (
           <IonList inset className="inset-shadow" style={{ marginTop: '10px' }}>
             {results.map(result => {
-              const alreadyAdded = myTmdbIds.has(String(result.id))
+              const existing = myShowsByTmdbId.get(String(result.id))
               return (
-                <IonItem key={result.id}>
+                <IonItem
+                  key={result.id}
+                  button
+                  detail
+                  onClick={() => navigate(`/tmdb/${result.id}`, { state: { result } })}
+                >
                   <IonThumbnail
                     slot="start"
                     style={
@@ -127,7 +130,7 @@ export function SearchPage() {
                     )}
                   </IonLabel>
 
-                  {alreadyAdded ? (
+                  {existing && (
                     <span
                       slot="end"
                       style={{
@@ -138,20 +141,6 @@ export function SearchPage() {
                     >
                       Added
                     </span>
-                  ) : (
-                    <IonButton
-                      slot="end"
-                      fill="solid"
-                      size="small"
-                      disabled={addShow.isPending}
-                      aria-label={`Add ${result.name}`}
-                      onClick={async () => {
-                        await addShow.mutateAsync(result)
-                        navigate('/')
-                      }}
-                    >
-                      {addShow.isPending ? 'Adding…' : 'Add'}
-                    </IonButton>
                   )}
                 </IonItem>
               )

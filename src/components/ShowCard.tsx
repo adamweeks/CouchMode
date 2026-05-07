@@ -68,7 +68,7 @@ export function ShowCard({
     <IonItem
       button={!reorderMode}
       detail={!reorderMode}
-      onClick={reorderMode ? undefined : () => navigate(`/shows/${show.id}`)}
+      onClick={reorderMode ? undefined : () => navigate(`/tmdb/${show.tmdb_id}`)}
     >
       <IonThumbnail
         slot="start"
