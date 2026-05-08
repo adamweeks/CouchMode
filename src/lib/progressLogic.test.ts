@@ -1,10 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import {
+  comparePosition,
   getCurrentProgress,
   getBackfillEntries,
   isSeriesComplete,
   isRegression,
   buildCompletionUpdates,
+  formatProgress,
+  formatMonthYear,
+  formatDuration,
+  getErrorMessage,
 } from './progressLogic'
 
 describe('getCurrentProgress', () => {
@@ -140,5 +145,80 @@ describe('buildCompletionUpdates', () => {
     const explicitStart = '2025-11-01T12:00:00Z'
     const result = buildCompletionUpdates(pastCompleted, currentStartedAt, explicitStart)
     expect(result.started_at).toBe(explicitStart)
+  })
+})
+
+describe('comparePosition', () => {
+  it('returns negative when a has lower episode in same season', () => {
+    expect(comparePosition({ season: 2, episode: 3 }, { season: 2, episode: 5 })).toBeLessThan(0)
+  })
+
+  it('returns positive when a has higher season', () => {
+    expect(comparePosition({ season: 3, episode: 1 }, { season: 2, episode: 10 })).toBeGreaterThan(0)
+  })
+
+  it('returns 0 when positions are equal', () => {
+    expect(comparePosition({ season: 1, episode: 4 }, { season: 1, episode: 4 })).toBe(0)
+  })
+
+  it('considers season before episode', () => {
+    // S2E1 > S1E99
+    expect(comparePosition({ season: 2, episode: 1 }, { season: 1, episode: 99 })).toBeGreaterThan(0)
+  })
+})
+
+describe('formatProgress', () => {
+  it('formats season 1 episode 5 correctly', () => {
+    expect(formatProgress(1, 5)).toBe('S1 E5')
+  })
+
+  it('formats season 3 episode 10 correctly', () => {
+    expect(formatProgress(3, 10)).toBe('S3 E10')
+  })
+})
+
+describe('formatMonthYear', () => {
+  it('formats January 2024', () => {
+    const result = formatMonthYear('2024-01-15')
+    expect(result).toContain('Jan')
+    expect(result).toContain('2024')
+  })
+
+  it('formats December 2026', () => {
+    const result = formatMonthYear('2026-12-01')
+    expect(result).toContain('Dec')
+    expect(result).toContain('2026')
+  })
+})
+
+describe('formatDuration', () => {
+  it('returns "Same day" when start and end are at the same timestamp', () => {
+    expect(formatDuration('2024-03-10T00:00:00Z', '2024-03-10T00:00:00Z')).toBe('Same day')
+  })
+
+  it('returns "1 day" for exactly one day apart', () => {
+    expect(formatDuration('2024-03-10T00:00:00Z', '2024-03-11T00:00:00Z')).toBe('1 day')
+  })
+
+  it('returns plural days for multiple days', () => {
+    expect(formatDuration('2024-03-01T00:00:00Z', '2024-03-06T00:00:00Z')).toBe('5 days')
+  })
+})
+
+describe('getErrorMessage', () => {
+  it('extracts message from Error instances', () => {
+    expect(getErrorMessage(new Error('oops'))).toBe('oops')
+  })
+
+  it('returns fallback for plain strings', () => {
+    expect(getErrorMessage('some string')).toBe('Something went wrong')
+  })
+
+  it('returns fallback for null', () => {
+    expect(getErrorMessage(null)).toBe('Something went wrong')
+  })
+
+  it('returns fallback for plain objects', () => {
+    expect(getErrorMessage({ message: 'not an error' })).toBe('Something went wrong')
   })
 })
