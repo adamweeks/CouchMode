@@ -195,22 +195,6 @@ export function ShowDetailPage() {
                   {tmdbSeasons.length} season{tmdbSeasons.length !== 1 ? 's' : ''} · {totalTmdbEps} episodes
                 </p>
               )}
-              {show && (() => {
-                const providers = show.streaming_providers as TMDBWatchProvider[] | null
-                return providers && providers.length > 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 6px', flexWrap: 'wrap' }}>
-                    {providers.map(p => (
-                      <img
-                        key={p.provider_id}
-                        src={providerLogoUrl(p.logo_path)}
-                        alt={p.provider_name}
-                        title={p.provider_name}
-                        style={{ width: '24px', height: '24px', borderRadius: '6px', objectFit: 'cover' }}
-                      />
-                    ))}
-                  </div>
-                ) : null
-              })()}
               {show && currentProgress ? (
                 <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ion-color-primary)', margin: 0 }}>
                   {formatProgress(currentProgress.season, currentProgress.episode)}
@@ -366,6 +350,38 @@ export function ShowDetailPage() {
             </div>
           </>
         )}
+
+        {/* Available on — show-only, after seasons */}
+        {show && (() => {
+          const providers = show.streaming_providers as TMDBWatchProvider[] | null
+          return providers && providers.length > 0 ? (
+            <>
+              <p style={sectionLabel}>Available On</p>
+              <div
+                role="list"
+                aria-label="Streaming services"
+                style={{ display: 'flex', gap: '10px', margin: '0 16px 16px', flexWrap: 'wrap' }}
+              >
+                {providers.map(p => (
+                  <div
+                    key={p.provider_id}
+                    role="listitem"
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
+                  >
+                    <img
+                      src={providerLogoUrl(p.logo_path)}
+                      alt={p.provider_name}
+                      style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'cover' }}
+                    />
+                    <span style={{ fontSize: '10px', color: 'var(--ion-color-medium)', textAlign: 'center', maxWidth: '48px', lineHeight: 1.2 }}>
+                      {p.provider_name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : null
+        })()}
 
         {/* Watchlist-only: stats */}
         {show && completedRewatches.length > 0 && (
