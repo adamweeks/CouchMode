@@ -24,7 +24,7 @@ import {
 } from '@ionic/react'
 import type { ItemReorderEventDetail } from '@ionic/core'
 import { add, searchOutline, arrowBackOutline } from 'ionicons/icons'
-import { useShowGroups, useUpdateShowOrder } from '../hooks/useShows'
+import { useShowGroups, useUpdateShowOrder, useRefreshProviders } from '../hooks/useShows'
 import { ShowCard } from '../components/ShowCard'
 import { WatchlistCard } from '../components/WatchlistCard'
 import { AppTabBar } from '../components/AppTabBar'
@@ -43,6 +43,11 @@ export function RotationPage() {
   const queue = data?.queue ?? []
   const done = data?.done ?? []
   const totalShows = watching.length + queue.length + done.length
+
+  const refreshProviders = useRefreshProviders()
+  useEffect(() => {
+    refreshProviders()
+  }, [refreshProviders])
 
   const q = searchQuery.toLowerCase().trim()
   const filteredWatching = q ? watching.filter(s => s.title.toLowerCase().includes(q)) : watching

@@ -1,9 +1,10 @@
+import { useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { fetchShowDetails, extractEpisodesPerSeason, posterUrl } from '../lib/tmdb'
+import { fetchShowDetails, extractEpisodesPerSeason, posterUrl, fetchWatchProviders } from '../lib/tmdb'
 import type { TMDBSearchResult } from '../lib/tmdb'
 import { useAuth } from '../contexts/AuthContext'
-import type { Database } from '../lib/database.types'
+import type { Database, Json } from '../lib/database.types'
 
 export type SortOption = 'added_at' | 'title' | 'manual'
 export type GroupSortOption = 'added_at' | 'title'
@@ -132,6 +133,8 @@ export function useAddShow() {
       const details = await fetchShowDetails(result.id)
       const episodesPerSeason = extractEpisodesPerSeason(details)
 
+      const providers = await fetchWatchProviders(result.id).catch(() => [])
+
       const { data: show, error: showError } = await supabase
         .from('shows')
         .insert({
@@ -141,6 +144,8 @@ export function useAddShow() {
           poster_url: posterUrl(result.poster_path),
           total_seasons: details.number_of_seasons,
           episodes_per_season: episodesPerSeason,
+          streaming_providers: providers.length > 0 ? (providers as unknown as Json) : null,
+          providers_updated_at: new Date().toISOString(),
         })
         .select()
         .single()
@@ -197,4 +202,35 @@ export function useUpdateShowOrder() {
       queryClient.invalidateQueries({ queryKey: ['shows', user?.id] })
     },
   })
+}
+
+const PROVIDERS_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
+
+export function useRefreshProviders() {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+
+  return useCallback(async () => {
+    if (!user) return
+    const cutoff = new Date(Date.now() - PROVIDERS_TTL_MS).toISOString()
+    const { data: stale } = await supabase
+      .from('shows')
+      .select('id, tmdb_id')
+      .or(`providers_updated_at.is.null,providers_updated_at.lt.${cutoff}`)
+    if (!stale || stale.length === 0) return
+
+    await Promise.allSettled(
+      stale.map(async show => {
+        const providers = await fetchWatchProviders(Number(show.tmdb_id)).catch(() => [])
+        await supabase
+          .from('shows')
+          .update({
+            streaming_providers: providers.length > 0 ? (providers as unknown as Json) : null,
+            providers_updated_at: new Date().toISOString(),
+          })
+          .eq('id', show.id)
+      })
+    )
+    queryClient.invalidateQueries({ queryKey: ['shows', user.id] })
+  }, [user, queryClient])
 }

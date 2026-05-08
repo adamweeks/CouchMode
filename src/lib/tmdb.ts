@@ -35,7 +35,18 @@ export interface TMDBSeasonDetails {
   episodes: TMDBEpisode[]
 }
 
+export interface TMDBWatchProvider {
+  provider_id: number
+  provider_name: string
+  logo_path: string
+}
+
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w300'
+const TMDB_LOGO_BASE = 'https://image.tmdb.org/t/p/w45'
+
+export function providerLogoUrl(logoPath: string): string {
+  return `${TMDB_LOGO_BASE}${logoPath}`
+}
 
 export function posterUrl(path: string | null | undefined): string {
   if (!path) return '/placeholder-poster.svg'
@@ -62,6 +73,13 @@ export async function fetchSeasonDetails(tmdbId: string, season: number): Promis
   const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?tmdb_id=${tmdbId}&season=${season}`)
   if (!res.ok) throw new Error('TMDB season fetch failed')
   return res.json()
+}
+
+export async function fetchWatchProviders(tmdbId: number): Promise<TMDBWatchProvider[]> {
+  const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?tmdb_id=${tmdbId}&providers=1`)
+  if (!res.ok) throw new Error('TMDB providers fetch failed')
+  const data = await res.json()
+  return data?.results?.US?.flatrate ?? []
 }
 
 export function extractEpisodesPerSeason(details: TMDBShowDetails): number[] {

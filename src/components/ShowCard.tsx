@@ -12,6 +12,8 @@ import {
 } from '@ionic/react'
 import { playOutline, reloadOutline } from 'ionicons/icons'
 import type { Database } from '../lib/database.types'
+import type { TMDBWatchProvider } from '../lib/tmdb'
+import { providerLogoUrl } from '../lib/tmdb'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useRewatches } from '../hooks/useRewatches'
 import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
@@ -20,6 +22,23 @@ import { LogProgressModal } from './LogProgressModal'
 type Show = Database['public']['Tables']['shows']['Row']
 
 type FilterTab = 'all' | 'watching' | 'done'
+
+function StreamingProviders({ providers }: { providers: TMDBWatchProvider[] | null }) {
+  if (!providers || providers.length === 0) return null
+  return (
+    <div style={{ display: 'flex', gap: '4px', marginBottom: '4px', flexWrap: 'wrap' }}>
+      {providers.map(p => (
+        <img
+          key={p.provider_id}
+          src={providerLogoUrl(p.logo_path)}
+          alt={p.provider_name}
+          title={p.provider_name}
+          style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'cover' }}
+        />
+      ))}
+    </div>
+  )
+}
 
 export function ShowCard({
   show,
@@ -93,9 +112,10 @@ export function ShowCard({
 
       <IonLabel>
         <h2 style={{ fontWeight: 600, fontSize: '15px', marginBottom: '2px' }}>{show.title}</h2>
-        <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', marginBottom: '6px' }}>
+        <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', marginBottom: '4px' }}>
           {episodeText}
         </p>
+        <StreamingProviders providers={show.streaming_providers as TMDBWatchProvider[] | null} />
         {currentProgress && (
           <>
             <div
