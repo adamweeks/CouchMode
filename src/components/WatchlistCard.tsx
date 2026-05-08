@@ -11,30 +11,11 @@ import {
 } from '@ionic/react'
 import { playOutline, trashOutline } from 'ionicons/icons'
 import type { Database } from '../lib/database.types'
-import type { TMDBWatchProvider } from '../lib/tmdb'
-import { providerLogoUrl } from '../lib/tmdb'
 import { useRewatches } from '../hooks/useRewatches'
 import { useRemoveShow } from '../hooks/useShows'
 import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
 
 type Show = Database['public']['Tables']['shows']['Row']
-
-function StreamingProviders({ providers }: { providers: TMDBWatchProvider[] | null }) {
-  if (!providers || providers.length === 0) return null
-  return (
-    <div style={{ display: 'flex', gap: '4px', marginTop: '4px', flexWrap: 'wrap' }}>
-      {providers.map(p => (
-        <img
-          key={p.provider_id}
-          src={providerLogoUrl(p.logo_path)}
-          alt={p.provider_name}
-          title={p.provider_name}
-          style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'cover' }}
-        />
-      ))}
-    </div>
-  )
-}
 
 export function WatchlistCard({ show, queuePosition }: { show: Show; queuePosition: number }) {
   const navigate = useNavigate()
@@ -72,7 +53,6 @@ export function WatchlistCard({ show, queuePosition }: { show: Show; queuePositi
           <IonLabel>
             <h2 style={{ fontWeight: 600, fontSize: '15px', marginBottom: '2px' }}>{show.title}</h2>
             <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)' }}>Not started</p>
-            <StreamingProviders providers={show.streaming_providers as TMDBWatchProvider[] | null} />
           </IonLabel>
 
           <div slot="end" style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingRight: '4px' }}>

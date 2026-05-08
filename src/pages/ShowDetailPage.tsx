@@ -28,7 +28,8 @@ import { MarkFinishedModal } from '../components/MarkFinishedModal'
 import { LogProgressModal } from '../components/LogProgressModal'
 import { AppTabBar } from '../components/AppTabBar'
 import { formatProgress, formatDuration, formatMonthYear } from '../lib/progressLogic'
-import { posterUrl } from '../lib/tmdb'
+import { posterUrl, providerLogoUrl } from '../lib/tmdb'
+import type { TMDBWatchProvider } from '../lib/tmdb'
 
 type Rewatch = { id: string; completed_at: string | null; started_at: string; note: string | null; status: string }
 
@@ -194,6 +195,22 @@ export function ShowDetailPage() {
                   {tmdbSeasons.length} season{tmdbSeasons.length !== 1 ? 's' : ''} · {totalTmdbEps} episodes
                 </p>
               )}
+              {show && (() => {
+                const providers = show.streaming_providers as TMDBWatchProvider[] | null
+                return providers && providers.length > 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 6px', flexWrap: 'wrap' }}>
+                    {providers.map(p => (
+                      <img
+                        key={p.provider_id}
+                        src={providerLogoUrl(p.logo_path)}
+                        alt={p.provider_name}
+                        title={p.provider_name}
+                        style={{ width: '24px', height: '24px', borderRadius: '6px', objectFit: 'cover' }}
+                      />
+                    ))}
+                  </div>
+                ) : null
+              })()}
               {show && currentProgress ? (
                 <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ion-color-primary)', margin: 0 }}>
                   {formatProgress(currentProgress.season, currentProgress.episode)}
