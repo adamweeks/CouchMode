@@ -75,7 +75,7 @@ export function LoginPage() {
               lineHeight: 1.4,
             }}
           >
-            Track every rewatch of your favorite shows
+            Settle in. Track every show.
           </p>
 
           {/* Google sign-in */}
