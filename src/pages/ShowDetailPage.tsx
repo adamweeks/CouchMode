@@ -28,7 +28,8 @@ import { MarkFinishedModal } from '../components/MarkFinishedModal'
 import { LogProgressModal } from '../components/LogProgressModal'
 import { AppTabBar } from '../components/AppTabBar'
 import { formatProgress, formatDuration, formatMonthYear } from '../lib/progressLogic'
-import { posterUrl } from '../lib/tmdb'
+import { posterUrl, providerLogoUrl } from '../lib/tmdb'
+import type { TMDBWatchProvider } from '../lib/tmdb'
 
 type Rewatch = { id: string; completed_at: string | null; started_at: string; note: string | null; status: string }
 
@@ -349,6 +350,38 @@ export function ShowDetailPage() {
             </div>
           </>
         )}
+
+        {/* Available on — show-only, after seasons */}
+        {show && (() => {
+          const providers = show.streaming_providers as TMDBWatchProvider[] | null
+          return providers && providers.length > 0 ? (
+            <>
+              <p style={sectionLabel}>Available On</p>
+              <div
+                role="list"
+                aria-label="Streaming services"
+                style={{ display: 'flex', gap: '10px', margin: '0 16px 16px', flexWrap: 'wrap' }}
+              >
+                {providers.map(p => (
+                  <div
+                    key={p.provider_id}
+                    role="listitem"
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
+                  >
+                    <img
+                      src={providerLogoUrl(p.logo_path)}
+                      alt={p.provider_name}
+                      style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'cover' }}
+                    />
+                    <span style={{ fontSize: '10px', color: 'var(--ion-color-medium)', textAlign: 'center', maxWidth: '48px', lineHeight: 1.2 }}>
+                      {p.provider_name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : null
+        })()}
 
         {/* Watchlist-only: stats */}
         {show && completedRewatches.length > 0 && (

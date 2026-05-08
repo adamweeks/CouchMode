@@ -96,7 +96,9 @@ export type Database = {
           episodes_per_season: number[]
           id: string
           poster_url: string | null
+          providers_updated_at: string | null
           sort_order: number | null
+          streaming_providers: Json | null
           title: string
           tmdb_id: string
           total_seasons: number
@@ -107,7 +109,9 @@ export type Database = {
           episodes_per_season?: number[]
           id?: string
           poster_url?: string | null
+          providers_updated_at?: string | null
           sort_order?: number | null
+          streaming_providers?: Json | null
           title: string
           tmdb_id: string
           total_seasons?: number
@@ -118,7 +122,9 @@ export type Database = {
           episodes_per_season?: number[]
           id?: string
           poster_url?: string | null
+          providers_updated_at?: string | null
           sort_order?: number | null
+          streaming_providers?: Json | null
           title?: string
           tmdb_id?: string
           total_seasons?: number

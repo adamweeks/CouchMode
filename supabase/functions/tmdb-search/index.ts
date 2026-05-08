@@ -20,9 +20,15 @@ serve(async (req) => {
 
     if (tmdbId) {
       const season = url.searchParams.get('season')
-      const tmdbUrl = season
-        ? `${TMDB_BASE}/tv/${tmdbId}/season/${season}?api_key=${TMDB_KEY}`
-        : `${TMDB_BASE}/tv/${tmdbId}?api_key=${TMDB_KEY}`
+      const providers = url.searchParams.get('providers')
+      let tmdbUrl: string
+      if (providers) {
+        tmdbUrl = `${TMDB_BASE}/tv/${tmdbId}/watch/providers?api_key=${TMDB_KEY}`
+      } else if (season) {
+        tmdbUrl = `${TMDB_BASE}/tv/${tmdbId}/season/${season}?api_key=${TMDB_KEY}`
+      } else {
+        tmdbUrl = `${TMDB_BASE}/tv/${tmdbId}?api_key=${TMDB_KEY}`
+      }
       const res = await fetch(tmdbUrl)
       const data = await res.json()
       return new Response(JSON.stringify(data), {
