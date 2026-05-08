@@ -8,9 +8,6 @@ import {
 } from './useProgressLogs'
 import { createWrapper, mockUser } from '../test/utils'
 
-// mockResult holds the value the chain resolves to. Tests update it as needed.
-let mockResult: { data: unknown; error: unknown } = { data: [], error: null }
-
 const { mockFrom, mockChain } = vi.hoisted(() => {
   let result: { data: unknown; error: unknown } = { data: [], error: null }
 
@@ -51,7 +48,7 @@ vi.mock('../contexts/AuthContext', () => ({
 }))
 
 function setResult(data: unknown, error: unknown = null) {
-  ;(mockChain as Record<string, unknown>).__setResult({ data, error })
+  ;(mockChain as Record<string, (r: { data: unknown; error: unknown }) => void>).__setResult({ data, error })
 }
 
 function resetMocks() {

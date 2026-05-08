@@ -1,7 +1,7 @@
 import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { MemoryRouter, useNavigate } from 'react-router-dom'
+import { MemoryRouter } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { createQueryClient, mockUser } from '../test/utils'
 import { RotationPage } from './RotationPage'
@@ -80,7 +80,7 @@ describe('RotationPage', () => {
     vi.mocked(useShowGroups).mockReturnValue({
       data: undefined,
       isLoading: true,
-    } as ReturnType<typeof useShowGroups>)
+    } as unknown as ReturnType<typeof useShowGroups>)
     renderPage()
     expect(screen.getByTestId('ion-spinner')).toBeInTheDocument()
   })
@@ -89,7 +89,7 @@ describe('RotationPage', () => {
     vi.mocked(useShowGroups).mockReturnValue({
       data: { watching: [], queue: [], done: [] },
       isLoading: false,
-    } as ReturnType<typeof useShowGroups>)
+    } as unknown as ReturnType<typeof useShowGroups>)
     renderPage()
     expect(await screen.findByText('No shows yet')).toBeInTheDocument()
   })
@@ -98,7 +98,7 @@ describe('RotationPage', () => {
     vi.mocked(useShowGroups).mockReturnValue({
       data: { watching: [makeShow()], queue: [], done: [] },
       isLoading: false,
-    } as ReturnType<typeof useShowGroups>)
+    } as unknown as ReturnType<typeof useShowGroups>)
     renderPage()
     expect(await screen.findByText('Watching')).toBeInTheDocument()
     expect(screen.getByText('Breaking Bad')).toBeInTheDocument()
@@ -108,7 +108,7 @@ describe('RotationPage', () => {
     vi.mocked(useShowGroups).mockReturnValue({
       data: { watching: [], queue: [makeShow()], done: [] },
       isLoading: false,
-    } as ReturnType<typeof useShowGroups>)
+    } as unknown as ReturnType<typeof useShowGroups>)
     renderPage()
     expect(await screen.findByText('Up Next')).toBeInTheDocument()
   })
@@ -121,7 +121,7 @@ describe('RotationPage', () => {
         done: [makeShow({ title: 'Completed Show' })],
       },
       isLoading: false,
-    } as ReturnType<typeof useShowGroups>)
+    } as unknown as ReturnType<typeof useShowGroups>)
     renderPage()
     expect(await screen.findByText('Done')).toBeInTheDocument()
   })
@@ -130,7 +130,7 @@ describe('RotationPage', () => {
     vi.mocked(useShowGroups).mockReturnValue({
       data: { watching: [makeShow()], queue: [], done: [] },
       isLoading: false,
-    } as ReturnType<typeof useShowGroups>)
+    } as unknown as ReturnType<typeof useShowGroups>)
     renderPage()
     // "My Shows" appears in the h1 header title AND the tab bar — at least one should exist
     await waitFor(() =>
@@ -146,7 +146,7 @@ describe('RotationPage', () => {
         done: [],
       },
       isLoading: false,
-    } as ReturnType<typeof useShowGroups>)
+    } as unknown as ReturnType<typeof useShowGroups>)
     renderPage()
 
     // wait for list to appear
@@ -165,7 +165,7 @@ describe('RotationPage', () => {
     vi.mocked(useShowGroups).mockReturnValue({
       data: { watching: [makeShow({ title: 'Breaking Bad' })], queue: [], done: [] },
       isLoading: false,
-    } as ReturnType<typeof useShowGroups>)
+    } as unknown as ReturnType<typeof useShowGroups>)
     renderPage()
 
     await screen.findByText('Breaking Bad')

@@ -97,18 +97,16 @@ export const IonReorder = (_props: AnyProps) => React.createElement('div', null)
 
 export const IonReorderGroup = ({
   children,
-  onIonItemReorder,
-  disabled,
 }: {
   children?: React.ReactNode
   onIonItemReorder?: (e: unknown) => void
   disabled?: boolean
+  [k: string]: unknown
 }) => React.createElement('div', null, children)
 
 export const IonSearchbar = ({
   value,
   onIonInput,
-  onIonClear,
   placeholder,
 }: {
   value?: string
@@ -275,12 +273,11 @@ export const IonRouterLink = ({
 
 export const IonSegment = ({
   children,
-  value,
-  onIonChange,
 }: {
   children?: React.ReactNode
   value?: string
   onIonChange?: (e: unknown) => void
+  [k: string]: unknown
 }) => React.createElement('div', null, children)
 
 export const IonSegmentButton = ({

@@ -57,7 +57,7 @@ export function createSupabaseChain(result: { data: unknown; error: unknown } = 
     upsert: vi.fn(),
     single: vi.fn(),
     maybeSingle: vi.fn(),
-    then: (onFulfilled: (value: typeof result) => unknown, onRejected?: (reason: unknown) => unknown) =>
+    then: (onFulfilled?: ((value: typeof result) => unknown) | null, onRejected?: ((reason: unknown) => unknown) | null) =>
       Promise.resolve(currentResult).then(onFulfilled, onRejected),
   }
 

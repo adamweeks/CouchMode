@@ -92,7 +92,7 @@ describe('AuthProvider', () => {
     mockGetSession.mockResolvedValue({ data: { session: null } })
 
     let authStateCallback: ((event: string, session: unknown) => void) | null = null
-    mockOnAuthStateChange.mockImplementation((cb: typeof authStateCallback) => {
+    mockOnAuthStateChange.mockImplementation((cb) => {
       authStateCallback = cb
       return { data: { subscription: { unsubscribe: mockUnsubscribe } } }
     })
@@ -168,8 +168,8 @@ describe('AuthProvider', () => {
   it('cleans up the auth subscription on unmount', async () => {
     mockGetSession.mockResolvedValue({ data: { session: null } })
 
-    const { unmount } = renderHook(() => useAuth(), { wrapper })
-    await waitFor(() => expect(result => result).toBeTruthy())
+    const { result, unmount } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
     unmount()
     expect(mockUnsubscribe).toHaveBeenCalled()
   })

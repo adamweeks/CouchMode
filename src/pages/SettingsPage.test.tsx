@@ -1,4 +1,3 @@
-import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -24,7 +23,7 @@ function renderPage(user: Record<string, unknown> | null = null) {
   vi.mocked(useAuth).mockReturnValue({
     user,
     signOut: mockSignOut,
-  } as ReturnType<typeof useAuth>)
+  } as unknown as ReturnType<typeof useAuth>)
 
   return render(
     <QueryClientProvider client={createQueryClient()}>
