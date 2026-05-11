@@ -28,6 +28,7 @@ import { useShowGroups, useUpdateShowOrder, useRefreshProviders } from '../hooks
 import { ShowCard } from '../components/ShowCard'
 import { WatchlistCard } from '../components/WatchlistCard'
 import { AppTabBar } from '../components/AppTabBar'
+import { TmdbAttribution } from '../components/TmdbAttribution'
 import { searchShows, posterUrl } from '../lib/tmdb'
 import { useDebounce } from '../hooks/useDebounce'
 
@@ -72,10 +73,6 @@ export function RotationPage() {
   function handleQueueReorder(event: CustomEvent<ItemReorderEventDetail>) {
     const reordered = event.detail.complete(queue) as typeof queue
     updateOrder(reordered.map((show, i) => ({ id: show.id, sort_order: i })))
-  }
-
-  function enterTmdbMode() {
-    setTmdbMode(true)
   }
 
   function exitTmdbMode() {
@@ -141,23 +138,7 @@ export function RotationPage() {
               </div>
             )}
 
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '12px 16px 4px',
-                opacity: 0.6,
-              }}
-            >
-              <img
-                src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
-                alt="Powered by TMDB"
-                style={{ height: '14px', width: 'auto' }}
-              />
-              <span style={{ fontSize: '11px', color: 'var(--ion-color-medium)' }}>Powered by TMDB</span>
-            </div>
+            <TmdbAttribution />
 
             {tmdbResults.length > 0 && (
               <IonList inset className="inset-shadow" style={{ marginTop: '10px' }}>
@@ -239,7 +220,7 @@ export function RotationPage() {
             <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', lineHeight: 1.5, marginBottom: '20px' }}>
               Add a show to start tracking your rewatches or build your queue.
             </p>
-            <IonButton onClick={enterTmdbMode}>Find a Show</IonButton>
+            <IonButton onClick={() => setTmdbMode(true)}>Find a Show</IonButton>
           </div>
         ) : filteredTotal === 0 ? (
           <>
@@ -260,7 +241,7 @@ export function RotationPage() {
               </p>
             </div>
             <IonList inset className="inset-shadow">
-              <IonItem button detail onClick={enterTmdbMode}>
+              <IonItem button detail onClick={() => setTmdbMode(true)}>
                 <IonIcon slot="start" icon={searchOutline} style={{ color: 'var(--ion-color-medium)' }} />
                 <span>Search <strong>"{searchQuery}"</strong> on TMDB</span>
               </IonItem>
@@ -311,7 +292,7 @@ export function RotationPage() {
 
             {q && (
               <IonList inset className="inset-shadow">
-                <IonItem button detail onClick={enterTmdbMode}>
+                <IonItem button detail onClick={() => setTmdbMode(true)}>
                   <IonIcon slot="start" icon={searchOutline} style={{ color: 'var(--ion-color-medium)' }} />
                   <span>Search <strong>"{searchQuery}"</strong> on TMDB</span>
                 </IonItem>
@@ -322,7 +303,7 @@ export function RotationPage() {
 
         {!tmdbMode && (
           <IonFab vertical="bottom" horizontal="end" slot="fixed">
-            <IonFabButton onClick={enterTmdbMode} aria-label="Add show">
+            <IonFabButton onClick={() => setTmdbMode(true)} aria-label="Add show">
               <IonIcon icon={add} />
             </IonFabButton>
           </IonFab>

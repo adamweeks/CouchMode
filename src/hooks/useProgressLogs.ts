@@ -86,22 +86,12 @@ export function useLogProgress() {
       const existingSet = new Set(existingLogs.map(l => `${l.season}x${l.episode}`))
       const now = new Date().toISOString()
 
-      const backfill = getBackfillEntries(season, episode, episodesPerSeason, existingSet, rewatchId, user.id, now)
-
-      if (backfill.length > 0) {
-        const { error } = await supabase.from('progress_logs').insert(backfill)
-        if (error) throw error
-      }
-
+      const rows = getBackfillEntries(season, episode, episodesPerSeason, existingSet, rewatchId, user.id, now)
       if (!existingSet.has(`${season}x${episode}`)) {
-        const { error } = await supabase.from('progress_logs').insert({
-          rewatch_id: rewatchId,
-          user_id: user.id,
-          season,
-          episode,
-          logged_at: now,
-          note: note ?? null,
-        })
+        rows.push({ rewatch_id: rewatchId, user_id: user.id, season, episode, logged_at: now, note: note ?? null })
+      }
+      if (rows.length > 0) {
+        const { error } = await supabase.from('progress_logs').insert(rows)
         if (error) throw error
       }
 

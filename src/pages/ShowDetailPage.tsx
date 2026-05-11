@@ -27,7 +27,7 @@ import { useTMDBSeason } from '../hooks/useTMDBSeason'
 import { MarkFinishedModal } from '../components/MarkFinishedModal'
 import { LogProgressModal } from '../components/LogProgressModal'
 import { AppTabBar } from '../components/AppTabBar'
-import { formatProgress, formatDuration, formatMonthYear } from '../lib/progressLogic'
+import { formatProgress, formatDuration, formatMonthYear, countWatchedEpisodes } from '../lib/progressLogic'
 import { posterUrl, providerLogoUrl } from '../lib/tmdb'
 import type { TMDBWatchProvider } from '../lib/tmdb'
 
@@ -67,14 +67,11 @@ export function ShowDetailPage() {
   const [showLogModal, setShowLogModal] = useState(false)
   const [presentAlert] = useIonAlert()
 
-  // TMDB data — always loaded
   const { data: tmdbShow, isLoading: isLoadingTMDB } = useTMDBShow(tmdbId)
 
-  // Rotation membership
   const { data: myShows = [], isLoading: isLoadingShows } = useShows()
   const show = myShows.find(s => s.tmdb_id === tmdbId) ?? null
 
-  // Watchlist hooks — enabled guards inside each hook handle null/empty id
   const { data: rewatches = [] } = useRewatches(show?.id ?? '')
   const { data: activeRewatch } = useActiveRewatch(show?.id ?? '')
   const currentProgress = useCurrentProgress(activeRewatch?.id)
@@ -97,16 +94,14 @@ export function ShowDetailPage() {
     tmdbId ?? null,
     nextEp?.season ?? 0,
   )
-  const nextEpisode = nextEp
-    ? (nextEp.season === (currentProgress?.season ?? 0)
-        ? currentSeasonData?.episodes?.find(e => e.episode_number === nextEp.episode)
-        : nextSeasonData?.episodes?.find(e => e.episode_number === nextEp.episode))
-    : undefined
+  const nextEpisodeEps = nextEp?.season === (currentProgress?.season ?? 0)
+    ? currentSeasonData?.episodes
+    : nextSeasonData?.episodes
+  const nextEpisode = nextEp ? nextEpisodeEps?.find(e => e.episode_number === nextEp.episode) : undefined
 
   const addShow = useAddShow()
   const removeShow = useRemoveShow()
 
-  // Derived TMDB metadata
   const title = tmdbShow?.name ?? show?.title ?? ''
   const year = tmdbShow?.first_air_date?.slice(0, 4)
   const genres = tmdbShow?.genres?.slice(0, 2).map(g => g.name).join(' · ')
@@ -114,14 +109,12 @@ export function ShowDetailPage() {
   const tmdbSeasons = tmdbShow ? tmdbShow.seasons.filter(s => s.season_number > 0) : []
   const totalTmdbEps = tmdbSeasons.reduce((sum, s) => sum + s.episode_count, 0)
 
-  // Progress calculations
   const totalEpisodes = show?.episodes_per_season.reduce((s, n) => s + n, 0) ?? 0
-  const watchedEps = currentProgress && show
-    ? show.episodes_per_season.slice(0, currentProgress.season - 1).reduce((s, n) => s + n, 0) + currentProgress.episode
-    : 0
+  const watchedEps = currentProgress && show ? countWatchedEpisodes(show.episodes_per_season, currentProgress) : 0
   const pct = totalEpisodes > 0 ? Math.round((watchedEps / totalEpisodes) * 100) : 0
   const completedRewatches = rewatches.filter(r => r.status === 'completed')
   const avgDays = avgDaysBetweenRewatches(completedRewatches)
+  const providers = (show?.streaming_providers as TMDBWatchProvider[] | null) ?? null
 
   function handleRemove() {
     presentAlert({
@@ -170,7 +163,6 @@ export function ShowDetailPage() {
       </IonHeader>
 
       <IonContent>
-        {/* Hero: poster + title + metadata */}
         <div style={{ ...card, margin: '12px 16px 12px' }}>
           <div style={{ display: 'flex', gap: '12px', padding: '12px 12px 10px' }}>
             <img
@@ -226,7 +218,6 @@ export function ShowDetailPage() {
           )}
         </div>
 
-        {/* Watchlist-only: current episode */}
         {show && currentProgress && currentEpisode && (
           <>
             <p style={sectionLabel}>Last Watched</p>
@@ -262,7 +253,6 @@ export function ShowDetailPage() {
           </>
         )}
 
-        {/* Watchlist-only: up next + action buttons */}
         {show && activeRewatch && nextEp && (
           <>
             <p style={sectionLabel}>Up Next</p>
@@ -315,7 +305,6 @@ export function ShowDetailPage() {
           </>
         )}
 
-        {/* Overview — always */}
         {tmdbShow?.overview && (
           <>
             <p style={sectionLabel}>Overview</p>
@@ -325,7 +314,6 @@ export function ShowDetailPage() {
           </>
         )}
 
-        {/* Season breakdown — always */}
         {tmdbSeasons.length > 0 && (
           <>
             <p style={sectionLabel}>Seasons</p>
@@ -351,39 +339,34 @@ export function ShowDetailPage() {
           </>
         )}
 
-        {/* Available on — show-only, after seasons */}
-        {show && (() => {
-          const providers = show.streaming_providers as TMDBWatchProvider[] | null
-          return providers && providers.length > 0 ? (
-            <>
-              <p style={sectionLabel}>Available On</p>
-              <div
-                role="list"
-                aria-label="Streaming services"
-                style={{ display: 'flex', gap: '10px', margin: '0 16px 16px', flexWrap: 'wrap' }}
-              >
-                {providers.map(p => (
-                  <div
-                    key={p.provider_id}
-                    role="listitem"
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-                  >
-                    <img
-                      src={providerLogoUrl(p.logo_path)}
-                      alt={p.provider_name}
-                      style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'cover' }}
-                    />
-                    <span style={{ fontSize: '10px', color: 'var(--ion-color-medium)', textAlign: 'center', maxWidth: '48px', lineHeight: 1.2 }}>
-                      {p.provider_name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : null
-        })()}
+        {show && providers && providers.length > 0 && (
+          <>
+            <p style={sectionLabel}>Available On</p>
+            <div
+              role="list"
+              aria-label="Streaming services"
+              style={{ display: 'flex', gap: '10px', margin: '0 16px 16px', flexWrap: 'wrap' }}
+            >
+              {providers.map(p => (
+                <div
+                  key={p.provider_id}
+                  role="listitem"
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
+                >
+                  <img
+                    src={providerLogoUrl(p.logo_path)}
+                    alt={p.provider_name}
+                    style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'cover' }}
+                  />
+                  <span style={{ fontSize: '10px', color: 'var(--ion-color-medium)', textAlign: 'center', maxWidth: '48px', lineHeight: 1.2 }}>
+                    {p.provider_name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
-        {/* Watchlist-only: stats */}
         {show && completedRewatches.length > 0 && (
           <>
             <p style={sectionLabel}>Stats</p>
@@ -413,7 +396,6 @@ export function ShowDetailPage() {
           </>
         )}
 
-        {/* Watchlist-only: rewatch history */}
         {show && completedRewatches.length > 0 && (
           <>
             <p style={sectionLabel}>Rewatch History</p>
@@ -442,7 +424,6 @@ export function ShowDetailPage() {
           </>
         )}
 
-        {/* CTA */}
         <div style={{ padding: '8px 16px 32px' }}>
           {show ? (
             <IonButton expand="block" fill="outline" color="danger" onClick={handleRemove}>

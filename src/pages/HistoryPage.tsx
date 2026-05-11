@@ -56,7 +56,6 @@ export function HistoryPage() {
   const totalRewatches = rewatches.length
   const totalShows = new Set(rewatches.map(r => r.show_id)).size
 
-  // Group rewatches by year
   const byYear = rewatches.reduce<Record<string, CompletedRewatch[]>>((acc, r) => {
     const year = new Date(r.completed_at).getFullYear().toString()
     if (!acc[year]) acc[year] = []

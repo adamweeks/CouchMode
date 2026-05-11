@@ -100,8 +100,17 @@ export function formatProgress(season: number, episode: number): string {
   return `S${season} E${episode}`
 }
 
+const monthYearFormatter = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' })
+
 export function formatMonthYear(dateStr: string): string {
-  return new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(new Date(dateStr))
+  return monthYearFormatter.format(new Date(dateStr))
+}
+
+export function countWatchedEpisodes(
+  episodesPerSeason: number[],
+  progress: { season: number; episode: number }
+): number {
+  return episodesPerSeason.slice(0, progress.season - 1).reduce((s, n) => s + n, 0) + progress.episode
 }
 
 export function getErrorMessage(error: unknown): string {

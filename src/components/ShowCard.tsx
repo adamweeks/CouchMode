@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { formatProgress, countWatchedEpisodes } from '../lib/progressLogic'
 import {
   IonItem,
   IonLabel,
@@ -52,14 +53,12 @@ export function ShowCard({
   if (filter === 'done' && !isDone) return null
 
   const totalEpisodes = show.episodes_per_season.reduce((sum, n) => sum + n, 0)
-  const episodesWatched = currentProgress
-    ? show.episodes_per_season.slice(0, currentProgress.season - 1).reduce((sum, n) => sum + n, 0) + currentProgress.episode
-    : 0
+  const episodesWatched = currentProgress ? countWatchedEpisodes(show.episodes_per_season, currentProgress) : 0
   const progressPct = totalEpisodes > 0 ? Math.round((episodesWatched / totalEpisodes) * 100) : 0
   const rewatchNumber = completedRewatches.length + 1
 
   const episodeText = currentProgress
-    ? `S${currentProgress.season} E${currentProgress.episode}`
+    ? formatProgress(currentProgress.season, currentProgress.episode)
     : isDone
     ? 'Completed'
     : 'Not started'
