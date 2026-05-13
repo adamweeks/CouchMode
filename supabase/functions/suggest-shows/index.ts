@@ -33,7 +33,7 @@ serve(async (req) => {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
         messages: [
           {
@@ -50,7 +50,8 @@ Respond with ONLY a valid JSON array, no other text:
     })
 
     if (!claudeRes.ok) {
-      throw new Error(`Claude API error: ${claudeRes.status}`)
+      const body = await claudeRes.text()
+      throw new Error(`Claude API error: ${claudeRes.status} — ${body}`)
     }
 
     const claudeData = await claudeRes.json()
