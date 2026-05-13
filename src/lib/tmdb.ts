@@ -82,6 +82,13 @@ export async function fetchWatchProviders(tmdbId: number): Promise<TMDBWatchProv
   return data?.results?.US?.flatrate ?? []
 }
 
+export async function fetchSimilarShows(tmdbId: number): Promise<TMDBSearchResult[]> {
+  const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?tmdb_id=${tmdbId}&similar=1`)
+  if (!res.ok) throw new Error('TMDB similar fetch failed')
+  const data = await res.json()
+  return data.results ?? []
+}
+
 export function extractEpisodesPerSeason(details: TMDBShowDetails): number[] {
   return details.seasons
     .filter(s => s.season_number > 0)

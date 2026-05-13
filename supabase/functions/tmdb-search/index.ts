@@ -21,11 +21,14 @@ serve(async (req) => {
     if (tmdbId) {
       const season = url.searchParams.get('season')
       const providers = url.searchParams.get('providers')
+      const similar = url.searchParams.get('similar')
       let tmdbUrl: string
       if (providers) {
         tmdbUrl = `${TMDB_BASE}/tv/${tmdbId}/watch/providers?api_key=${TMDB_KEY}`
       } else if (season) {
         tmdbUrl = `${TMDB_BASE}/tv/${tmdbId}/season/${season}?api_key=${TMDB_KEY}`
+      } else if (similar) {
+        tmdbUrl = `${TMDB_BASE}/tv/${tmdbId}/similar?api_key=${TMDB_KEY}&page=1`
       } else {
         tmdbUrl = `${TMDB_BASE}/tv/${tmdbId}?api_key=${TMDB_KEY}`
       }

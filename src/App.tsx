@@ -9,6 +9,7 @@ import { RotationPage } from './pages/RotationPage'
 import { ShowDetailPage } from './pages/ShowDetailPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { SuggestionsPage } from './pages/SuggestionsPage'
 import { supabase } from './lib/supabase'
 
 function OAuthRedirectHandler() {
@@ -71,6 +72,14 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/suggestions"
+                element={
+                  <ProtectedRoute>
+                    <SuggestionsPage />
                   </ProtectedRoute>
                 }
               />
