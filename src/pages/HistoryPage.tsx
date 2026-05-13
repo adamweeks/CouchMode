@@ -44,6 +44,27 @@ function useCompletedRewatches() {
   })
 }
 
+function StatCard({ value, label }: { value: string | number; label: string }) {
+  return (
+    <div
+      style={{
+        background: 'var(--ion-item-background)',
+        borderRadius: '14px',
+        padding: '14px',
+        textAlign: 'center',
+        boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+      }}
+    >
+      <p style={{ fontSize: '28px', fontWeight: 700, color: 'var(--ion-color-primary)', margin: 0 }}>
+        {value}
+      </p>
+      <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: '2px 0 0' }}>
+        {label}
+      </p>
+    </div>
+  )
+}
+
 export function HistoryPage() {
   const navigate = useNavigate()
   const { data: rewatches = [], isLoading: loadingRewatches } = useCompletedRewatches()
@@ -56,6 +77,37 @@ export function HistoryPage() {
   const totalRewatches = rewatches.length
   const totalShows = new Set(rewatches.map(r => r.show_id)).size
 
+  const totalEpisodes = rewatches.reduce((sum, r) => {
+    const show = showMap.get(r.show_id)
+    if (!show) return sum
+    return sum + show.episodes_per_season.reduce((s: number, n: number) => s + n, 0)
+  }, 0)
+
+  // ~42 min/ep average for scripted TV
+  const estHours = Math.round(totalEpisodes * 42 / 60)
+
+  const rewatchCountByShowId = rewatches.reduce<Record<string, number>>((acc, r) => {
+    acc[r.show_id] = (acc[r.show_id] ?? 0) + 1
+    return acc
+  }, {})
+  const mostRewatchedEntry = Object.entries(rewatchCountByShowId).sort((a, b) => b[1] - a[1])[0]
+  const mostRewatchedShow = mostRewatchedEntry ? showMap.get(mostRewatchedEntry[0]) : null
+  const mostRewatchedCount = mostRewatchedEntry?.[1] ?? 0
+
+  const rewatchesWithDates = rewatches.filter(r => r.started_at && r.completed_at)
+  const avgDays =
+    rewatchesWithDates.length > 0
+      ? Math.round(
+          rewatchesWithDates.reduce((sum, r) => {
+            return (
+              sum +
+              (new Date(r.completed_at).getTime() - new Date(r.started_at).getTime()) /
+                (1000 * 60 * 60 * 24)
+            )
+          }, 0) / rewatchesWithDates.length
+        )
+      : null
+
   const byYear = rewatches.reduce<Record<string, CompletedRewatch[]>>((acc, r) => {
     const year = new Date(r.completed_at).getFullYear().toString()
     if (!acc[year]) acc[year] = []
@@ -64,6 +116,8 @@ export function HistoryPage() {
   }, {})
 
   const years = Object.keys(byYear).sort((a, b) => Number(b) - Number(a))
+  const currentYear = new Date().getFullYear().toString()
+  const rewatchesThisYear = byYear[currentYear]?.length ?? 0
 
   return (
     <IonPage>
@@ -98,47 +152,97 @@ export function HistoryPage() {
           </div>
         ) : (
           <>
-            {/* Stats row */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '12px',
-                margin: '16px 16px 4px',
-              }}
-            >
-              <div
+            {/* Stats section */}
+            <div style={{ margin: '16px 16px 4px' }}>
+              <p
                 style={{
-                  background: 'var(--ion-item-background)',
-                  borderRadius: '14px',
-                  padding: '14px',
-                  textAlign: 'center',
-                  boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  color: 'var(--ion-color-medium)',
+                  margin: '0 0 10px',
                 }}
               >
-                <p style={{ fontSize: '28px', fontWeight: 700, color: 'var(--ion-color-primary)', margin: 0 }}>
-                  {totalRewatches}
-                </p>
-                <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: '2px 0 0' }}>
-                  Total Rewatches
-                </p>
-              </div>
+                Your Stats
+              </p>
+
               <div
                 style={{
-                  background: 'var(--ion-item-background)',
-                  borderRadius: '14px',
-                  padding: '14px',
-                  textAlign: 'center',
-                  boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '10px',
+                  marginBottom: '10px',
                 }}
               >
-                <p style={{ fontSize: '28px', fontWeight: 700, color: 'var(--ion-color-primary)', margin: 0 }}>
-                  {totalShows}
-                </p>
-                <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: '2px 0 0' }}>
-                  Shows Rewatched
-                </p>
+                <StatCard value={totalRewatches} label="Total Rewatches" />
+                <StatCard value={totalShows} label="Shows Rewatched" />
+                <StatCard value={totalEpisodes.toLocaleString()} label="Episodes Watched" />
+                <StatCard value={`${estHours.toLocaleString()}h`} label="Est. Hours" />
               </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '10px',
+                  marginBottom: mostRewatchedShow && mostRewatchedCount > 1 ? '10px' : '4px',
+                }}
+              >
+                <StatCard
+                  value={avgDays !== null ? (avgDays === 0 ? '<1' : avgDays) : '—'}
+                  label="Avg. Days / Rewatch"
+                />
+                <StatCard value={rewatchesThisYear} label={`In ${currentYear}`} />
+              </div>
+
+              {mostRewatchedShow && mostRewatchedCount > 1 && (
+                <div
+                  style={{
+                    background: 'var(--ion-item-background)',
+                    borderRadius: '14px',
+                    padding: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+                    marginBottom: '4px',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => navigate(`/tmdb/${mostRewatchedShow.tmdb_id}`)}
+                >
+                  <img
+                    src={mostRewatchedShow.poster_url ?? '/placeholder-poster.svg'}
+                    alt={mostRewatchedShow.title}
+                    style={{
+                      width: '40px',
+                      height: '54px',
+                      borderRadius: '6px',
+                      objectFit: 'cover',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div>
+                    <p
+                      style={{
+                        fontSize: '11px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        color: 'var(--ion-color-medium)',
+                        margin: '0 0 2px',
+                      }}
+                    >
+                      Most Rewatched
+                    </p>
+                    <p style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 2px' }}>
+                      {mostRewatchedShow.title}
+                    </p>
+                    <p style={{ fontSize: '12px', color: 'var(--ion-color-primary)', margin: 0 }}>
+                      watched {mostRewatchedCount}×
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Year-grouped rewatch list */}
