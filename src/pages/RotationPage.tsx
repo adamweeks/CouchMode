@@ -25,7 +25,9 @@ import {
 import type { ItemReorderEventDetail } from '@ionic/core'
 import { add, searchOutline, arrowBackOutline } from 'ionicons/icons'
 import { useShowGroups, useUpdateShowOrder, useRefreshProviders } from '../hooks/useShows'
+import { useResumeShow } from '../hooks/useResumeShow'
 import { ShowCard } from '../components/ShowCard'
+import { ResumeCard } from '../components/ResumeCard'
 import { WatchlistCard } from '../components/WatchlistCard'
 import { AppTabBar } from '../components/AppTabBar'
 import { TmdbAttribution } from '../components/TmdbAttribution'
@@ -38,6 +40,7 @@ export function RotationPage() {
   const [tmdbMode, setTmdbMode] = useState(false)
 
   const { data, isLoading } = useShowGroups()
+  const { data: resumeData } = useResumeShow()
   const { mutate: updateOrder } = useUpdateShowOrder()
 
   const watching = data?.watching ?? []
@@ -255,6 +258,8 @@ export function RotationPage() {
           </>
         ) : (
           <>
+            {!q && resumeData && <ResumeCard data={resumeData} />}
+
             {filteredWatching.length > 0 && (
               <>
                 <IonListHeader style={{ paddingTop: '10px' }}>
