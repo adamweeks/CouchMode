@@ -198,6 +198,10 @@ export function LoginPage() {
             </svg>
             Continue with Google
           </IonButton>
+
+          <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', marginTop: '32px', opacity: 0.6 }}>
+            v{__APP_VERSION__}
+          </p>
         </div>
       </IonContent>
     </IonPage>
