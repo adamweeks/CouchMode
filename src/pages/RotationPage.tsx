@@ -70,6 +70,12 @@ export function RotationPage() {
     if (!searchQuery) setTmdbMode(false)
   }, [searchQuery])
 
+  useEffect(() => {
+    if (!tmdbMode && debouncedQuery.length > 2 && filteredTotal === 0) {
+      setTmdbMode(true)
+    }
+  }, [debouncedQuery, filteredTotal, tmdbMode])
+
   function handleQueueReorder(event: CustomEvent<ItemReorderEventDetail>) {
     const reordered = event.detail.complete(queue) as typeof queue
     updateOrder(reordered.map((show, i) => ({ id: show.id, sort_order: i })))
