@@ -1,12 +1,45 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { IonPage, IonContent, IonButton, useIonToast } from '@ionic/react'
+import { IonPage, IonContent, IonButton, IonInput, IonItem, IonLabel, useIonToast } from '@ionic/react'
 import { useAuth } from '../contexts/AuthContext'
 import { getErrorMessage } from '../lib/progressLogic'
 
 export function LoginPage() {
-  const { signInWithGoogle } = useAuth()
+  const { signIn, signUp, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
   const [presentToast] = useIonToast()
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setSubmitting(true)
+    try {
+      if (mode === 'signup') {
+        await signUp(email, password)
+        presentToast({
+          message: 'Account created! Check your email to confirm.',
+          duration: 4000,
+          color: 'success',
+          position: 'top',
+        })
+      } else {
+        await signIn(email, password)
+        navigate('/', { replace: true })
+      }
+    } catch (e) {
+      presentToast({
+        message: getErrorMessage(e),
+        duration: 3000,
+        color: 'danger',
+        position: 'top',
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   async function handleGoogle() {
     try {
@@ -33,7 +66,6 @@ export function LoginPage() {
             justifyContent: 'center',
             minHeight: '100%',
             padding: '48px 32px',
-            gap: '0',
           }}
         >
           {/* Logo mark */}
@@ -70,13 +102,81 @@ export function LoginPage() {
             style={{
               fontSize: '15px',
               color: 'var(--ion-color-medium)',
-              marginBottom: '48px',
+              marginBottom: '32px',
               textAlign: 'center',
               lineHeight: 1.4,
             }}
           >
             Settle in. Track every show.
           </p>
+
+          {/* Email/password form */}
+          <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '320px' }}>
+            <IonItem style={{ marginBottom: '8px' }}>
+              <IonLabel position="floating">Email</IonLabel>
+              <IonInput
+                type="email"
+                value={email}
+                onIonInput={e => setEmail(e.detail.value ?? '')}
+                required
+                autocomplete="email"
+              />
+            </IonItem>
+            <IonItem style={{ marginBottom: '16px' }}>
+              <IonLabel position="floating">Password</IonLabel>
+              <IonInput
+                type="password"
+                value={password}
+                onIonInput={e => setPassword(e.detail.value ?? '')}
+                required
+                autocomplete={mode === 'signup' ? 'new-password' : 'current-password'}
+              />
+            </IonItem>
+
+            <IonButton
+              expand="block"
+              type="submit"
+              disabled={submitting}
+              style={{ marginBottom: '12px' }}
+            >
+              {mode === 'signup' ? 'Create account' : 'Sign in'}
+            </IonButton>
+          </form>
+
+          {/* Toggle sign in / sign up */}
+          <p style={{ fontSize: '14px', color: 'var(--ion-color-medium)', margin: '0 0 24px' }}>
+            {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
+            <button
+              onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--ion-color-primary)',
+                cursor: 'pointer',
+                padding: 0,
+                fontSize: 'inherit',
+                textDecoration: 'underline',
+              }}
+            >
+              {mode === 'signin' ? 'Sign up' : 'Sign in'}
+            </button>
+          </p>
+
+          {/* Divider */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              width: '100%',
+              maxWidth: '320px',
+              gap: '12px',
+              marginBottom: '16px',
+            }}
+          >
+            <div style={{ flex: 1, height: '1px', background: 'var(--ion-color-light-shade)' }} />
+            <span style={{ fontSize: '13px', color: 'var(--ion-color-medium)' }}>or</span>
+            <div style={{ flex: 1, height: '1px', background: 'var(--ion-color-light-shade)' }} />
+          </div>
 
           {/* Google sign-in */}
           <IonButton
