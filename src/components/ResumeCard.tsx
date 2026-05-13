@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { IonButton, IonIcon } from '@ionic/react'
 import { playOutline } from 'ionicons/icons'
 import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
+import { useTMDBSeason } from '../hooks/useTMDBSeason'
 import { formatProgress } from '../lib/progressLogic'
 import { LogProgressModal } from './LogProgressModal'
 import type { ResumeShowData } from '../hooks/useResumeShow'
@@ -18,6 +19,11 @@ export function ResumeCard({ data }: { data: ResumeShowData }) {
     currentProgress,
     () => setLogModalOpen(true),
   )
+
+  const { data: seasonData } = useTMDBSeason(show.tmdb_id, nextEp?.season ?? 0)
+  const nextEpisodeName = nextEp
+    ? seasonData?.episodes?.find(e => e.episode_number === nextEp.episode)?.name
+    : undefined
 
   if (!nextEp || !logNext) return null
 
@@ -75,6 +81,7 @@ export function ResumeCard({ data }: { data: ResumeShowData }) {
           </h3>
           <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)' }}>
             Up next: {formatProgress(nextEp.season, nextEp.episode)}
+            {nextEpisodeName && ` · ${nextEpisodeName}`}
           </p>
         </div>
 
