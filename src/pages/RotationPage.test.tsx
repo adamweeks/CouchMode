@@ -26,6 +26,10 @@ vi.mock('../hooks/useShows', () => ({
   useRefreshProviders: vi.fn(() => mockRefreshProviders),
 }))
 
+vi.mock('../hooks/useResumeShow', () => ({
+  useResumeShow: vi.fn(() => ({ data: null })),
+}))
+
 vi.mock('../lib/tmdb', () => ({
   searchShows: vi.fn().mockResolvedValue([]),
   posterUrl: vi.fn((p: string | null) => p ?? '/placeholder-poster.svg'),
@@ -34,6 +38,10 @@ vi.mock('../lib/tmdb', () => ({
 vi.mock('../components/ShowCard', () => ({
   ShowCard: ({ show }: { show: { title: string } }) =>
     React.createElement('div', { 'data-testid': 'show-card' }, show.title),
+}))
+
+vi.mock('../components/ResumeCard', () => ({
+  ResumeCard: () => null,
 }))
 
 vi.mock('../components/WatchlistCard', () => ({
