@@ -77,12 +77,19 @@ Respond with ONLY a valid JSON array, no other text:
       })
     )
 
+    const seen = new Set<number>()
     const suggestions = results
       .filter(
         (r): r is PromiseFulfilledResult<{ tmdb: unknown; reason: string }> =>
           r.status === 'fulfilled' && r.value !== null
       )
       .map(r => r.value)
+      .filter(s => {
+        const id = (s.tmdb as { id: number }).id
+        if (seen.has(id)) return false
+        seen.add(id)
+        return true
+      })
 
     return new Response(JSON.stringify({ suggestions }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
