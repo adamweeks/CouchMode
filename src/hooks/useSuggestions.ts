@@ -33,6 +33,6 @@ export function useSuggestions() {
         .map(s => ({ result: s.tmdb, reason: s.reason }))
     },
     enabled,
-    staleTime: 1000 * 60 * 30,
+    staleTime: 1000 * 60 * 60 * 24,
   })
 }
