@@ -1,5 +1,5 @@
 import { IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/react'
-import { tvOutline, bookOutline, settingsOutline } from 'ionicons/icons'
+import { tvOutline, bookOutline, settingsOutline, sparklesOutline } from 'ionicons/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 export function AppTabBar() {
@@ -15,6 +15,14 @@ export function AppTabBar() {
       >
         <IonIcon icon={tvOutline} />
         <IonLabel>My Shows</IonLabel>
+      </IonTabButton>
+      <IonTabButton
+        tab="suggestions"
+        selected={pathname === '/suggestions'}
+        onClick={() => navigate('/suggestions')}
+      >
+        <IonIcon icon={sparklesOutline} />
+        <IonLabel>Suggested</IonLabel>
       </IonTabButton>
       <IonTabButton
         tab="history"

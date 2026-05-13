@@ -7,7 +7,6 @@ import {
   IonTitle,
   IonContent,
   IonButtons,
-  IonBackButton,
   IonButton,
   IonList,
   IonItem,
@@ -17,7 +16,7 @@ import {
   IonIcon,
   IonFooter,
 } from '@ionic/react'
-import { playOutline, checkmarkDoneOutline, listOutline } from 'ionicons/icons'
+import { playOutline, checkmarkDoneOutline, listOutline, arrowBackOutline } from 'ionicons/icons'
 import { useShows, useAddShow, useRemoveShow } from '../hooks/useShows'
 import { useRewatches, useActiveRewatch } from '../hooks/useRewatches'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
@@ -139,7 +138,7 @@ export function ShowDetailPage() {
       <IonPage>
         <IonHeader className="gradient-header">
           <IonToolbar>
-            <IonButtons slot="start"><IonBackButton defaultHref="/" /></IonButtons>
+            <IonButtons slot="start"><IonButton onClick={() => navigate(-1)}><IonIcon slot="icon-only" icon={arrowBackOutline} /></IonButton></IonButtons>
           </IonToolbar>
         </IonHeader>
         <IonContent>
@@ -156,7 +155,7 @@ export function ShowDetailPage() {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/" />
+            <IonButton onClick={() => navigate(-1)}><IonIcon slot="icon-only" icon={arrowBackOutline} /></IonButton>
           </IonButtons>
           <IonTitle>{title}</IonTitle>
         </IonToolbar>
