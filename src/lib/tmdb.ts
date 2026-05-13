@@ -82,11 +82,17 @@ export async function fetchWatchProviders(tmdbId: number): Promise<TMDBWatchProv
   return data?.results?.US?.flatrate ?? []
 }
 
-export async function fetchSimilarShows(tmdbId: number): Promise<TMDBSearchResult[]> {
-  const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?tmdb_id=${tmdbId}&similar=1`)
-  if (!res.ok) throw new Error('TMDB similar fetch failed')
+export async function fetchAISuggestions(
+  showTitles: string[]
+): Promise<Array<{ tmdb: TMDBSearchResult; reason: string }>> {
+  const res = await fetch(`${FUNCTIONS_URL}/suggest-shows`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ shows: showTitles }),
+  })
+  if (!res.ok) throw new Error('AI suggestions fetch failed')
   const data = await res.json()
-  return data.results ?? []
+  return data.suggestions ?? []
 }
 
 export function extractEpisodesPerSeason(details: TMDBShowDetails): number[] {

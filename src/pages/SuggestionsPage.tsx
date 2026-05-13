@@ -86,7 +86,7 @@ export function SuggestionsPage() {
           <>
             <TmdbAttribution />
             <IonList inset className="inset-shadow" style={{ marginTop: '10px' }}>
-              {suggestions.map(({ result, becauseOf }) => (
+              {suggestions.map(({ result, reason }) => (
                 <IonItem
                   key={result.id}
                   button
@@ -117,7 +117,7 @@ export function SuggestionsPage() {
                   <IonLabel>
                     <h2 style={{ fontWeight: 600, fontSize: '15px' }}>{result.name}</h2>
                     <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)' }}>
-                      Because you watched {becauseOf}
+                      {reason}
                       {result.first_air_date ? ` · ${result.first_air_date.slice(0, 4)}` : ''}
                     </p>
                   </IonLabel>
