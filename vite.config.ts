@@ -18,7 +18,7 @@ export default defineConfig({
       manifest: {
         name: 'CouchMode',
         short_name: 'CouchMode',
-        description: 'Track your TV show rewatches',
+        description: 'Settle in. Track every show.',
         theme_color: '#0f0f17',
         background_color: '#0f0f17',
         display: 'standalone',
