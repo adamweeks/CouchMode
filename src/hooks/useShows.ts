@@ -130,10 +130,11 @@ export function useAddShow() {
     mutationFn: async (result: TMDBSearchResult) => {
       if (!user) throw new Error('Not authenticated')
 
-      const details = await fetchShowDetails(result.id)
+      const [details, providers] = await Promise.all([
+        fetchShowDetails(result.id),
+        fetchWatchProviders(result.id).catch(() => []),
+      ])
       const episodesPerSeason = extractEpisodesPerSeason(details)
-
-      const providers = await fetchWatchProviders(result.id).catch(() => [])
 
       const { data: show, error: showError } = await supabase
         .from('shows')
@@ -210,8 +211,9 @@ export function useRefreshProviders() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
 
+  const userId = user?.id
   return useCallback(async () => {
-    if (!user) return
+    if (!userId) return
     const cutoff = new Date(Date.now() - PROVIDERS_TTL_MS).toISOString()
     const { data: stale } = await supabase
       .from('shows')
@@ -231,6 +233,6 @@ export function useRefreshProviders() {
           .eq('id', show.id)
       })
     )
-    queryClient.invalidateQueries({ queryKey: ['shows', user.id] })
-  }, [user, queryClient])
+    queryClient.invalidateQueries({ queryKey: ['shows', userId] })
+  }, [userId, queryClient])
 }

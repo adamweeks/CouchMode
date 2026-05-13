@@ -26,8 +26,7 @@ export function WatchlistCard({ show, queuePosition }: { show: Show; queuePositi
   const { present: presentLogSheet } = useLogEpisodeSheet(show, activeRewatch?.id, null)
 
   return (
-    <>
-      <IonItemSliding>
+    <IonItemSliding>
         <IonItem button detail onClick={() => navigate(`/tmdb/${show.tmdb_id}`)}>
           <IonThumbnail
             slot="start"
@@ -92,7 +91,6 @@ export function WatchlistCard({ show, queuePosition }: { show: Show; queuePositi
             <IonIcon slot="icon-only" icon={trashOutline} />
           </IonItemOption>
         </IonItemOptions>
-      </IonItemSliding>
-    </>
+    </IonItemSliding>
   )
 }

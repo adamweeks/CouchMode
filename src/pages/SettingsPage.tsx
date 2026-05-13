@@ -117,7 +117,7 @@ export function SettingsPage() {
             expand="block"
             fill="outline"
             color="danger"
-            onClick={() => signOut()}
+            onClick={signOut}
           >
             Sign Out
           </IonButton>
