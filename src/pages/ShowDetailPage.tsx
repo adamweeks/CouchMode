@@ -25,6 +25,7 @@ import { useTMDBShow } from '../hooks/useTMDBShow'
 import { useTMDBSeason } from '../hooks/useTMDBSeason'
 import { MarkFinishedModal } from '../components/MarkFinishedModal'
 import { LogProgressModal } from '../components/LogProgressModal'
+import { BrowseEpisodesModal } from '../components/BrowseEpisodesModal'
 import { AppTabBar } from '../components/AppTabBar'
 import { formatProgress, formatDuration, formatMonthYear, countWatchedEpisodes } from '../lib/progressLogic'
 import { posterUrl, providerLogoUrl } from '../lib/tmdb'
@@ -64,6 +65,7 @@ export function ShowDetailPage() {
   const navigate = useNavigate()
   const [showFinishedModal, setShowFinishedModal] = useState(false)
   const [showLogModal, setShowLogModal] = useState(false)
+  const [browseSeason, setBrowseSeason] = useState<number | null>(null)
   const [presentAlert] = useIonAlert()
 
   const { data: tmdbShow, isLoading: isLoadingTMDB } = useTMDBShow(tmdbId)
@@ -318,21 +320,24 @@ export function ShowDetailPage() {
             <p style={sectionLabel}>Seasons</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', margin: '0 16px 16px' }}>
               {tmdbSeasons.map(s => (
-                <div
+                <button
                   key={s.season_number}
+                  onClick={() => setBrowseSeason(s.season_number)}
                   style={{
                     background: 'var(--ion-item-background)',
                     borderRadius: '8px',
                     padding: '6px 10px',
                     fontSize: '12px',
                     boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                    cursor: 'pointer',
+                    border: 'none',
                   }}
                 >
                   <span style={{ fontWeight: 600 }}>S{s.season_number}</span>
                   <span style={{ color: 'var(--ion-color-medium)', marginLeft: '4px' }}>
                     {s.episode_count} ep{s.episode_count !== 1 ? 's' : ''}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           </>
@@ -467,6 +472,16 @@ export function ShowDetailPage() {
           show={show}
           rewatchId={activeRewatch.id}
           onClose={() => setShowLogModal(false)}
+        />
+      )}
+
+      {browseSeason !== null && tmdbShow && (
+        <BrowseEpisodesModal
+          tmdbId={tmdbId!}
+          title={title}
+          seasons={tmdbSeasons}
+          initialSeason={browseSeason}
+          onClose={() => setBrowseSeason(null)}
         />
       )}
     </IonPage>
