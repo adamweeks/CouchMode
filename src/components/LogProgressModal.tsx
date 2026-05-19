@@ -247,19 +247,14 @@ function EpisodeList({
         episodes?.map(ep => {
           const isCurrent = season === currentProgress?.season && ep.episode_number === currentProgress?.episode
           return (
-            <button
+            <div
               key={ep.episode_number}
-              onClick={() => onEpisodeTap(ep.episode_number)}
-              disabled={disabled}
               style={{
                 display: 'flex',
                 gap: '12px',
                 padding: '12px 16px',
                 borderBottom: '1px solid var(--ion-border-color, var(--ion-color-light))',
-                width: '100%',
-                textAlign: 'left',
                 background: isCurrent ? 'rgba(var(--ion-color-primary-rgb), 0.08)' : 'transparent',
-                cursor: 'pointer',
                 alignItems: 'flex-start',
               }}
             >
@@ -324,7 +319,7 @@ function EpisodeList({
                   <p style={{
                     fontSize: '12px',
                     color: 'var(--ion-color-medium)',
-                    margin: 0,
+                    margin: '0 0 8px',
                     overflow: 'hidden',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
@@ -333,8 +328,17 @@ function EpisodeList({
                     {ep.overview}
                   </p>
                 ) : null}
+                <IonButton
+                  size="small"
+                  fill="outline"
+                  disabled={disabled}
+                  onClick={() => onEpisodeTap(ep.episode_number)}
+                  style={{ marginTop: ep.overview ? 0 : '8px' }}
+                >
+                  Log episode
+                </IonButton>
               </div>
-            </button>
+            </div>
           )
         })
       )}
