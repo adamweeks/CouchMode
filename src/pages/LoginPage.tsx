@@ -69,22 +69,43 @@ export function LoginPage() {
           }}
         >
           {/* Logo mark */}
-          <div
-            style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '20px',
-              background: 'linear-gradient(135deg, #3880ff 0%, #5260ff 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '40px',
-              marginBottom: '20px',
-              boxShadow: '0 8px 24px rgba(56, 128, 255, 0.35)',
-            }}
+          <svg
+            width="80"
+            height="80"
+            viewBox="0 0 512 512"
+            xmlns="http://www.w3.org/2000/svg"
+            style={{ marginBottom: '20px', borderRadius: '18px', filter: 'drop-shadow(0 8px 24px rgba(45,212,191,0.35))' }}
           >
-            📺
-          </div>
+            <defs>
+              <linearGradient id="lp-bg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#071f20"/>
+                <stop offset="100%" stopColor="#040e10"/>
+              </linearGradient>
+              <linearGradient id="lp-screen" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#071e20"/>
+                <stop offset="100%" stopColor="#020a0b"/>
+              </linearGradient>
+              <linearGradient id="lp-bezel" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#2dd4bf"/>
+                <stop offset="100%" stopColor="#0f766e"/>
+              </linearGradient>
+              <filter id="lp-glow">
+                <feGaussianBlur stdDeviation="8" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <rect width="512" height="512" rx="115" fill="url(#lp-bg)"/>
+            <rect x="72" y="128" width="368" height="252" rx="28" fill="url(#lp-bezel)"/>
+            <rect x="96" y="152" width="320" height="204" rx="12" fill="url(#lp-screen)"/>
+            <rect x="96" y="152" width="320" height="204" rx="12" fill="none" stroke="#2dd4bf" strokeWidth="2" opacity="0.4"/>
+            <rect x="216" y="378" width="80" height="22" rx="6" fill="#0f766e"/>
+            <rect x="176" y="397" width="160" height="16" rx="8" fill="#0f766e"/>
+            <circle cx="256" cy="254" r="68" fill="none" stroke="#134e4a" strokeWidth="12"/>
+            <path d="M 256 186 A 68 68 0 1 1 200 289" fill="none" stroke="#ccfbf1" strokeWidth="12" strokeLinecap="round" filter="url(#lp-glow)"/>
+            <polygon points="190,277 198,299 215,284" fill="#ccfbf1" filter="url(#lp-glow)"/>
+            <polygon points="240,233 240,275 278,254" fill="white" opacity="0.95" filter="url(#lp-glow)"/>
+            <ellipse cx="256" cy="415" rx="100" ry="10" fill="#2dd4bf" opacity="0.2"/>
+          </svg>
 
           {/* Wordmark */}
           <h1
