@@ -17,6 +17,7 @@ import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useRewatches } from '../hooks/useRewatches'
 import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
 import { LogProgressModal } from './LogProgressModal'
+import { useTMDBSeason } from '../hooks/useTMDBSeason'
 
 type Show = Database['public']['Tables']['shows']['Row']
 
@@ -42,6 +43,14 @@ export function ShowCard({
   const isWatching = !!currentProgress
   const isDone = !currentProgress && completedRewatches.length > 0
 
+  const { data: seasonData } = useTMDBSeason(
+    currentProgress ? show.tmdb_id : null,
+    currentProgress?.season ?? 0,
+  )
+  const episodeTitle = seasonData?.episodes.find(
+    ep => ep.episode_number === currentProgress?.episode,
+  )?.name
+
   const { present: presentLogSheet } = useLogEpisodeSheet(
     show,
     activeRewatch?.id,
@@ -58,7 +67,8 @@ export function ShowCard({
   const rewatchNumber = completedRewatches.length + 1
 
   const episodeText = currentProgress
-    ? formatProgress(currentProgress.season, currentProgress.episode)
+    ? formatProgress(currentProgress.season, currentProgress.episode) +
+      (episodeTitle ? ` · ${episodeTitle}` : '')
     : isDone
     ? 'Completed'
     : 'Not started'
@@ -92,7 +102,7 @@ export function ShowCard({
 
       <IonLabel>
         <h2 style={{ fontWeight: 600, fontSize: '15px', marginBottom: '2px' }}>{show.title}</h2>
-        <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', marginBottom: '6px' }}>
+        <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {episodeText}
         </p>
         {currentProgress && (
