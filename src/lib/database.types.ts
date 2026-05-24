@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          user_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       progress_logs: {
         Row: {
           episode: number
@@ -137,6 +152,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       admin_get_overview: {
         Args: Record<PropertyKey, never>
         Returns: Json

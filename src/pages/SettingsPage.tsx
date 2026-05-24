@@ -16,15 +16,14 @@ import { shieldCheckmarkOutline } from 'ionicons/icons'
 import { useNavigate } from 'react-router-dom'
 import { AppTabBar } from '../components/AppTabBar'
 import { useAuth } from '../contexts/AuthContext'
-
-const ADMIN_EMAILS = ['adam.weeks@gmail.com']
+import { useIsAdmin } from '../hooks/useIsAdmin'
 
 export function SettingsPage() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
+  const { data: isAdmin } = useIsAdmin()
 
   const displayName = user?.user_metadata?.full_name ?? user?.email ?? 'User'
-  const isAdmin = ADMIN_EMAILS.includes(user?.email ?? '')
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined
   const version = __APP_VERSION__
 

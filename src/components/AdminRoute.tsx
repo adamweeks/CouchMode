@@ -1,14 +1,21 @@
 import { Navigate } from 'react-router-dom'
+import { IonSpinner } from '@ionic/react'
 import { useAuth } from '../contexts/AuthContext'
-
-const ADMIN_EMAILS = ['adam.weeks@gmail.com']
+import { useIsAdmin } from '../hooks/useIsAdmin'
 
 export function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const { data: isAdmin, isLoading: adminLoading } = useIsAdmin()
 
-  if (loading) return null
+  if (authLoading || adminLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '48px' }}>
+        <IonSpinner name="crescent" />
+      </div>
+    )
+  }
 
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? '')) {
+  if (!user || !isAdmin) {
     return <Navigate to="/" replace />
   }
 
