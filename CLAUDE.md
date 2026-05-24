@@ -46,6 +46,7 @@ The TMDB API key is never exposed to the frontend — TMDB requests go through t
 - **shows** — User's tracked shows with `tmdb_id`, `title`, `poster_url`, `episodes_per_season` (JSON array).
 - **rewatches** — Each rewatch session per show (`status: in_progress | completed`, `started_at`, `completed_at`).
 - **progress_logs** — Individual episode logs (`season`, `episode`, `logged_at`, `note`).
+- **admin_users** — Admin user UUIDs. RLS enabled with no public policies; managed via the Supabase dashboard or service role only.
 
 Row Level Security (RLS) is enabled on all tables — users only see their own rows.
 
@@ -56,12 +57,34 @@ Row Level Security (RLS) is enabled on all tables — users only see their own r
 ### Key Directories
 
 - `src/hooks/` — All data-fetching and mutation hooks (React Query wrappers around Supabase calls)
-- `src/pages/` — Route-level components: `LoginPage`, `RotationPage`, `ShowDetailPage`, `SearchPage`
-- `src/components/` — Reusable UI (e.g., `ShowCard`, `EpisodePicker`, `LogProgressModal`)
+- `src/pages/` — Route-level components: `LoginPage`, `RotationPage`, `ShowDetailPage`, `SearchPage`, `AdminPage`
+- `src/components/` — Reusable UI (e.g., `ShowCard`, `EpisodePicker`, `LogProgressModal`, `AdminRoute`)
 - `src/lib/` — Non-React utilities: `supabase.ts` (client init), `database.types.ts` (generated types), `progressLogic.ts`, `tmdb.ts`
 - `src/contexts/` — `AuthContext`
 - `supabase/migrations/` — SQL schema and RLS policies
 - `supabase/functions/` — Deno edge functions
+
+### Admin Portal
+
+The `/admin` route provides cross-user stats. Access is controlled by the `admin_users` database table.
+
+**Granting admin access:**
+```sql
+INSERT INTO admin_users (user_id)
+SELECT id FROM auth.users WHERE email = 'someone@example.com';
+```
+
+**Revoking admin access:**
+```sql
+DELETE FROM admin_users
+WHERE user_id = (SELECT id FROM auth.users WHERE email = 'someone@example.com');
+```
+
+**How it works:**
+- `is_admin()` — `SECURITY DEFINER` SQL function; returns `true` if `auth.uid()` is in `admin_users`.
+- Three stats functions (`admin_get_overview`, `admin_get_user_list`, `admin_get_popular_shows`) all call `is_admin()` and raise an exception if it returns false.
+- Frontend: `useIsAdmin()` hook calls `supabase.rpc('is_admin')`. `AdminRoute` redirects non-admins; the Settings page link is hidden for non-admins.
+- The `admin_users` table has RLS enabled with no public policies — clients cannot read or write it directly.
 
 ### Styling
 

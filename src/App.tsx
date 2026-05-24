@@ -4,12 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { IonApp } from '@ionic/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { AdminRoute } from './components/AdminRoute'
 import { LoginPage } from './pages/LoginPage'
 import { RotationPage } from './pages/RotationPage'
 import { ShowDetailPage } from './pages/ShowDetailPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SuggestionsPage } from './pages/SuggestionsPage'
+import { AdminPage } from './pages/AdminPage'
 import { supabase } from './lib/supabase'
 
 function OAuthRedirectHandler() {
@@ -80,6 +82,16 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <SuggestionsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminRoute>
+                      <AdminPage />
+                    </AdminRoute>
                   </ProtectedRoute>
                 }
               />
