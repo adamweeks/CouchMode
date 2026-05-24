@@ -10,14 +10,21 @@ import {
   IonLabel,
   IonButton,
   IonNote,
+  IonIcon,
 } from '@ionic/react'
+import { shieldCheckmarkOutline } from 'ionicons/icons'
+import { useNavigate } from 'react-router-dom'
 import { AppTabBar } from '../components/AppTabBar'
 import { useAuth } from '../contexts/AuthContext'
 
+const ADMIN_EMAILS = ['adam.weeks@gmail.com']
+
 export function SettingsPage() {
   const { user, signOut } = useAuth()
+  const navigate = useNavigate()
 
   const displayName = user?.user_metadata?.full_name ?? user?.email ?? 'User'
+  const isAdmin = ADMIN_EMAILS.includes(user?.email ?? '')
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined
   const version = __APP_VERSION__
 
@@ -83,6 +90,16 @@ export function SettingsPage() {
             )}
           </div>
         </div>
+
+        {/* Admin section */}
+        {isAdmin && (
+          <IonList inset>
+            <IonItem button detail onClick={() => navigate('/admin')} lines="none">
+              <IonIcon icon={shieldCheckmarkOutline} slot="start" color="primary" />
+              <IonLabel>Admin Portal</IonLabel>
+            </IonItem>
+          </IonList>
+        )}
 
         {/* About section */}
         <IonList inset>

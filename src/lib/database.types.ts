@@ -137,7 +137,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_get_overview: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      admin_get_user_list: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
+          email: string
+          display_name: string
+          created_at: string
+          last_sign_in_at: string | null
+          show_count: number
+          episode_count: number
+          rewatch_count: number
+        }[]
+      }
+      admin_get_popular_shows: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          tmdb_id: string
+          title: string
+          poster_url: string | null
+          user_count: number
+          total_rewatches: number
+        }[]
+      }
     }
     Enums: {
       rewatch_status: "in_progress" | "completed"
