@@ -165,8 +165,8 @@ function PopularShowsList({ shows }: { shows: PopularShow[] }) {
 
 export function AdminPage() {
   const { data: overview, isLoading: loadingOverview, error: overviewError } = useAdminOverview()
-  const { data: users = [], isLoading: loadingUsers } = useAdminUserList()
-  const { data: popularShows = [], isLoading: loadingShows } = useAdminPopularShows()
+  const { data: users = [], isLoading: loadingUsers, error: usersError } = useAdminUserList()
+  const { data: popularShows = [], isLoading: loadingShows, error: showsError } = useAdminPopularShows()
 
   return (
     <IonPage>
@@ -232,6 +232,10 @@ export function AdminPage() {
               <div style={{ display: 'flex', justifyContent: 'center', padding: '24px' }}>
                 <IonSpinner name="crescent" />
               </div>
+            ) : usersError ? (
+              <p style={{ padding: '0 16px 16px', fontSize: '13px', color: 'var(--ion-color-danger)' }}>
+                {String(usersError)}
+              </p>
             ) : (
               <UsersTable users={users} />
             )}
@@ -241,6 +245,10 @@ export function AdminPage() {
               <div style={{ display: 'flex', justifyContent: 'center', padding: '24px' }}>
                 <IonSpinner name="crescent" />
               </div>
+            ) : showsError ? (
+              <p style={{ padding: '0 16px 48px', fontSize: '13px', color: 'var(--ion-color-danger)' }}>
+                {String(showsError)}
+              </p>
             ) : (
               <PopularShowsList shows={popularShows} />
             )}

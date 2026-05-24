@@ -50,7 +50,7 @@ export function useAdminUserList() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc('admin_get_user_list')
       if (error) throw error
-      return (data ?? []) as AdminUser[]
+      return (data ?? []) as unknown as AdminUser[]
     },
   })
 }
@@ -61,7 +61,7 @@ export function useAdminPopularShows() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc('admin_get_popular_shows')
       if (error) throw error
-      return (data ?? []) as PopularShow[]
+      return (data ?? []) as unknown as PopularShow[]
     },
   })
 }

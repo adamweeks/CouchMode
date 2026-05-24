@@ -162,26 +162,11 @@ export type Database = {
       }
       admin_get_user_list: {
         Args: Record<PropertyKey, never>
-        Returns: {
-          user_id: string
-          email: string
-          display_name: string
-          created_at: string
-          last_sign_in_at: string | null
-          show_count: number
-          episode_count: number
-          rewatch_count: number
-        }[]
+        Returns: Json
       }
       admin_get_popular_shows: {
         Args: Record<PropertyKey, never>
-        Returns: {
-          tmdb_id: string
-          title: string
-          poster_url: string | null
-          user_count: number
-          total_rewatches: number
-        }[]
+        Returns: Json
       }
     }
     Enums: {
