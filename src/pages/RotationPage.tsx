@@ -1,43 +1,27 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import {
   IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
-  IonFab,
-  IonFabButton,
-  IonIcon,
   IonSpinner,
-  IonButton,
-  IonButtons,
   IonList,
   IonListHeader,
-  IonItem,
   IonLabel,
-  IonThumbnail,
-  IonFooter,
   IonReorderGroup,
   IonSearchbar,
 } from '@ionic/react'
 import type { ItemReorderEventDetail } from '@ionic/core'
-import { add, searchOutline, arrowBackOutline } from 'ionicons/icons'
 import { useShowGroups, useUpdateShowOrder, useRefreshProviders } from '../hooks/useShows'
 import { useResumeShow } from '../hooks/useResumeShow'
 import { ShowCard } from '../components/ShowCard'
 import { ResumeCard } from '../components/ResumeCard'
 import { WatchlistCard } from '../components/WatchlistCard'
-import { AppTabBar } from '../components/AppTabBar'
-import { TmdbAttribution } from '../components/TmdbAttribution'
-import { searchShows, posterUrl } from '../lib/tmdb'
-import { useDebounce } from '../hooks/useDebounce'
+import { BottomNav } from '../components/BottomNav'
 
 export function RotationPage() {
-  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
-  const [tmdbMode, setTmdbMode] = useState(false)
 
   const { data, isLoading } = useShowGroups()
   const { data: resumeData } = useResumeShow()
@@ -59,156 +43,31 @@ export function RotationPage() {
   const filteredDone = q ? done.filter(s => s.title.toLowerCase().includes(q)) : done
   const filteredTotal = filteredWatching.length + filteredQueue.length + filteredDone.length
 
-  const debouncedQuery = useDebounce(searchQuery, 300)
-  const allMyShows = [...watching, ...queue, ...done]
-  const myShowsByTmdbId = new Map(allMyShows.map(s => [s.tmdb_id, s]))
-
-  const { data: tmdbResults = [], isFetching: tmdbFetching } = useQuery({
-    queryKey: ['tmdb-search', debouncedQuery],
-    queryFn: () => searchShows(debouncedQuery),
-    enabled: tmdbMode && debouncedQuery.length > 2,
-  })
-
-  useEffect(() => {
-    if (!searchQuery) setTmdbMode(false)
-  }, [searchQuery])
-
-  useEffect(() => {
-    if (!tmdbMode && debouncedQuery.length > 2 && filteredTotal === 0) {
-      setTmdbMode(true)
-    }
-  }, [debouncedQuery, filteredTotal, tmdbMode])
-
   function handleQueueReorder(event: CustomEvent<ItemReorderEventDetail>) {
     const reordered = event.detail.complete(queue) as typeof queue
     updateOrder(reordered.map((show, i) => ({ id: show.id, sort_order: i })))
-  }
-
-  function exitTmdbMode() {
-    setTmdbMode(false)
-    setSearchQuery('')
   }
 
   return (
     <IonPage>
       <IonHeader className="gradient-header">
         <IonToolbar>
-          {tmdbMode && (
-            <IonButtons slot="start">
-              <IonButton onClick={exitTmdbMode} aria-label="Back to my shows">
-                <IonIcon slot="icon-only" icon={arrowBackOutline} />
-              </IonButton>
-            </IonButtons>
-          )}
-          <IonTitle>{tmdbMode ? 'Add a Show' : 'My Shows'}</IonTitle>
+          <IonTitle>My Shows</IonTitle>
         </IonToolbar>
         <IonToolbar>
           <IonSearchbar
             className="gradient-searchbar"
-            placeholder={tmdbMode ? 'Search TV shows…' : 'Find a show…'}
+            placeholder="Find a show…"
             value={searchQuery}
             onIonInput={e => setSearchQuery(e.detail.value ?? '')}
-            onIonClear={() => { setSearchQuery(''); setTmdbMode(false) }}
+            onIonClear={() => setSearchQuery('')}
             debounce={150}
           />
         </IonToolbar>
       </IonHeader>
 
-      <IonContent>
-        {tmdbMode ? (
-          <>
-            {tmdbFetching && (
-              <div className="flex justify-center pt-8" role="status" aria-label="Searching">
-                <IonSpinner name="crescent" />
-              </div>
-            )}
-
-            {!tmdbFetching && debouncedQuery.length > 2 && tmdbResults.length === 0 && (
-              <p className="text-center pt-8 px-4" style={{ color: 'var(--ion-color-medium)' }}>
-                No results for "{debouncedQuery}"
-              </p>
-            )}
-
-            {!tmdbFetching && debouncedQuery.length <= 2 && (
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  paddingTop: '48px',
-                  paddingBottom: '24px',
-                  color: 'var(--ion-color-medium)',
-                  textAlign: 'center',
-                  gap: '8px',
-                }}
-              >
-                <span style={{ fontSize: '40px', opacity: 0.3 }}>🔍</span>
-                <p style={{ fontSize: '14px' }}>Search for a show to add to your rotation</p>
-              </div>
-            )}
-
-            <TmdbAttribution />
-
-            {tmdbResults.length > 0 && (
-              <IonList inset className="inset-shadow" style={{ marginTop: '10px' }}>
-                {tmdbResults.map(result => {
-                  const existing = myShowsByTmdbId.get(String(result.id))
-                  return (
-                    <IonItem
-                      key={result.id}
-                      button
-                      detail
-                      onClick={() => navigate(`/tmdb/${result.id}`, { state: { result } })}
-                    >
-                      <IonThumbnail
-                        slot="start"
-                        style={
-                          {
-                            '--size': '44px',
-                            '--border-radius': '6px',
-                            height: '58px',
-                            paddingTop: '8px',
-                            paddingBottom: '8px',
-                            marginRight: '12px',
-                          } as React.CSSProperties
-                        }
-                      >
-                        <img
-                          src={posterUrl(result.poster_path)}
-                          alt={result.name}
-                          style={{ objectFit: 'cover', height: '100%', width: '100%', borderRadius: '6px' }}
-                          loading="lazy"
-                        />
-                      </IonThumbnail>
-
-                      <IonLabel>
-                        <h2 style={{ fontWeight: 600, fontSize: '15px' }}>{result.name}</h2>
-                        {result.first_air_date && (
-                          <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)' }}>
-                            {result.first_air_date.slice(0, 4)}
-                          </p>
-                        )}
-                      </IonLabel>
-
-                      {existing && (
-                        <span
-                          slot="end"
-                          style={{
-                            fontSize: '12px',
-                            color: 'var(--ion-color-medium)',
-                            fontWeight: 500,
-                          }}
-                        >
-                          Added
-                        </span>
-                      )}
-                    </IonItem>
-                  )
-                })}
-              </IonList>
-            )}
-          </>
-        ) : isLoading ? (
+      <IonContent className="tab-page-content">
+        {isLoading ? (
           <div className="flex justify-center pt-16" role="status" aria-label="Loading shows">
             <IonSpinner name="crescent" />
           </div>
@@ -226,36 +85,27 @@ export function RotationPage() {
           >
             <span style={{ fontSize: '48px', opacity: 0.3, marginBottom: '12px' }}>📺</span>
             <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No shows yet</h2>
-            <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', lineHeight: 1.5, marginBottom: '20px' }}>
-              Add a show to start tracking your rewatches or build your queue.
+            <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', lineHeight: 1.5 }}>
+              Use the search bar to find a show and start tracking your rewatches.
             </p>
-            <IonButton onClick={() => setTmdbMode(true)}>Find a Show</IonButton>
           </div>
         ) : filteredTotal === 0 ? (
-          <>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '48px 24px 24px',
-                textAlign: 'center',
-              }}
-            >
-              <span style={{ fontSize: '48px', opacity: 0.3, marginBottom: '12px' }}>🔍</span>
-              <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No matches</h2>
-              <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', lineHeight: 1.5 }}>
-                No shows match "{searchQuery}".
-              </p>
-            </div>
-            <IonList inset className="inset-shadow">
-              <IonItem button detail onClick={() => setTmdbMode(true)}>
-                <IonIcon slot="start" icon={searchOutline} style={{ color: 'var(--ion-color-medium)' }} />
-                <span>Search <strong>"{searchQuery}"</strong> on TMDB</span>
-              </IonItem>
-            </IonList>
-          </>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '48px 24px 24px',
+              textAlign: 'center',
+            }}
+          >
+            <span style={{ fontSize: '48px', opacity: 0.3, marginBottom: '12px' }}>🔍</span>
+            <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No matches</h2>
+            <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', lineHeight: 1.5 }}>
+              No shows match "{searchQuery}".
+            </p>
+          </div>
         ) : (
           <>
             {!q && resumeData && <ResumeCard data={resumeData} />}
@@ -300,30 +150,11 @@ export function RotationPage() {
                 </IonList>
               </>
             )}
-
-            {q && (
-              <IonList inset className="inset-shadow">
-                <IonItem button detail onClick={() => setTmdbMode(true)}>
-                  <IonIcon slot="start" icon={searchOutline} style={{ color: 'var(--ion-color-medium)' }} />
-                  <span>Search <strong>"{searchQuery}"</strong> on TMDB</span>
-                </IonItem>
-              </IonList>
-            )}
           </>
-        )}
-
-        {!tmdbMode && (
-          <IonFab vertical="bottom" horizontal="end" slot="fixed">
-            <IonFabButton onClick={() => setTmdbMode(true)} aria-label="Add show">
-              <IonIcon icon={add} />
-            </IonFabButton>
-          </IonFab>
         )}
       </IonContent>
 
-      <IonFooter>
-        <AppTabBar />
-      </IonFooter>
+      <BottomNav />
 
     </IonPage>
   )
