@@ -5,7 +5,6 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
-  IonFooter,
   IonSpinner,
   IonList,
   IonItem,
@@ -16,7 +15,7 @@ import {
 import { useSuggestions } from '../hooks/useSuggestions'
 import { useShowGroups } from '../hooks/useShows'
 import { posterUrl } from '../lib/tmdb'
-import { AppTabBar } from '../components/AppTabBar'
+import { BottomNav } from '../components/BottomNav'
 import { TmdbAttribution } from '../components/TmdbAttribution'
 
 export function SuggestionsPage() {
@@ -39,7 +38,7 @@ export function SuggestionsPage() {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent>
+      <IonContent className="tab-page-content">
         {loading ? (
           <div className="flex justify-center pt-16" role="status" aria-label="Loading suggestions">
             <IonSpinner name="crescent" />
@@ -128,9 +127,7 @@ export function SuggestionsPage() {
         )}
       </IonContent>
 
-      <IonFooter>
-        <AppTabBar />
-      </IonFooter>
+      <BottomNav />
     </IonPage>
   )
 }

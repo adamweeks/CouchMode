@@ -14,7 +14,6 @@ import {
   IonSpinner,
   useIonAlert,
   IonIcon,
-  IonFooter,
 } from '@ionic/react'
 import { playOutline, checkmarkDoneOutline, listOutline, arrowBackOutline } from 'ionicons/icons'
 import { useShows, useAddShow, useRemoveShow } from '../hooks/useShows'
@@ -26,7 +25,7 @@ import { useTMDBSeason } from '../hooks/useTMDBSeason'
 import { MarkFinishedModal } from '../components/MarkFinishedModal'
 import { LogProgressModal } from '../components/LogProgressModal'
 import { BrowseEpisodesModal } from '../components/BrowseEpisodesModal'
-import { AppTabBar } from '../components/AppTabBar'
+import { BottomNav } from '../components/BottomNav'
 import { formatProgress, formatDuration, formatMonthYear, countWatchedEpisodes } from '../lib/progressLogic'
 import { posterUrl, providerLogoUrl } from '../lib/tmdb'
 import type { TMDBWatchProvider } from '../lib/tmdb'
@@ -163,7 +162,7 @@ export function ShowDetailPage() {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent>
+      <IonContent className="tab-page-content">
         <div style={{ ...card, margin: '12px 16px 12px' }}>
           <div style={{ display: 'flex', gap: '12px', padding: '12px 12px 10px' }}>
             <img
@@ -454,9 +453,7 @@ export function ShowDetailPage() {
         </div>
       </IonContent>
 
-      <IonFooter>
-        <AppTabBar />
-      </IonFooter>
+      <BottomNav />
 
       {showFinishedModal && activeRewatch && show && (
         <MarkFinishedModal

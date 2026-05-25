@@ -4,7 +4,6 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
-  IonFooter,
   IonList,
   IonItem,
   IonLabel,
@@ -14,7 +13,7 @@ import {
 } from '@ionic/react'
 import { shieldCheckmarkOutline } from 'ionicons/icons'
 import { useNavigate } from 'react-router-dom'
-import { AppTabBar } from '../components/AppTabBar'
+import { BottomNav } from '../components/BottomNav'
 import { useAuth } from '../contexts/AuthContext'
 import { useIsAdmin } from '../hooks/useIsAdmin'
 
@@ -35,7 +34,7 @@ export function SettingsPage() {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent>
+      <IonContent className="tab-page-content">
         {/* Profile card */}
         <div
           style={{
@@ -140,9 +139,7 @@ export function SettingsPage() {
         </div>
       </IonContent>
 
-      <IonFooter>
-        <AppTabBar />
-      </IonFooter>
+      <BottomNav />
     </IonPage>
   )
 }

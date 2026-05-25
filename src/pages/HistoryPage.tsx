@@ -6,14 +6,13 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
-  IonFooter,
   IonList,
   IonItem,
   IonLabel,
   IonThumbnail,
   IonSpinner,
 } from '@ionic/react'
-import { AppTabBar } from '../components/AppTabBar'
+import { BottomNav } from '../components/BottomNav'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useShows } from '../hooks/useShows'
@@ -127,7 +126,7 @@ export function HistoryPage() {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent>
+      <IonContent className="tab-page-content">
         {isLoading ? (
           <div className="flex justify-center pt-16" role="status" aria-label="Loading history">
             <IonSpinner name="crescent" />
@@ -306,9 +305,7 @@ export function HistoryPage() {
         )}
       </IonContent>
 
-      <IonFooter>
-        <AppTabBar />
-      </IonFooter>
+      <BottomNav />
     </IonPage>
   )
 }

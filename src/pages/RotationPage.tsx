@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -18,7 +18,6 @@ import {
   IonItem,
   IonLabel,
   IonThumbnail,
-  IonFooter,
   IonReorderGroup,
   IonSearchbar,
 } from '@ionic/react'
@@ -29,7 +28,7 @@ import { useResumeShow } from '../hooks/useResumeShow'
 import { ShowCard } from '../components/ShowCard'
 import { ResumeCard } from '../components/ResumeCard'
 import { WatchlistCard } from '../components/WatchlistCard'
-import { AppTabBar } from '../components/AppTabBar'
+import { BottomNav } from '../components/BottomNav'
 import { TmdbAttribution } from '../components/TmdbAttribution'
 import { searchShows, posterUrl } from '../lib/tmdb'
 import { useDebounce } from '../hooks/useDebounce'
@@ -114,7 +113,7 @@ export function RotationPage() {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent>
+      <IonContent className="tab-page-content">
         {tmdbMode ? (
           <>
             {tmdbFetching && (
@@ -313,7 +312,12 @@ export function RotationPage() {
         )}
 
         {!tmdbMode && (
-          <IonFab vertical="bottom" horizontal="end" slot="fixed">
+          <IonFab
+            vertical="bottom"
+            horizontal="end"
+            slot="fixed"
+            style={{ '--bottom': 'calc(50px + env(safe-area-inset-bottom, 0px) + 16px)' } as React.CSSProperties}
+          >
             <IonFabButton onClick={() => setTmdbMode(true)} aria-label="Add show">
               <IonIcon icon={add} />
             </IonFabButton>
@@ -321,9 +325,7 @@ export function RotationPage() {
         )}
       </IonContent>
 
-      <IonFooter>
-        <AppTabBar />
-      </IonFooter>
+      <BottomNav />
 
     </IonPage>
   )

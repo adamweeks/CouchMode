@@ -145,8 +145,8 @@ ion-content.white-bg {
   --background: #ffffff;
 }
 
-/* Apply safe-area-inset-bottom only on the tab bar, not ion-footer, to avoid
-   double-counting (ion-footer also consumes --ion-safe-area-bottom). */
-ion-tab-bar {
-  --ion-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+/* Pages with the fixed bottom nav need scroll padding so content isn't hidden
+   behind the nav. 50px = nav icon+label area; safe-area accounts for home indicator. */
+.tab-page-content {
+  --padding-bottom: calc(50px + env(safe-area-inset-bottom, 0px));
 }
