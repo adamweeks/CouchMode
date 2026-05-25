@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -316,7 +316,7 @@ export function RotationPage() {
             vertical="bottom"
             horizontal="end"
             slot="fixed"
-            style={{ '--bottom': 'calc(50px + env(safe-area-inset-bottom, 0px) + 16px)' } as React.CSSProperties}
+            className="fab-above-nav"
           >
             <IonFabButton onClick={() => setTmdbMode(true)} aria-label="Add show">
               <IonIcon icon={add} />
