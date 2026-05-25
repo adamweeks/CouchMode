@@ -10,6 +10,7 @@ export interface MarkFinishedArgs {
   startedAt?: string
   completedAt: string
   note?: string
+  service?: string
 }
 
 export function useRewatches(showId: string) {
@@ -52,7 +53,7 @@ export function useMarkSeriesFinished() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ rewatchId, showId, startedAt, completedAt, note }: MarkFinishedArgs) => {
+    mutationFn: async ({ rewatchId, showId, startedAt, completedAt, note, service }: MarkFinishedArgs) => {
       if (!user) throw new Error('Not authenticated')
 
       const { data: rewatch, error: fetchError } = await supabase
@@ -62,7 +63,7 @@ export function useMarkSeriesFinished() {
         .single()
       if (fetchError) throw fetchError
 
-      const updates = buildCompletionUpdates(completedAt, rewatch.started_at, startedAt, note)
+      const updates = { ...buildCompletionUpdates(completedAt, rewatch.started_at, startedAt, note), service: service ?? null }
       const { error } = await supabase.from('rewatches').update(updates).eq('id', rewatchId)
       if (error) throw error
 
@@ -71,6 +72,23 @@ export function useMarkSeriesFinished() {
     onSuccess: (_data, { showId }) => {
       queryClient.invalidateQueries({ queryKey: ['rewatches', showId] })
       queryClient.invalidateQueries({ queryKey: ['shows', user?.id] })
+    },
+  })
+}
+
+export function useUpdateRewatch(showId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ rewatchId, service }: { rewatchId: string; service: string | null }) => {
+      const { error } = await supabase
+        .from('rewatches')
+        .update({ service })
+        .eq('id', rewatchId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rewatches', showId] })
     },
   })
 }
