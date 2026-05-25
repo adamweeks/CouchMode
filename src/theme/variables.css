@@ -150,9 +150,3 @@ ion-content.white-bg {
 .tab-page-content {
   --padding-bottom: calc(50px + env(safe-area-inset-bottom, 0px));
 }
-
-/* IonFab vertical=bottom computes: bottom = 16px + var(--bottom, 0px).
-   Set --bottom to lift the FAB clear of the fixed BottomNav. */
-.fab-above-nav {
-  --bottom: calc(50px + env(safe-area-inset-bottom, 0px));
-}
