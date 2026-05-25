@@ -52,8 +52,8 @@ export function EditServiceModal({ showId, rewatchId, currentService, onClose, a
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <IonContent>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px 24px' }}>
           <ServiceSelector value={service} onChange={setService} label="Service" availableOn={availableOn} />
 
           <IonButton
