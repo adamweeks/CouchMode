@@ -1,8 +1,10 @@
 :root {
-  /* Wire Ionic's safe-area variables to the browser env() values so tab bar
-     and other Ionic components get correct padding in iOS PWA (standalone) mode. */
+  /* Wire Ionic's safe-area variables to the browser env() values so components
+     get correct padding in iOS PWA (standalone) mode. */
   --ion-safe-area-top: env(safe-area-inset-top);
-  --ion-safe-area-bottom: env(safe-area-inset-bottom);
+  /* Note: --ion-safe-area-bottom is intentionally NOT set here. Both ion-footer
+     and ion-tab-bar consume this variable, which causes double-counting in iOS
+     PWA mode. Setting it only on ion-tab-bar (below) fixes the gray-space gap. */
   --ion-safe-area-left: env(safe-area-inset-left);
   --ion-safe-area-right: env(safe-area-inset-right);
 
@@ -141,4 +143,10 @@ ion-content {
 
 ion-content.white-bg {
   --background: #ffffff;
+}
+
+/* Apply safe-area-inset-bottom only on the tab bar, not ion-footer, to avoid
+   double-counting (ion-footer also consumes --ion-safe-area-bottom). */
+ion-tab-bar {
+  --ion-safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
