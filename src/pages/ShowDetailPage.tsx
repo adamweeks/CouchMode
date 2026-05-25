@@ -15,7 +15,7 @@ import {
   useIonAlert,
   IonIcon,
 } from '@ionic/react'
-import { playOutline, checkmarkDoneOutline, listOutline, arrowBackOutline } from 'ionicons/icons'
+import { playOutline, checkmarkDoneOutline, listOutline, arrowBackOutline, tvOutline } from 'ionicons/icons'
 import { useShows, useAddShow, useRemoveShow } from '../hooks/useShows'
 import { useRewatches, useActiveRewatch } from '../hooks/useRewatches'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
@@ -307,22 +307,17 @@ export function ShowDetailPage() {
                 Finished
               </IonButton>
             </div>
-            <div style={{ margin: '0 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <button
+            <div style={{ margin: '0 16px 12px' }}>
+              <IonButton
+                expand="block"
+                fill="outline"
+                color="medium"
+                size="small"
                 onClick={() => setShowEditServiceModal(true)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  color: 'var(--ion-color-medium)',
-                  padding: '4px 8px',
-                }}
               >
-                {activeRewatch?.service
-                  ? `Watching on: ${activeRewatch.service} · edit`
-                  : '+ Set service'}
-              </button>
+                <IonIcon slot="start" icon={tvOutline} />
+                {activeRewatch?.service ? activeRewatch.service : 'Set service'}
+              </IonButton>
             </div>
           </>
         )}
