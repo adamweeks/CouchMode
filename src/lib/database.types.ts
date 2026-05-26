@@ -72,6 +72,7 @@ export type Database = {
           completed_at: string | null
           id: string
           note: string | null
+          service: string | null
           show_id: string
           started_at: string
           status: Database["public"]["Enums"]["rewatch_status"]
@@ -81,6 +82,7 @@ export type Database = {
           completed_at?: string | null
           id?: string
           note?: string | null
+          service?: string | null
           show_id: string
           started_at?: string
           status?: Database["public"]["Enums"]["rewatch_status"]
@@ -90,6 +92,7 @@ export type Database = {
           completed_at?: string | null
           id?: string
           note?: string | null
+          service?: string | null
           show_id?: string
           started_at?: string
           status?: Database["public"]["Enums"]["rewatch_status"]

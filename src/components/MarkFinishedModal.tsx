@@ -14,19 +14,23 @@ import {
 } from '@ionic/react'
 import { useMarkSeriesFinished } from '../hooks/useRewatches'
 import { getErrorMessage } from '../lib/progressLogic'
+import { ServiceSelector } from './ServiceSelector'
 
 interface Props {
   showId: string
   rewatchId: string
   rewatchStartedAt: string
+  currentService: string | null
   onClose: () => void
+  availableOn?: string[]
 }
 
-export function MarkFinishedModal({ showId, rewatchId, rewatchStartedAt, onClose }: Props) {
+export function MarkFinishedModal({ showId, rewatchId, rewatchStartedAt, currentService, onClose, availableOn }: Props) {
   const today = new Date().toISOString().split('T')[0]
   const [startDate, setStartDate] = useState(rewatchStartedAt.split('T')[0])
   const [endDate, setEndDate] = useState(today)
   const [note, setNote] = useState('')
+  const [service, setService] = useState(currentService ?? '')
   const [error, setError] = useState<string | null>(null)
   const [presentToast] = useIonToast()
 
@@ -41,7 +45,14 @@ export function MarkFinishedModal({ showId, rewatchId, rewatchStartedAt, onClose
     try {
       const completedAt = new Date(endDate + 'T12:00:00Z').toISOString()
       const startedAt = startDate ? new Date(startDate + 'T12:00:00Z').toISOString() : undefined
-      await markFinished.mutateAsync({ rewatchId, showId, startedAt, completedAt, note: note || undefined })
+      await markFinished.mutateAsync({
+        rewatchId,
+        showId,
+        startedAt,
+        completedAt,
+        note: note || undefined,
+        service: service || undefined,
+      })
       onClose()
     } catch (e) {
       presentToast({
@@ -90,6 +101,13 @@ export function MarkFinishedModal({ showId, rewatchId, rewatchStartedAt, onClose
             label="When did you finish?"
             labelPlacement="floating"
             fill="outline"
+          />
+
+          <ServiceSelector
+            value={service}
+            onChange={setService}
+            label="Watched on (optional)"
+            availableOn={availableOn}
           />
 
           <IonTextarea

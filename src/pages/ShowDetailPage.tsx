@@ -15,7 +15,7 @@ import {
   useIonAlert,
   IonIcon,
 } from '@ionic/react'
-import { playOutline, checkmarkDoneOutline, listOutline, arrowBackOutline } from 'ionicons/icons'
+import { playOutline, checkmarkDoneOutline, listOutline, arrowBackOutline, tvOutline } from 'ionicons/icons'
 import { useShows, useAddShow, useRemoveShow } from '../hooks/useShows'
 import { useRewatches, useActiveRewatch } from '../hooks/useRewatches'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
@@ -26,11 +26,13 @@ import { MarkFinishedModal } from '../components/MarkFinishedModal'
 import { LogProgressModal } from '../components/LogProgressModal'
 import { BrowseEpisodesModal } from '../components/BrowseEpisodesModal'
 import { BottomNav } from '../components/BottomNav'
+import { EditServiceModal } from '../components/EditServiceModal'
+import { ServiceSelector } from '../components/ServiceSelector'
 import { formatProgress, formatDuration, formatMonthYear, countWatchedEpisodes } from '../lib/progressLogic'
 import { posterUrl, providerLogoUrl } from '../lib/tmdb'
 import type { TMDBWatchProvider } from '../lib/tmdb'
 
-type Rewatch = { id: string; completed_at: string | null; started_at: string; note: string | null; status: string }
+type Rewatch = { id: string; completed_at: string | null; started_at: string; note: string | null; service: string | null; status: string }
 
 function avgDaysBetweenRewatches(rewatches: Rewatch[]): number | null {
   if (rewatches.length < 2) return null
@@ -64,6 +66,8 @@ export function ShowDetailPage() {
   const navigate = useNavigate()
   const [showFinishedModal, setShowFinishedModal] = useState(false)
   const [showLogModal, setShowLogModal] = useState(false)
+  const [showEditServiceModal, setShowEditServiceModal] = useState(false)
+  const [addShowService, setAddShowService] = useState('')
   const [browseSeason, setBrowseSeason] = useState<number | null>(null)
   const [presentAlert] = useIonAlert()
 
@@ -115,6 +119,7 @@ export function ShowDetailPage() {
   const completedRewatches = rewatches.filter(r => r.status === 'completed')
   const avgDays = avgDaysBetweenRewatches(completedRewatches)
   const providers = (show?.streaming_providers as TMDBWatchProvider[] | null) ?? null
+  const providerNames = providers?.map(p => p.provider_name)
 
   function handleRemove() {
     presentAlert({
@@ -292,7 +297,7 @@ export function ShowDetailPage() {
                 </IonButton>
               </div>
             </div>
-            <div style={{ margin: '0 16px 12px', display: 'flex', gap: '8px' }}>
+            <div style={{ margin: '0 16px 4px', display: 'flex', gap: '8px' }}>
               <IonButton expand="block" fill="outline" style={{ flex: 1 }} onClick={() => setShowLogModal(true)}>
                 <IonIcon slot="start" icon={listOutline} />
                 Pick Episode
@@ -300,6 +305,18 @@ export function ShowDetailPage() {
               <IonButton expand="block" fill="outline" color="success" style={{ flex: 1 }} onClick={() => setShowFinishedModal(true)}>
                 <IonIcon slot="start" icon={checkmarkDoneOutline} />
                 Finished
+              </IonButton>
+            </div>
+            <div style={{ margin: '0 16px 12px' }}>
+              <IonButton
+                expand="block"
+                fill="outline"
+                color="medium"
+                size="small"
+                onClick={() => setShowEditServiceModal(true)}
+              >
+                <IonIcon slot="start" icon={tvOutline} />
+                {activeRewatch?.service ? activeRewatch.service : 'Set service'}
               </IonButton>
             </div>
           </>
@@ -410,7 +427,15 @@ export function ShowDetailPage() {
                       Rewatch #{completedRewatches.length - i}
                     </h3>
                     {rewatch.started_at && rewatch.completed_at && (
-                      <p style={{ fontSize: '12px' }}>{formatDuration(rewatch.started_at, rewatch.completed_at)}</p>
+                      <p style={{ fontSize: '12px' }}>
+                        {formatDuration(rewatch.started_at, rewatch.completed_at)}
+                        {rewatch.service && (
+                          <span style={{ color: 'var(--ion-color-medium)' }}> · {rewatch.service}</span>
+                        )}
+                      </p>
+                    )}
+                    {!rewatch.started_at && rewatch.service && (
+                      <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)' }}>{rewatch.service}</p>
                     )}
                     {rewatch.note && (
                       <p style={{ fontSize: '12px', fontStyle: 'italic' }}>"{rewatch.note}"</p>
@@ -433,22 +458,31 @@ export function ShowDetailPage() {
               Remove from Rotation
             </IonButton>
           ) : (
-            <IonButton
-              expand="block"
-              disabled={addShow.isPending || !tmdbShow}
-              onClick={async () => {
-                if (!tmdbShow) return
-                await addShow.mutateAsync({
-                  id: tmdbShow.id,
-                  name: tmdbShow.name,
-                  poster_path: tmdbShow.poster_path,
-                  first_air_date: tmdbShow.first_air_date,
-                  overview: tmdbShow.overview,
-                })
-              }}
-            >
-              {addShow.isPending ? 'Adding…' : 'Add to Rotation'}
-            </IonButton>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <ServiceSelector
+                value={addShowService}
+                onChange={setAddShowService}
+                label="Watching on (optional)"
+                availableOn={providerNames}
+              />
+              <IonButton
+                expand="block"
+                disabled={addShow.isPending || !tmdbShow}
+                onClick={async () => {
+                  if (!tmdbShow) return
+                  await addShow.mutateAsync({
+                    id: tmdbShow.id,
+                    name: tmdbShow.name,
+                    poster_path: tmdbShow.poster_path,
+                    first_air_date: tmdbShow.first_air_date,
+                    overview: tmdbShow.overview,
+                    service: addShowService || undefined,
+                  })
+                }}
+              >
+                {addShow.isPending ? 'Adding…' : 'Add to Rotation'}
+              </IonButton>
+            </div>
           )}
         </div>
       </IonContent>
@@ -460,7 +494,9 @@ export function ShowDetailPage() {
           showId={show.id}
           rewatchId={activeRewatch.id}
           rewatchStartedAt={activeRewatch.started_at}
+          currentService={activeRewatch.service ?? null}
           onClose={() => setShowFinishedModal(false)}
+          availableOn={providerNames}
         />
       )}
 
@@ -469,6 +505,16 @@ export function ShowDetailPage() {
           show={show}
           rewatchId={activeRewatch.id}
           onClose={() => setShowLogModal(false)}
+        />
+      )}
+
+      {showEditServiceModal && activeRewatch && show && (
+        <EditServiceModal
+          showId={show.id}
+          rewatchId={activeRewatch.id}
+          currentService={activeRewatch.service ?? null}
+          onClose={() => setShowEditServiceModal(false)}
+          availableOn={providerNames}
         />
       )}
 

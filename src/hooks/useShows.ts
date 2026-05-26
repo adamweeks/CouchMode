@@ -127,7 +127,7 @@ export function useAddShow() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (result: TMDBSearchResult) => {
+    mutationFn: async (result: TMDBSearchResult & { service?: string }) => {
       if (!user) throw new Error('Not authenticated')
 
       const [details, providers] = await Promise.all([
@@ -158,6 +158,7 @@ export function useAddShow() {
           show_id: show.id,
           user_id: user.id,
           status: 'in_progress',
+          service: result.service ?? null,
         })
       if (rewatchError) throw rewatchError
 
