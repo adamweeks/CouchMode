@@ -8,7 +8,9 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  IF auth.email() != 'adam.weeks@gmail.com' THEN
+  -- Note: email-based admin check removed before open-source. These functions
+  -- are superseded by migration 0002 which uses is_admin() + admin_users table.
+  IF NOT is_admin() THEN
     RAISE EXCEPTION 'Unauthorized: Admin access required';
   END IF;
 
@@ -49,7 +51,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  IF auth.email() != 'adam.weeks@gmail.com' THEN
+  IF NOT is_admin() THEN
     RAISE EXCEPTION 'Unauthorized: Admin access required';
   END IF;
 
@@ -85,7 +87,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  IF auth.email() != 'adam.weeks@gmail.com' THEN
+  IF NOT is_admin() THEN
     RAISE EXCEPTION 'Unauthorized: Admin access required';
   END IF;
 

@@ -41,6 +41,8 @@ export interface TMDBWatchProvider {
   logo_path: string
 }
 
+import { supabase } from './supabase'
+
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w300'
 const TMDB_LOGO_BASE = 'https://image.tmdb.org/t/p/w45'
 
@@ -56,27 +58,41 @@ export function posterUrl(path: string | null | undefined): string {
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
 
+async function authHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return {}
+  return { Authorization: `Bearer ${session.access_token}` }
+}
+
 export async function searchShows(query: string): Promise<TMDBSearchResult[]> {
-  const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?query=${encodeURIComponent(query)}`)
+  const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?query=${encodeURIComponent(query)}`, {
+    headers: await authHeaders(),
+  })
   if (!res.ok) throw new Error('TMDB search failed')
   const data = await res.json()
   return data.results ?? []
 }
 
 export async function fetchShowDetails(tmdbId: number): Promise<TMDBShowDetails> {
-  const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?tmdb_id=${tmdbId}`)
+  const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?tmdb_id=${tmdbId}`, {
+    headers: await authHeaders(),
+  })
   if (!res.ok) throw new Error('TMDB fetch failed')
   return res.json()
 }
 
 export async function fetchSeasonDetails(tmdbId: string, season: number): Promise<TMDBSeasonDetails> {
-  const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?tmdb_id=${tmdbId}&season=${season}`)
+  const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?tmdb_id=${tmdbId}&season=${season}`, {
+    headers: await authHeaders(),
+  })
   if (!res.ok) throw new Error('TMDB season fetch failed')
   return res.json()
 }
 
 export async function fetchWatchProviders(tmdbId: number): Promise<TMDBWatchProvider[]> {
-  const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?tmdb_id=${tmdbId}&providers=1`)
+  const res = await fetch(`${FUNCTIONS_URL}/tmdb-search?tmdb_id=${tmdbId}&providers=1`, {
+    headers: await authHeaders(),
+  })
   if (!res.ok) throw new Error('TMDB providers fetch failed')
   const data = await res.json()
   return data?.results?.US?.flatrate ?? []
@@ -87,7 +103,7 @@ export async function fetchAISuggestions(
 ): Promise<Array<{ tmdb: TMDBSearchResult; reason: string }>> {
   const res = await fetch(`${FUNCTIONS_URL}/suggest-shows`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
     body: JSON.stringify({ shows: showTitles }),
   })
   if (!res.ok) throw new Error('AI suggestions fetch failed')
