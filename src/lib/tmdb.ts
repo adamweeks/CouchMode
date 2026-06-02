@@ -1,3 +1,5 @@
+import { supabase } from './supabase'
+
 export interface TMDBSearchResult {
   id: number
   name: string
@@ -41,8 +43,6 @@ export interface TMDBWatchProvider {
   logo_path: string
 }
 
-import { supabase } from './supabase'
-
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w300'
 const TMDB_LOGO_BASE = 'https://image.tmdb.org/t/p/w45'
 
@@ -58,10 +58,23 @@ export function posterUrl(path: string | null | undefined): string {
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
 
+// Deduplicate concurrent getSession() calls so parallel TMDB hooks on the
+// same page share one lock acquisition rather than queuing sequentially.
+let pendingSession: Promise<string | null> | null = null
+
+async function getAuthToken(): Promise<string | null> {
+  if (!pendingSession) {
+    pendingSession = supabase.auth.getSession()
+      .then(({ data: { session } }) => session?.access_token ?? null)
+      .finally(() => { pendingSession = null })
+  }
+  return pendingSession
+}
+
 async function authHeaders(): Promise<Record<string, string>> {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return {}
-  return { Authorization: `Bearer ${session.access_token}` }
+  const token = await getAuthToken()
+  if (!token) throw new Error('Session expired — please log in again.')
+  return { Authorization: `Bearer ${token}` }
 }
 
 export async function searchShows(query: string): Promise<TMDBSearchResult[]> {

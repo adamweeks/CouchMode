@@ -1,26 +1,10 @@
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getCorsHeaders } from '../_shared/cors.ts'
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
 const TMDB_KEY = Deno.env.get('TMDB_API_KEY')!
 const TMDB_BASE = 'https://api.themoviedb.org/3'
-
-const ALLOWED_ORIGINS = [
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'https://couch-mode.vercel.app',
-]
-
-function getCorsHeaders(origin: string | null): Record<string, string> {
-  const allowed =
-    origin !== null &&
-    (ALLOWED_ORIGINS.includes(origin) ||
-      /^https:\/\/couch-mode(-[^.]+)?\.vercel\.app$/.test(origin))
-  return {
-    'Access-Control-Allow-Origin': allowed ? origin! : ALLOWED_ORIGINS[2],
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  }
-}
 
 function sanitizeTitle(title: string): string {
   return title.replace(/[\r\n\t]/g, ' ').trim().slice(0, 100)

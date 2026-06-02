@@ -1,4 +1,7 @@
--- Admin stats functions (SECURITY DEFINER to bypass RLS and access auth schema)
+-- Admin stats functions (initial version — immediately superseded by migration 0002
+-- which re-creates all three functions using the is_admin() table check instead.
+-- This file is retained for migration history only; its function definitions are
+-- never the active version in any fully-migrated database.)
 
 -- Overview stats
 CREATE OR REPLACE FUNCTION admin_get_overview()
