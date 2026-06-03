@@ -1,4 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+vi.mock('../hooks/useIsAdmin', () => ({
+  useIsAdmin: vi.fn(() => ({ data: false, isPending: false })),
+}))
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'

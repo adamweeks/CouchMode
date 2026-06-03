@@ -1,4 +1,14 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
+
+vi.mock('./supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { access_token: 'test-token' } },
+      }),
+    },
+  },
+}))
 import {
   posterUrl,
   providerLogoUrl,

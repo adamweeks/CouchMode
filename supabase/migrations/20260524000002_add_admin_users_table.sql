@@ -8,9 +8,10 @@ ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 -- No public policies — direct client access is intentionally blocked.
 -- All reads go through SECURITY DEFINER functions below.
 
--- Seed with the initial admin account
+-- Seed with the initial admin account.
+-- Replace YOUR_ADMIN_EMAIL_HERE with your email before running this migration.
 INSERT INTO admin_users (user_id)
-SELECT id FROM auth.users WHERE email = 'adam.weeks@gmail.com'
+SELECT id FROM auth.users WHERE email = 'YOUR_ADMIN_EMAIL_HERE'
 ON CONFLICT DO NOTHING;
 
 -- is_admin(): returns true if the current JWT user is in admin_users
