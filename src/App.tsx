@@ -8,6 +8,7 @@ import { AdminRoute } from './components/AdminRoute'
 import { LoginPage } from './pages/LoginPage'
 import { RotationPage } from './pages/RotationPage'
 import { ShowDetailPage } from './pages/ShowDetailPage'
+import { SearchPage } from './pages/SearchPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SuggestionsPage } from './pages/SuggestionsPage'
@@ -50,6 +51,14 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <RotationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/search"
+                element={
+                  <ProtectedRoute>
+                    <SearchPage />
                   </ProtectedRoute>
                 }
               />

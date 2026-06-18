@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   IonPage,
   IonHeader,
@@ -11,7 +12,11 @@ import {
   IonLabel,
   IonReorderGroup,
   IonSearchbar,
+  IonButtons,
+  IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { add } from 'ionicons/icons'
 import type { ItemReorderEventDetail } from '@ionic/core'
 import { useShowGroups, useUpdateShowOrder, useRefreshProviders } from '../hooks/useShows'
 import { useResumeShow } from '../hooks/useResumeShow'
@@ -21,6 +26,7 @@ import { WatchlistCard } from '../components/WatchlistCard'
 import { BottomNav } from '../components/BottomNav'
 
 export function RotationPage() {
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
 
   const { data, isLoading } = useShowGroups()
@@ -53,6 +59,11 @@ export function RotationPage() {
       <IonHeader className="gradient-header">
         <IonToolbar>
           <IonTitle>My Shows</IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={() => navigate('/search')} aria-label="Add show">
+              <IonIcon slot="icon-only" icon={add} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
         <IonToolbar>
           <IonSearchbar
@@ -86,7 +97,7 @@ export function RotationPage() {
             <span style={{ fontSize: '48px', opacity: 0.3, marginBottom: '12px' }}>📺</span>
             <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No shows yet</h2>
             <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', lineHeight: 1.5 }}>
-              Use the search bar to find a show and start tracking your rewatches.
+              Tap + to search for a show and start tracking your rewatches.
             </p>
           </div>
         ) : filteredTotal === 0 ? (
