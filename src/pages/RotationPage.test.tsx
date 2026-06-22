@@ -184,4 +184,37 @@ describe('RotationPage', () => {
       expect(screen.getByText('No matches')).toBeInTheDocument()
     })
   })
+
+  it('shows "Search TMDB" button when no local shows match the query', async () => {
+    vi.mocked(useShowGroups).mockReturnValue({
+      data: { watching: [makeShow({ title: 'Breaking Bad' })], queue: [], done: [] },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useShowGroups>)
+    renderPage()
+
+    await screen.findByText('Breaking Bad')
+    const searchInput = screen.getByTestId('ion-searchbar')
+    fireEvent.change(searchInput, { target: { value: 'high maintenance' } })
+
+    await waitFor(() => {
+      expect(screen.getByText(/Search TMDB for "high maintenance"/)).toBeInTheDocument()
+    })
+  })
+
+  it('navigates to /search with the query when "Search TMDB" button is clicked', async () => {
+    vi.mocked(useShowGroups).mockReturnValue({
+      data: { watching: [makeShow({ title: 'Breaking Bad' })], queue: [], done: [] },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useShowGroups>)
+    renderPage()
+
+    await screen.findByText('Breaking Bad')
+    const searchInput = screen.getByTestId('ion-searchbar')
+    fireEvent.change(searchInput, { target: { value: 'high maintenance' } })
+
+    const tmdbButton = await screen.findByText(/Search TMDB for "high maintenance"/)
+    fireEvent.click(tmdbButton)
+
+    expect(mockNavigateFn).toHaveBeenCalledWith('/search', { state: { query: 'high maintenance' } })
+  })
 })

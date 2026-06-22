@@ -116,6 +116,13 @@ export function RotationPage() {
             <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', lineHeight: 1.5 }}>
               No shows match "{searchQuery}".
             </p>
+            <IonButton
+              fill="clear"
+              style={{ marginTop: '8px' }}
+              onClick={() => navigate('/search', { state: { query: searchQuery } })}
+            >
+              Search TMDB for "{searchQuery}"
+            </IonButton>
           </div>
         ) : (
           <>
