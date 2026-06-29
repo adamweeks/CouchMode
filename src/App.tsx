@@ -14,6 +14,7 @@ import { SettingsPage } from './pages/SettingsPage'
 import { SuggestionsPage } from './pages/SuggestionsPage'
 import { AdminPage } from './pages/AdminPage'
 import { supabase } from './lib/supabase'
+import { PWAUpdatePrompt } from './components/PWAUpdatePrompt'
 
 function OAuthRedirectHandler() {
   const navigate = useNavigate()
@@ -42,6 +43,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <IonApp>
+          <PWAUpdatePrompt />
           <BrowserRouter>
             <OAuthRedirectHandler />
             <Routes>
