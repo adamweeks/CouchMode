@@ -165,7 +165,7 @@ export function RotationPage() {
                   <IonLabel>On TMDB</IonLabel>
                 </IonListHeader>
 
-                {tmdbFetching ? (
+                {tmdbFetching || debouncedQuery.trim().toLowerCase() !== q ? (
                   <div className="flex justify-center pt-4 pb-4" role="status" aria-label="Searching TMDB">
                     <IonSpinner name="crescent" />
                   </div>
