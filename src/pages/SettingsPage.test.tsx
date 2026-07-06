@@ -7,6 +7,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { createQueryClient } from '../test/utils'
+import { ThemeProvider, THEME_STORAGE_KEY } from '../contexts/ThemeContext'
 import { SettingsPage } from './SettingsPage'
 
 const mockSignOut = vi.fn()
@@ -31,9 +32,11 @@ function renderPage(user: Record<string, unknown> | null = null) {
 
   return render(
     <QueryClientProvider client={createQueryClient()}>
-      <MemoryRouter>
-        <SettingsPage />
-      </MemoryRouter>
+      <ThemeProvider>
+        <MemoryRouter>
+          <SettingsPage />
+        </MemoryRouter>
+      </ThemeProvider>
     </QueryClientProvider>,
   )
 }
@@ -74,5 +77,35 @@ describe('SettingsPage', () => {
   it('renders version info', () => {
     renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
     expect(screen.getByText('Version')).toBeInTheDocument()
+  })
+
+  describe('theme selector', () => {
+    beforeEach(() => {
+      localStorage.clear()
+      document.documentElement.classList.remove('dark')
+    })
+
+    it('renders with System selected by default', () => {
+      renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
+      expect(screen.getByText('Theme')).toBeInTheDocument()
+      expect(screen.getByRole('combobox')).toHaveValue('system')
+    })
+
+    it('switches to dark mode and persists the choice', () => {
+      renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'dark' } })
+      expect(document.documentElement.classList.contains('dark')).toBe(true)
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark')
+    })
+
+    it('switches back to light mode', () => {
+      localStorage.setItem(THEME_STORAGE_KEY, 'dark')
+      renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
+      expect(screen.getByRole('combobox')).toHaveValue('dark')
+
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'light' } })
+      expect(document.documentElement.classList.contains('dark')).toBe(false)
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('light')
+    })
   })
 })

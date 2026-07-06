@@ -19,7 +19,7 @@ function StatCard({ value, label, sub }: { value: string | number; label: string
         borderRadius: '14px',
         padding: '14px',
         textAlign: 'center',
-        boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+        boxShadow: 'var(--app-card-shadow)',
       }}
     >
       <p style={{ fontSize: '26px', fontWeight: 700, color: 'var(--ion-color-primary)', margin: 0 }}>

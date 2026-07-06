@@ -51,7 +51,7 @@ function StatCard({ value, label }: { value: string | number; label: string }) {
         borderRadius: '14px',
         padding: '14px',
         textAlign: 'center',
-        boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+        boxShadow: 'var(--app-card-shadow)',
       }}
     >
       <p style={{ fontSize: '28px', fontWeight: 700, color: 'var(--ion-color-primary)', margin: 0 }}>
@@ -204,7 +204,7 @@ export function HistoryPage() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
-                    boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+                    boxShadow: 'var(--app-card-shadow)',
                     marginBottom: '4px',
                     cursor: 'pointer',
                   }}

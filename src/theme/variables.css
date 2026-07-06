@@ -8,7 +8,8 @@
   --ion-safe-area-left: env(safe-area-inset-left);
   --ion-safe-area-right: env(safe-area-inset-right);
 
-  /* Force light-mode for all Ionic components regardless of system preference */
+  /* Light is the default; the ThemeProvider adds .dark on <html> to switch.
+     (An inline script in index.html applies it pre-hydration to avoid a flash.) */
   color-scheme: light;
 
   /* ── Primary: Ionic Blue ── */
@@ -78,6 +79,69 @@
   /* ── Modals / overlays ── */
   --ion-backdrop-color: #000000;
   --ion-backdrop-opacity: 0.5;
+
+  /* ── App-level tokens (light) ── */
+  --app-content-background: #f4f5f8;
+  --app-card-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  --app-card-shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Dark theme — applied via .dark class on <html> ── */
+:root.dark {
+  color-scheme: dark;
+
+  /* Primary lightened slightly for contrast on dark surfaces */
+  --ion-color-primary: #4c8dff;
+  --ion-color-primary-rgb: 76, 141, 255;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #3880ff;
+  --ion-color-primary-tint: #5e98ff;
+
+  /* Medium nudged lighter so secondary text stays readable */
+  --ion-color-medium: #9d9fa6;
+  --ion-color-medium-rgb: 157, 159, 166;
+  --ion-color-medium-contrast: #000000;
+  --ion-color-medium-shade: #8a8c92;
+  --ion-color-medium-tint: #a7a9af;
+
+  /* "Light" is a surface step — inverted to a raised dark surface */
+  --ion-color-light: #23232e;
+  --ion-color-light-rgb: 35, 35, 46;
+  --ion-color-light-contrast: #ffffff;
+  --ion-color-light-shade: #1e1e28;
+  --ion-color-light-tint: #2d2d3a;
+
+  /* ── App surfaces ── */
+  --ion-background-color: #0f0f17;
+  --ion-background-color-rgb: 15, 15, 23;
+
+  --ion-text-color: #f2f2f7;
+  --ion-text-color-rgb: 242, 242, 247;
+
+  --ion-item-background: #1a1a26;
+  --ion-item-border-color: rgba(255, 255, 255, 0.08);
+
+  --ion-card-background: #1a1a26;
+
+  /* ── Toolbar ── */
+  --ion-toolbar-background: #16161f;
+  --ion-toolbar-color: #f2f2f7;
+  --ion-toolbar-border-color: rgba(255, 255, 255, 0.06);
+
+  /* ── Tab bar ── */
+  --ion-tab-bar-background: #16161f;
+  --ion-tab-bar-color: #8a8a94;
+  --ion-tab-bar-color-selected: #4c8dff;
+  --ion-tab-bar-border-color: rgba(255, 255, 255, 0.06);
+
+  /* ── Modals / overlays ── */
+  --ion-backdrop-opacity: 0.6;
+
+  /* ── App-level tokens (dark) ── */
+  --app-content-background: #0f0f17;
+  --app-card-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+  --app-card-shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 
 /* ── Gradient header used on all tab pages ── */
@@ -133,16 +197,16 @@ ion-fab-button {
 
 /* Inset list shadow to match design */
 ion-list.inset-shadow {
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--app-card-shadow);
 }
 
 /* IonContent alt background */
 ion-content {
-  --background: #f4f5f8;
+  --background: var(--app-content-background);
 }
 
 ion-content.white-bg {
-  --background: #ffffff;
+  --background: var(--ion-background-color);
 }
 
 /* Pages with the fixed bottom nav need scroll padding so content isn't hidden

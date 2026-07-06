@@ -48,7 +48,7 @@ const card: React.CSSProperties = {
   background: 'var(--ion-item-background)',
   margin: '0 16px 12px',
   borderRadius: '14px',
-  boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+  boxShadow: 'var(--app-card-shadow)',
   overflow: 'hidden',
 }
 
@@ -344,7 +344,7 @@ export function ShowDetailPage() {
                     borderRadius: '8px',
                     padding: '6px 10px',
                     fontSize: '12px',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                    boxShadow: 'var(--app-card-shadow-sm)',
                     cursor: 'pointer',
                     border: 'none',
                   }}
@@ -398,14 +398,14 @@ export function ShowDetailPage() {
                 margin: '0 16px 12px',
               }}
             >
-              <div style={{ background: 'var(--ion-item-background)', borderRadius: '14px', padding: '14px', textAlign: 'center', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+              <div style={{ background: 'var(--ion-item-background)', borderRadius: '14px', padding: '14px', textAlign: 'center', boxShadow: 'var(--app-card-shadow)' }}>
                 <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ion-color-primary)', margin: 0 }}>
                   {completedRewatches.length}
                 </p>
                 <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: '2px 0 0' }}>Rewatches</p>
               </div>
               {avgDays !== null && (
-                <div style={{ background: 'var(--ion-item-background)', borderRadius: '14px', padding: '14px', textAlign: 'center', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+                <div style={{ background: 'var(--ion-item-background)', borderRadius: '14px', padding: '14px', textAlign: 'center', boxShadow: 'var(--app-card-shadow)' }}>
                   <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ion-color-primary)', margin: 0 }}>
                     {avgDays}d
                   </p>

@@ -98,7 +98,7 @@ Key exports:
 - `src/pages/` — Route-level components: `LoginPage`, `RotationPage`, `ShowDetailPage`, `SearchPage`, `HistoryPage`, `SettingsPage`, `SuggestionsPage`, `AdminPage`
 - `src/components/` — Reusable UI: `ShowCard`, `WatchlistCard`, `ResumeCard`, `LogProgressModal`, `BrowseEpisodesModal`, `MarkFinishedModal`, `EditServiceModal`, `ServiceSelector`, `BottomNav`, `StatusBadge`, `TmdbAttribution`, `AdminRoute`, `ProtectedRoute`
 - `src/lib/` — Non-React utilities: `supabase.ts` (client init), `database.types.ts` (generated types), `progressLogic.ts`, `tmdb.ts`
-- `src/contexts/` — `AuthContext`
+- `src/contexts/` — `AuthContext`, `ThemeContext`
 - `src/test/` — Vitest setup, `ionicMock.tsx` (stubs Ionic components for tests), `utils.tsx` (render helpers)
 - `supabase/migrations/` — SQL schema and RLS policies
 - `supabase/functions/` — Deno edge functions: `tmdb-search`, `suggest-shows`
@@ -143,7 +143,7 @@ WHERE user_id = (SELECT id FROM auth.users WHERE email = 'someone@example.com');
 
 ### Styling
 
-Tailwind CSS v4 via `@tailwindcss/vite`. Ionic React for UI components (`IonPage`, `IonHeader`, `IonList`, `IonItem`, etc.). Dark-mode-first design (`#0f0f17` background, purple/blue accents). Mobile-first with `env(safe-area-inset-bottom)` support in `src/index.css`. The `gradient-header` and `gradient-searchbar` CSS classes are defined in the global stylesheet. App version is injected at build time as `__APP_VERSION__` global (defined in `vite.config.ts` and `vitest.config.ts`).
+Tailwind CSS v4 via `@tailwindcss/vite`. Ionic React for UI components (`IonPage`, `IonHeader`, `IonList`, `IonItem`, etc.). Light and dark themes: `ThemeContext` (`src/contexts/ThemeContext.tsx`) follows the device `prefers-color-scheme` by default with a manual System/Light/Dark override in Settings, persisted to localStorage (`couchmode-theme`). The resolved theme toggles a `.dark` class on `<html>`; all theme values are CSS variables in `src/theme/variables.css` (light in `:root`, dark overrides in `:root.dark` — dark background `#0f0f17`). An inline script in `index.html` applies the class pre-hydration to avoid a theme flash. Mobile-first with `env(safe-area-inset-bottom)` support in `src/index.css`. The `gradient-header` and `gradient-searchbar` CSS classes are defined in the global stylesheet. App version is injected at build time as `__APP_VERSION__` global (defined in `vite.config.ts` and `vitest.config.ts`).
 
 ### Testing
 
