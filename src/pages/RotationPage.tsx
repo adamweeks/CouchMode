@@ -121,7 +121,7 @@ export function RotationPage() {
             {filteredWatching.length > 0 && (
               <>
                 <IonListHeader style={{ paddingTop: '10px' }}>
-                  <IonLabel>Watching</IonLabel>
+                  <IonLabel role="heading" aria-level={2}>Watching</IonLabel>
                 </IonListHeader>
                 <IonList inset className="inset-shadow">
                   {filteredWatching.map(show => (
@@ -134,7 +134,7 @@ export function RotationPage() {
             {filteredQueue.length > 0 && (
               <>
                 <IonListHeader style={{ paddingTop: filteredWatching.length > 0 ? '4px' : '10px' }}>
-                  <IonLabel>Up Next</IonLabel>
+                  <IonLabel role="heading" aria-level={2}>Up Next</IonLabel>
                 </IonListHeader>
                 <IonList inset className="inset-shadow">
                   <IonReorderGroup disabled={!!q} onIonItemReorder={handleQueueReorder}>
@@ -149,7 +149,7 @@ export function RotationPage() {
             {filteredDone.length > 0 && (
               <>
                 <IonListHeader style={{ paddingTop: filteredWatching.length > 0 || filteredQueue.length > 0 ? '4px' : '10px' }}>
-                  <IonLabel>Done</IonLabel>
+                  <IonLabel role="heading" aria-level={2}>Done</IonLabel>
                 </IonListHeader>
                 <IonList inset className="inset-shadow">
                   {filteredDone.map(show => (
@@ -162,7 +162,7 @@ export function RotationPage() {
             {q.length > 2 && (
               <>
                 <IonListHeader style={{ paddingTop: filteredTotal > 0 ? '4px' : '10px' }}>
-                  <IonLabel>On TMDB</IonLabel>
+                  <IonLabel role="heading" aria-level={2}>On TMDB</IonLabel>
                 </IonListHeader>
 
                 {tmdbFetching || debouncedQuery.trim().toLowerCase() !== q ? (
