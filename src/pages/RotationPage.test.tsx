@@ -50,6 +50,7 @@ vi.mock('../components/WatchlistCard', () => ({
 }))
 
 import { useShowGroups } from '../hooks/useShows'
+import { searchShows } from '../lib/tmdb'
 
 function makeShow(overrides: Record<string, unknown> = {}) {
   return {
@@ -169,7 +170,7 @@ describe('RotationPage', () => {
     })
   })
 
-  it('shows "No matches" when search has no results in library', async () => {
+  it('shows "On TMDB" section when search has no local matches', async () => {
     vi.mocked(useShowGroups).mockReturnValue({
       data: { watching: [makeShow({ title: 'Breaking Bad' })], queue: [], done: [] },
       isLoading: false,
@@ -181,11 +182,15 @@ describe('RotationPage', () => {
     fireEvent.change(searchInput, { target: { value: 'zzz' } })
 
     await waitFor(() => {
-      expect(screen.getByText('No matches')).toBeInTheDocument()
+      expect(screen.queryByText('Breaking Bad')).not.toBeInTheDocument()
+      expect(screen.getByText('On TMDB')).toBeInTheDocument()
     })
   })
 
-  it('shows "Search TMDB" button when no local shows match the query', async () => {
+  it('shows TMDB results inline below local matches', async () => {
+    vi.mocked(searchShows).mockResolvedValue([
+      { id: 99999, name: 'High Maintenance', poster_path: null, first_air_date: '2016-09-05', overview: '' },
+    ])
     vi.mocked(useShowGroups).mockReturnValue({
       data: { watching: [makeShow({ title: 'Breaking Bad' })], queue: [], done: [] },
       isLoading: false,
@@ -197,11 +202,15 @@ describe('RotationPage', () => {
     fireEvent.change(searchInput, { target: { value: 'high maintenance' } })
 
     await waitFor(() => {
-      expect(screen.getByText(/Search TMDB for "high maintenance"/)).toBeInTheDocument()
+      expect(screen.getByText('On TMDB')).toBeInTheDocument()
+      expect(screen.getByText('High Maintenance')).toBeInTheDocument()
     })
   })
 
-  it('navigates to /search with the query when "Search TMDB" button is clicked', async () => {
+  it('navigates to show detail when a TMDB result is clicked', async () => {
+    vi.mocked(searchShows).mockResolvedValue([
+      { id: 99999, name: 'High Maintenance', poster_path: null, first_air_date: '2016-09-05', overview: '' },
+    ])
     vi.mocked(useShowGroups).mockReturnValue({
       data: { watching: [makeShow({ title: 'Breaking Bad' })], queue: [], done: [] },
       isLoading: false,
@@ -212,9 +221,9 @@ describe('RotationPage', () => {
     const searchInput = screen.getByTestId('ion-searchbar')
     fireEvent.change(searchInput, { target: { value: 'high maintenance' } })
 
-    const tmdbButton = await screen.findByText(/Search TMDB for "high maintenance"/)
-    fireEvent.click(tmdbButton)
+    const result = await screen.findByText('High Maintenance')
+    fireEvent.click(result)
 
-    expect(mockNavigateFn).toHaveBeenCalledWith('/search', { state: { query: 'high maintenance' } })
+    expect(mockNavigateFn).toHaveBeenCalledWith('/tmdb/99999', { state: { result: expect.any(Object) } })
   })
 })
