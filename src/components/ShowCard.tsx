@@ -51,7 +51,7 @@ export function ShowCard({
     ep => ep.episode_number === currentProgress?.episode,
   )?.name
 
-  const { present: presentLogSheet } = useLogEpisodeSheet(
+  const { present: presentLogSheet, logNext, isLogging } = useLogEpisodeSheet(
     show,
     activeRewatch?.id,
     currentProgress,
@@ -133,7 +133,35 @@ export function ShowCard({
       </IonLabel>
 
       {!reorderMode && (
-        <div slot="end" style={{ display: 'flex', alignItems: 'center', paddingRight: '4px' }}>
+        <div slot="end" style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingRight: '4px' }}>
+          {isWatching && logNext && (
+            <button
+              aria-label={`Log next episode of ${show.title}`}
+              disabled={isLogging}
+              onClick={e => {
+                e.stopPropagation()
+                logNext()
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                border: 'none',
+                background: 'var(--ion-color-primary)',
+                color: 'var(--ion-color-primary-contrast, #fff)',
+                fontSize: '13px',
+                fontWeight: 700,
+                flexShrink: 0,
+                cursor: 'pointer',
+                opacity: isLogging ? 0.5 : 1,
+              }}
+            >
+              +1
+            </button>
+          )}
           <span
             style={{
               display: 'inline-flex',
