@@ -139,7 +139,7 @@ export function ShowCard({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '3px',
-              background: '#ebf3ff',
+              background: 'rgba(var(--ion-color-primary-rgb), 0.12)',
               color: 'var(--ion-color-primary)',
               borderRadius: '20px',
               padding: '3px 8px',

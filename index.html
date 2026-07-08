@@ -5,8 +5,27 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0f0f17" />
+    <meta name="theme-color" content="#f4f5f8" />
     <meta name="description" content="Settle in. Track every show." />
+    <script>
+      // Apply the saved (or device) theme before the app hydrates to avoid a
+      // flash of the wrong theme. Mirrors the logic in ThemeContext.tsx.
+      ;(function () {
+        try {
+          var pref = localStorage.getItem('couchmode-theme')
+          var dark =
+            pref === 'dark' ||
+            (pref !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) {
+            document.documentElement.classList.add('dark')
+            var meta = document.querySelector('meta[name="theme-color"]')
+            if (meta) meta.setAttribute('content', '#0f0f17')
+          }
+        } catch (e) {
+          /* default to light */
+        }
+      })()
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="CouchMode" />

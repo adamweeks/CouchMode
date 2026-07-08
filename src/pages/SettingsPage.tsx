@@ -10,17 +10,22 @@ import {
   IonButton,
   IonNote,
   IonIcon,
+  IonSelect,
+  IonSelectOption,
 } from '@ionic/react'
-import { shieldCheckmarkOutline } from 'ionicons/icons'
+import { moonOutline, shieldCheckmarkOutline } from 'ionicons/icons'
 import { useNavigate } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
+import type { ThemePreference } from '../contexts/ThemeContext'
 import { useIsAdmin } from '../hooks/useIsAdmin'
 
 export function SettingsPage() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const { data: isAdmin } = useIsAdmin()
+  const { preference, setPreference } = useTheme()
 
   const displayName = user?.user_metadata?.full_name ?? user?.email ?? 'User'
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined
@@ -45,7 +50,7 @@ export function SettingsPage() {
             margin: '16px',
             borderRadius: '14px',
             padding: '16px',
-            boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+            boxShadow: 'var(--app-card-shadow)',
           }}
         >
           {avatarUrl ? (
@@ -88,6 +93,25 @@ export function SettingsPage() {
             )}
           </div>
         </div>
+
+        {/* Appearance section */}
+        <IonList inset>
+          <IonItem lines="none">
+            <IonIcon icon={moonOutline} slot="start" color="primary" />
+            <IonLabel>Theme</IonLabel>
+            <IonSelect
+              slot="end"
+              interface="popover"
+              aria-label="Theme"
+              value={preference}
+              onIonChange={(e) => setPreference(e.detail.value as ThemePreference)}
+            >
+              <IonSelectOption value="system">System</IonSelectOption>
+              <IonSelectOption value="light">Light</IonSelectOption>
+              <IonSelectOption value="dark">Dark</IonSelectOption>
+            </IonSelect>
+          </IonItem>
+        </IonList>
 
         {/* Admin section */}
         {isAdmin && (
