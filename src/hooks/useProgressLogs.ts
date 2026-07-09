@@ -90,19 +90,47 @@ export function useLogProgress() {
       if (!existingSet.has(`${season}x${episode}`)) {
         rows.push({ rewatch_id: rewatchId, user_id: user.id, season, episode, logged_at: now, note: note ?? null })
       }
+      let insertedIds: string[] = []
       if (rows.length > 0) {
-        const { error } = await supabase.from('progress_logs').insert(rows)
+        const { data: inserted, error } = await supabase.from('progress_logs').insert(rows).select('id')
         if (error) throw error
+        insertedIds = (inserted ?? []).map(r => r.id)
       }
 
       if (isSeriesComplete(season, episode, totalSeasons, episodesPerSeason)) {
         await completeRewatch(rewatchId)
         const newRewatch = await createNewRewatch(showId, user.id)
         onSeriesComplete?.(newRewatch.id)
-        return { completed: true, newRewatchId: newRewatch.id }
+        return { completed: true, newRewatchId: newRewatch.id, insertedIds }
       }
 
-      return { completed: false }
+      return { completed: false, insertedIds }
+    },
+    onSuccess: (_data, { showId, rewatchId }) => {
+      queryClient.invalidateQueries({ queryKey: ['progress_logs', rewatchId] })
+      queryClient.invalidateQueries({ queryKey: ['rewatches', showId] })
+      queryClient.invalidateQueries({ queryKey: ['shows', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['resume-show', user?.id] })
+    },
+  })
+}
+
+interface DeleteProgressLogsArgs {
+  ids: string[]
+  rewatchId: string
+  showId: string
+}
+
+export function useDeleteProgressLogs() {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ ids }: DeleteProgressLogsArgs) => {
+      if (!user) throw new Error('Not authenticated')
+      if (ids.length === 0) return
+      const { error } = await supabase.from('progress_logs').delete().in('id', ids)
+      if (error) throw error
     },
     onSuccess: (_data, { showId, rewatchId }) => {
       queryClient.invalidateQueries({ queryKey: ['progress_logs', rewatchId] })

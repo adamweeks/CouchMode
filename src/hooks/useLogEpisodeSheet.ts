@@ -6,7 +6,7 @@ import {
   informationCircleOutline,
 } from 'ionicons/icons'
 import { useNavigate } from 'react-router-dom'
-import { useLogProgress } from './useProgressLogs'
+import { useLogProgress, useDeleteProgressLogs } from './useProgressLogs'
 import { getErrorMessage } from '../lib/progressLogic'
 import type { Database } from '../lib/database.types'
 
@@ -23,6 +23,7 @@ export function useLogEpisodeSheet(
   const [presentAlert] = useIonAlert()
   const [presentToast] = useIonToast()
   const logProgress = useLogProgress()
+  const deleteLogs = useDeleteProgressLogs()
 
   function getNextEp() {
     if (!show || !activeRewatchId) return null
@@ -36,23 +37,65 @@ export function useLogEpisodeSheet(
     return null
   }
 
+  async function undoLog(ids: string[], rewatchId: string, showId: string) {
+    try {
+      await deleteLogs.mutateAsync({ ids, rewatchId, showId })
+      presentToast({
+        message: 'Log removed',
+        duration: 2000,
+        position: 'bottom',
+        color: 'dark',
+      })
+    } catch (e) {
+      presentToast({
+        message: getErrorMessage(e),
+        duration: 3000,
+        position: 'bottom',
+        color: 'danger',
+      })
+    }
+  }
+
   async function doLog(season: number, episode: number) {
     if (!show || !activeRewatchId) return
+    const rewatchId = activeRewatchId
+    const showId = show.id
     try {
-      await logProgress.mutateAsync({
-        rewatchId: activeRewatchId,
-        showId: show.id,
+      const result = await logProgress.mutateAsync({
+        rewatchId,
+        showId,
         season,
         episode,
         totalSeasons: show.total_seasons,
         episodesPerSeason: show.episodes_per_season,
       })
-      presentToast({
-        message: `S${season} E${episode} logged`,
-        duration: 2500,
-        position: 'bottom',
-        color: 'dark',
-      })
+      if (result.completed) {
+        presentToast({
+          message: `S${season} E${episode} logged — series complete! 🎉`,
+          duration: 3000,
+          position: 'bottom',
+          color: 'dark',
+        })
+      } else {
+        presentToast({
+          message: `S${season} E${episode} ✓`,
+          duration: 4000,
+          position: 'bottom',
+          color: 'dark',
+          buttons:
+            result.insertedIds.length > 0
+              ? [
+                  {
+                    text: 'Undo',
+                    role: 'cancel',
+                    handler: () => {
+                      undoLog(result.insertedIds, rewatchId, showId)
+                    },
+                  },
+                ]
+              : undefined,
+        })
+      }
     } catch (e) {
       presentToast({
         message: getErrorMessage(e),
@@ -150,5 +193,6 @@ export function useLogEpisodeSheet(
     present,
     nextEp,
     logNext: nextEp ? () => doLog(nextEp.season, nextEp.episode) : null,
+    isLogging: logProgress.isPending,
   }
 }
