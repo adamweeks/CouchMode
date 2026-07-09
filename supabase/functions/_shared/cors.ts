@@ -23,6 +23,7 @@ function isAllowedOrigin(origin: string): boolean {
 export function getCorsHeaders(origin: string | null): Record<string, string> {
   const headers: Record<string, string> = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   }
   if (origin !== null && isAllowedOrigin(origin)) {
     headers['Access-Control-Allow-Origin'] = origin

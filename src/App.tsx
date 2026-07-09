@@ -1,21 +1,32 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { IonApp } from '@ionic/react'
+import { IonApp, IonSpinner } from '@ionic/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AdminRoute } from './components/AdminRoute'
 import { LoginPage } from './pages/LoginPage'
 import { RotationPage } from './pages/RotationPage'
-import { ShowDetailPage } from './pages/ShowDetailPage'
-import { SearchPage } from './pages/SearchPage'
-import { HistoryPage } from './pages/HistoryPage'
-import { SettingsPage } from './pages/SettingsPage'
-import { SuggestionsPage } from './pages/SuggestionsPage'
-import { AdminPage } from './pages/AdminPage'
 import { supabase } from './lib/supabase'
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt'
+
+// Login and the main list stay in the entry bundle for fast first paint;
+// everything else is split per route.
+const ShowDetailPage = lazy(() => import('./pages/ShowDetailPage').then(m => ({ default: m.ShowDetailPage })))
+const SearchPage = lazy(() => import('./pages/SearchPage').then(m => ({ default: m.SearchPage })))
+const HistoryPage = lazy(() => import('./pages/HistoryPage').then(m => ({ default: m.HistoryPage })))
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
+const SuggestionsPage = lazy(() => import('./pages/SuggestionsPage').then(m => ({ default: m.SuggestionsPage })))
+const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })))
+
+function RouteFallback() {
+  return (
+    <div className="flex justify-center pt-16" role="status" aria-label="Loading">
+      <IonSpinner name="crescent" />
+    </div>
+  )
+}
 
 function OAuthRedirectHandler() {
   const navigate = useNavigate()
@@ -48,6 +59,7 @@ export default function App() {
             <PWAUpdatePrompt />
             <BrowserRouter>
               <OAuthRedirectHandler />
+              <Suspense fallback={<RouteFallback />}>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route
@@ -110,6 +122,7 @@ export default function App() {
                 />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
+              </Suspense>
             </BrowserRouter>
           </IonApp>
         </AuthProvider>

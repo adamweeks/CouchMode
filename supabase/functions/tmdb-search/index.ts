@@ -34,6 +34,22 @@ serve(async (req) => {
     })
   }
 
+  // Per-user rate limit so a single account can't exhaust the TMDB quota.
+  // Fails open if the RPC is unavailable (e.g. migration not yet applied).
+  const { data: allowed, error: rateLimitError } = await supabase.rpc('consume_rate_limit', {
+    bucket_name: 'tmdb-search',
+    max_calls: 240,
+    window_seconds: 3600,
+  })
+  if (rateLimitError) {
+    console.error('rate limit check failed:', rateLimitError)
+  } else if (!allowed) {
+    return new Response(JSON.stringify({ error: 'Rate limit exceeded. Try again later.' }), {
+      status: 429,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
   try {
     const url = new URL(req.url)
     const query = url.searchParams.get('query')
@@ -65,6 +81,7 @@ serve(async (req) => {
       const res = await fetch(tmdbUrl)
       const data = await res.json()
       return new Response(JSON.stringify(data), {
+        status: res.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
@@ -81,6 +98,7 @@ serve(async (req) => {
     )
     const data = await res.json()
     return new Response(JSON.stringify(data), {
+      status: res.status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err) {

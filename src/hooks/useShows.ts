@@ -39,16 +39,14 @@ export function useShowGroups(sort: GroupSortOption = 'added_at') {
         if (r.status === 'completed') hasCompletedByShow.add(r.show_id)
       }
 
-      const inProgressIds = [...inProgressIdByShow.values()]
+      // Count server-side: fetching log rows to count them both over-transfers
+      // and silently truncates at the PostgREST max-rows cap (1000 by default).
       const logCounts = new Map<string, number>()
-      if (inProgressIds.length > 0) {
-        const { data: logs, error: logsError } = await supabase
-          .from('progress_logs')
-          .select('rewatch_id')
-          .in('rewatch_id', inProgressIds)
-        if (logsError) throw logsError
-        for (const log of logs) {
-          logCounts.set(log.rewatch_id, (logCounts.get(log.rewatch_id) ?? 0) + 1)
+      if (inProgressIdByShow.size > 0) {
+        const { data: counts, error: countsError } = await supabase.rpc('get_rewatch_log_counts')
+        if (countsError) throw countsError
+        for (const row of counts) {
+          logCounts.set(row.rewatch_id, row.log_count)
         }
       }
 
@@ -194,11 +192,13 @@ export function useUpdateShowOrder() {
 
   return useMutation({
     mutationFn: async (updates: { id: string; sort_order: number }[]) => {
-      await Promise.all(
+      const results = await Promise.all(
         updates.map(({ id, sort_order }) =>
           supabase.from('shows').update({ sort_order }).eq('id', id)
         )
       )
+      const failed = results.find(r => r.error)
+      if (failed?.error) throw failed.error
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shows', user?.id] })

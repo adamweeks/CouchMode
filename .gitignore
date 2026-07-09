@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Env files — Vite loads these; never commit secrets
+.env
+.env.*
+!.env.example

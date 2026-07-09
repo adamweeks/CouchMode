@@ -91,7 +91,11 @@ export function useLogProgress() {
         rows.push({ rewatch_id: rewatchId, user_id: user.id, season, episode, logged_at: now, note: note ?? null })
       }
       if (rows.length > 0) {
-        const { error } = await supabase.from('progress_logs').insert(rows)
+        // Upsert so concurrent logs (double-tap, second device) hit the
+        // uq_progress_logs_rewatch_position index instead of duplicating rows.
+        const { error } = await supabase
+          .from('progress_logs')
+          .upsert(rows, { onConflict: 'rewatch_id,season,episode', ignoreDuplicates: true })
         if (error) throw error
       }
 
