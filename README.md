@@ -102,3 +102,7 @@ SELECT id FROM auth.users WHERE email = 'someone@example.com';
 ## Attribution
 
 Show data provided by [The Movie Database (TMDB)](https://www.themoviedb.org/). This product uses the TMDB API but is not endorsed or certified by TMDB.
+
+## License
+
+Released under the [MIT License](LICENSE).
