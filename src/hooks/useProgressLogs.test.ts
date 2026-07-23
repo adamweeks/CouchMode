@@ -3,6 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import {
   useProgressLogs,
   useCurrentProgress,
+  useResetRewatch,
   createNewRewatch,
   completeRewatch,
 } from './useProgressLogs'
@@ -124,6 +125,36 @@ describe('completeRewatch', () => {
   it('throws when update returns an error', async () => {
     ;(mockChain.eq as ReturnType<typeof vi.fn>).mockResolvedValue({ error: new Error('update failed') })
     await expect(completeRewatch('rw-1')).rejects.toThrow('update failed')
+  })
+})
+
+describe('useResetRewatch', () => {
+  beforeEach(() => {
+    resetMocks()
+    ;(mockChain.delete as ReturnType<typeof vi.fn>).mockReturnValue(mockChain)
+    ;(mockChain.eq as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null })
+  })
+
+  it('deletes all progress logs for the rewatch', async () => {
+    const { Wrapper } = createWrapper()
+    const { result } = renderHook(() => useResetRewatch(), { wrapper: Wrapper })
+
+    await result.current.mutateAsync({ rewatchId: 'rw-1', showId: 'show-1' })
+
+    expect(mockFrom).toHaveBeenCalledWith('progress_logs')
+    expect(mockChain.delete).toHaveBeenCalled()
+    expect(mockChain.eq).toHaveBeenCalledWith('rewatch_id', 'rw-1')
+  })
+
+  it('throws when the delete fails', async () => {
+    ;(mockChain.eq as ReturnType<typeof vi.fn>).mockResolvedValue({ error: new Error('delete failed') })
+
+    const { Wrapper } = createWrapper()
+    const { result } = renderHook(() => useResetRewatch(), { wrapper: Wrapper })
+
+    await expect(
+      result.current.mutateAsync({ rewatchId: 'rw-1', showId: 'show-1' }),
+    ).rejects.toThrow('delete failed')
   })
 })
 

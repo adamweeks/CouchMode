@@ -121,6 +121,40 @@ interface DeleteProgressLogsArgs {
   showId: string
 }
 
+interface ResetRewatchArgs {
+  rewatchId: string
+  showId: string
+}
+
+/**
+ * Clears every progress log for an in-progress rewatch, undoing an
+ * accidentally-started ("restarted") rewatch. The rewatch row itself is kept
+ * (empty, still in_progress) so the show falls back to its previous state —
+ * Done if it has completed rewatches, otherwise Up Next — and stays ready for
+ * the next real start. Completed rewatch history is untouched.
+ */
+export function useResetRewatch() {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ rewatchId }: ResetRewatchArgs) => {
+      if (!user) throw new Error('Not authenticated')
+      const { error } = await supabase
+        .from('progress_logs')
+        .delete()
+        .eq('rewatch_id', rewatchId)
+      if (error) throw error
+    },
+    onSuccess: (_data, { showId, rewatchId }) => {
+      queryClient.invalidateQueries({ queryKey: ['progress_logs', rewatchId] })
+      queryClient.invalidateQueries({ queryKey: ['rewatches', showId] })
+      queryClient.invalidateQueries({ queryKey: ['shows', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['resume-show', user?.id] })
+    },
+  })
+}
+
 export function useDeleteProgressLogs() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
