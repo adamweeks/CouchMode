@@ -103,6 +103,30 @@ describe('RotationPage', () => {
     expect(await screen.findByText('No shows yet')).toBeInTheDocument()
   })
 
+  it('shows TMDB results when searching with an empty library', async () => {
+    vi.mocked(searchShows).mockResolvedValue([
+      { id: 95396, name: 'Severance', poster_path: null, first_air_date: '2022-02-17', overview: '' },
+    ])
+    vi.mocked(useShowGroups).mockReturnValue({
+      data: { watching: [], queue: [], done: [] },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useShowGroups>)
+    renderPage()
+
+    // empty state is visible before typing
+    expect(await screen.findByText('No shows yet')).toBeInTheDocument()
+
+    const searchInput = screen.getByTestId('ion-searchbar')
+    fireEvent.change(searchInput, { target: { value: 'Severance' } })
+
+    // once searching, the empty state gives way to tappable TMDB results
+    await waitFor(() => {
+      expect(screen.queryByText('No shows yet')).not.toBeInTheDocument()
+      expect(screen.getByText('On TMDB')).toBeInTheDocument()
+      expect(screen.getByText('Severance')).toBeInTheDocument()
+    })
+  })
+
   it('renders watching section when there are watching shows', async () => {
     vi.mocked(useShowGroups).mockReturnValue({
       data: { watching: [makeShow()], queue: [], done: [] },

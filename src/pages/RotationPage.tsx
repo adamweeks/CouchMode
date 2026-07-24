@@ -96,7 +96,7 @@ export function RotationPage() {
           <div className="flex justify-center pt-16" role="status" aria-label="Loading shows">
             <IonSpinner name="crescent" />
           </div>
-        ) : totalShows === 0 ? (
+        ) : totalShows === 0 && !q ? (
           <div
             style={{
               display: 'flex',
@@ -111,7 +111,7 @@ export function RotationPage() {
             <span style={{ fontSize: '48px', opacity: 0.3, marginBottom: '12px' }}>📺</span>
             <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No shows yet</h2>
             <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)', lineHeight: 1.5 }}>
-              Tap + to search for a show and start tracking your rewatches.
+              Search above or tap + to find a show and start tracking your rewatches.
             </p>
           </div>
         ) : (
