@@ -13,12 +13,14 @@ import {
   IonLabel,
   IonSpinner,
   useIonAlert,
+  useIonToast,
   IonIcon,
 } from '@ionic/react'
-import { playOutline, checkmarkDoneOutline, listOutline, arrowBackOutline, tvOutline } from 'ionicons/icons'
+import { playOutline, checkmarkDoneOutline, listOutline, arrowBackOutline, tvOutline, arrowUndoOutline } from 'ionicons/icons'
 import { useShows, useAddShow, useRemoveShow } from '../hooks/useShows'
 import { useRewatches, useActiveRewatch } from '../hooks/useRewatches'
-import { useCurrentProgress } from '../hooks/useProgressLogs'
+import { useCurrentProgress, useResetRewatch } from '../hooks/useProgressLogs'
+import { getErrorMessage } from '../lib/progressLogic'
 import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
 import { useTMDBShow } from '../hooks/useTMDBShow'
 import { useTMDBSeason } from '../hooks/useTMDBSeason'
@@ -70,6 +72,8 @@ export function ShowDetailPage() {
   const [addShowService, setAddShowService] = useState('')
   const [browseSeason, setBrowseSeason] = useState<number | null>(null)
   const [presentAlert] = useIonAlert()
+  const [presentToast] = useIonToast()
+  const resetRewatch = useResetRewatch()
 
   const { data: tmdbShow, isLoading: isLoadingTMDB } = useTMDBShow(tmdbId)
 
@@ -120,6 +124,29 @@ export function ShowDetailPage() {
   const avgDays = avgDaysBetweenRewatches(completedRewatches)
   const providers = (show?.streaming_providers as TMDBWatchProvider[] | null) ?? null
   const providerNames = providers?.map(p => p.provider_name)
+
+  function handleResetRewatch() {
+    if (!activeRewatch || !show) return
+    presentAlert({
+      header: 'Undo this rewatch?',
+      message: `This clears the ${watchedEps} episode${watchedEps !== 1 ? 's' : ''} logged in your current rewatch of ${show.title}. Your completed rewatch history is kept.`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Undo Rewatch',
+          role: 'destructive',
+          handler: async () => {
+            try {
+              await resetRewatch.mutateAsync({ rewatchId: activeRewatch.id, showId: show.id })
+              presentToast({ message: 'Rewatch reset', duration: 2000, position: 'bottom', color: 'dark' })
+            } catch (e) {
+              presentToast({ message: getErrorMessage(e), duration: 3000, position: 'bottom', color: 'danger' })
+            }
+          },
+        },
+      ],
+    })
+  }
 
   function handleRemove() {
     presentAlert({
@@ -319,6 +346,21 @@ export function ShowDetailPage() {
                 {activeRewatch?.service ? activeRewatch.service : 'Set service'}
               </IonButton>
             </div>
+            {currentProgress && (
+              <div style={{ margin: '0 16px 12px' }}>
+                <IonButton
+                  expand="block"
+                  fill="clear"
+                  color="medium"
+                  size="small"
+                  disabled={resetRewatch.isPending}
+                  onClick={handleResetRewatch}
+                >
+                  <IonIcon slot="start" icon={arrowUndoOutline} />
+                  Undo rewatch (reset progress)
+                </IonButton>
+              </div>
+            )}
           </>
         )}
 

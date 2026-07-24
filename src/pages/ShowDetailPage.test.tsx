@@ -46,6 +46,7 @@ vi.mock('../hooks/useRewatches', () => ({
 }))
 vi.mock('../hooks/useProgressLogs', () => ({
   useCurrentProgress: mockUseCurrentProgress,
+  useResetRewatch: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
 }))
 vi.mock('../hooks/useTMDBSeason', () => ({
   useTMDBSeason: vi.fn(() => ({ data: undefined })),
