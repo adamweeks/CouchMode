@@ -7,7 +7,7 @@ import {
 } from 'ionicons/icons'
 import { useNavigate } from 'react-router-dom'
 import { useLogProgress, useDeleteProgressLogs } from './useProgressLogs'
-import { getErrorMessage } from '../lib/progressLogic'
+import { getErrorMessage, getNextEpisode } from '../lib/progressLogic'
 import type { Database } from '../lib/database.types'
 
 type Show = Database['public']['Tables']['shows']['Row']
@@ -27,14 +27,7 @@ export function useLogEpisodeSheet(
 
   function getNextEp() {
     if (!show || !activeRewatchId) return null
-    if (!currentProgress) return { season: 1, episode: 1 }
-    const maxEp = show.episodes_per_season[currentProgress.season - 1] ?? 1
-    if (currentProgress.episode < maxEp) {
-      return { season: currentProgress.season, episode: currentProgress.episode + 1 }
-    } else if (currentProgress.season < show.total_seasons) {
-      return { season: currentProgress.season + 1, episode: 1 }
-    }
-    return null
+    return getNextEpisode(currentProgress, show.total_seasons, show.episodes_per_season)
   }
 
   async function undoLog(ids: string[], rewatchId: string, showId: string) {

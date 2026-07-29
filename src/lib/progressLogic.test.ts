@@ -3,6 +3,7 @@ import {
   comparePosition,
   getCurrentProgress,
   getBackfillEntries,
+  getNextEpisode,
   isSeriesComplete,
   isRegression,
   buildCompletionUpdates,
@@ -66,6 +67,37 @@ describe('getBackfillEntries', () => {
   it('returns empty when logging S1E1', () => {
     const entries = getBackfillEntries(1, 1, eps, new Set(), rewatchId, userId, now)
     expect(entries.length).toBe(0)
+  })
+})
+
+describe('getNextEpisode', () => {
+  it('advances to the next episode within a season', () => {
+    expect(getNextEpisode({ season: 1, episode: 3 }, 2, [7, 13])).toEqual({ season: 1, episode: 4 })
+  })
+
+  it('rolls over to the next season after the last episode', () => {
+    expect(getNextEpisode({ season: 1, episode: 7 }, 2, [7, 13])).toEqual({ season: 2, episode: 1 })
+  })
+
+  it('returns S1 E1 when there is no progress', () => {
+    expect(getNextEpisode(null, 2, [7, 13])).toEqual({ season: 1, episode: 1 })
+  })
+
+  it('returns null at the final episode', () => {
+    expect(getNextEpisode({ season: 2, episode: 13 }, 2, [7, 13])).toBeNull()
+  })
+
+  it('skips a trailing empty season instead of pointing at a nonexistent episode', () => {
+    // Season 2 has no episodes (e.g. not yet aired / no TMDB data)
+    expect(getNextEpisode({ season: 1, episode: 8 }, 2, [8, 0])).toBeNull()
+  })
+
+  it('skips an empty season to reach the next populated one', () => {
+    expect(getNextEpisode({ season: 1, episode: 8 }, 3, [8, 0, 10])).toEqual({ season: 3, episode: 1 })
+  })
+
+  it('starts at the first populated season when early seasons are empty', () => {
+    expect(getNextEpisode(null, 3, [0, 10, 8])).toEqual({ season: 2, episode: 1 })
   })
 })
 
