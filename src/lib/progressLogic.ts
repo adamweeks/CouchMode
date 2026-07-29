@@ -44,6 +44,30 @@ export function isSeriesComplete(
   return targetEpisode >= lastEpisode
 }
 
+export function getNextEpisode(
+  currentProgress: { season: number; episode: number } | null | undefined,
+  totalSeasons: number,
+  episodesPerSeason: number[]
+): { season: number; episode: number } | null {
+  if (!currentProgress) {
+    for (let s = 1; s <= totalSeasons; s++) {
+      if ((episodesPerSeason[s - 1] ?? 0) > 0) return { season: s, episode: 1 }
+    }
+    return { season: 1, episode: 1 }
+  }
+
+  const maxEp = episodesPerSeason[currentProgress.season - 1] ?? 1
+  if (currentProgress.episode < maxEp) {
+    return { season: currentProgress.season, episode: currentProgress.episode + 1 }
+  }
+
+  for (let s = currentProgress.season + 1; s <= totalSeasons; s++) {
+    if ((episodesPerSeason[s - 1] ?? 0) > 0) return { season: s, episode: 1 }
+  }
+
+  return null
+}
+
 export function getBackfillEntries(
   targetSeason: number,
   targetEpisode: number,

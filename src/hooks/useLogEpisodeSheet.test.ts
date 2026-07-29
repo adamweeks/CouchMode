@@ -77,6 +77,18 @@ describe('useLogEpisodeSheet', () => {
       expect(result.current.logNext).toBeNull()
     })
 
+    it('returns null instead of a nonexistent episode when the next season is empty', () => {
+      const { result } = renderHook(() =>
+        useLogEpisodeSheet(
+          makeShow({ total_seasons: 2, episodes_per_season: [8, 0] }),
+          'rw-1',
+          { season: 1, episode: 8 },
+        ),
+      )
+      expect(result.current.nextEp).toBeNull()
+      expect(result.current.logNext).toBeNull()
+    })
+
     it('returns null when there is no active rewatch', () => {
       const { result } = renderHook(() =>
         useLogEpisodeSheet(makeShow(), null, { season: 1, episode: 3 }),
