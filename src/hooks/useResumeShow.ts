@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import { getCurrentProgress } from '../lib/progressLogic'
 import type { Database } from '../lib/database.types'
 
 type Show = Database['public']['Tables']['shows']['Row']
@@ -17,44 +16,42 @@ export function useResumeShow() {
   return useQuery({
     queryKey: ['resume-show', user?.id],
     queryFn: async (): Promise<ResumeShowData | null> => {
-      const { data: rewatches, error: rewatchError } = await supabase
-        .from('rewatches')
-        .select('id, show_id')
-        .eq('status', 'in_progress')
-      if (rewatchError) throw rewatchError
-      if (!rewatches.length) return null
-
-      const rewatchIds = rewatches.map(r => r.id)
-
-      const { data: latestLog } = await supabase
+      // Most recent activity across all in-progress rewatches, in one row.
+      const { data: latestLog, error: latestError } = await supabase
         .from('progress_logs')
-        .select('rewatch_id, logged_at')
-        .in('rewatch_id', rewatchIds)
+        .select('rewatch_id, logged_at, rewatches!inner(show_id, status)')
+        .eq('rewatches.status', 'in_progress')
         .order('logged_at', { ascending: false })
         .limit(1)
         .maybeSingle()
+      if (latestError) throw latestError
       if (!latestLog) return null
 
-      const rewatch = rewatches.find(r => r.id === latestLog.rewatch_id)!
+      const rewatchId = latestLog.rewatch_id
+      const showId = latestLog.rewatches.show_id
 
-      const [logsResult, showResult] = await Promise.all([
+      // Highest position in that rewatch (may differ from most recent by time)
+      // plus the show row, in parallel.
+      const [progressResult, showResult] = await Promise.all([
         supabase
           .from('progress_logs')
           .select('id, season, episode, logged_at')
-          .eq('rewatch_id', rewatch.id),
+          .eq('rewatch_id', rewatchId)
+          .order('season', { ascending: false })
+          .order('episode', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
         supabase
           .from('shows')
           .select('*')
-          .eq('id', rewatch.show_id)
+          .eq('id', showId)
           .single(),
       ])
-      if (logsResult.error) throw logsResult.error
+      if (progressResult.error) throw progressResult.error
       if (showResult.error) throw showResult.error
+      if (!progressResult.data) return null
 
-      const currentProgress = getCurrentProgress(logsResult.data)
-      if (!currentProgress) return null
-
-      return { show: showResult.data, rewatchId: rewatch.id, currentProgress }
+      return { show: showResult.data, rewatchId, currentProgress: progressResult.data }
     },
     enabled: !!user,
   })

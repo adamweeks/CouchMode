@@ -86,7 +86,7 @@ export function RotationPage() {
             value={searchQuery}
             onIonInput={e => setSearchQuery(e.detail.value ?? '')}
             onIonClear={() => setSearchQuery('')}
-            debounce={150}
+            debounce={0}
           />
         </IonToolbar>
       </IonHeader>

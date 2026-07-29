@@ -92,7 +92,14 @@ export function useLogProgress() {
       }
       let insertedIds: string[] = []
       if (rows.length > 0) {
-        const { data: inserted, error } = await supabase.from('progress_logs').insert(rows).select('id')
+        // Upsert so concurrent logs (double-tap, second device) hit the
+        // uq_progress_logs_rewatch_position index instead of duplicating rows.
+        // select() only returns rows that were actually inserted, so undo
+        // never deletes logs that existed before this mutation.
+        const { data: inserted, error } = await supabase
+          .from('progress_logs')
+          .upsert(rows, { onConflict: 'rewatch_id,season,episode', ignoreDuplicates: true })
+          .select('id')
         if (error) throw error
         insertedIds = (inserted ?? []).map(r => r.id)
       }

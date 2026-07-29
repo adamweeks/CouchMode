@@ -39,10 +39,37 @@ serve(async (req) => {
     })
   }
 
-  try {
-    const { shows } = await req.json() as { shows: string[] }
+  // Tight per-user rate limit: every call costs an Anthropic API invocation
+  // plus up to 15 TMDB searches, and the client caches results for 24h anyway.
+  // Fails open if the RPC is unavailable (e.g. migration not yet applied).
+  const { data: allowed, error: rateLimitError } = await supabase.rpc('consume_rate_limit', {
+    bucket_name: 'suggest-shows',
+    max_calls: 10,
+    window_seconds: 86400,
+  })
+  if (rateLimitError) {
+    console.error('rate limit check failed:', rateLimitError)
+  } else if (!allowed) {
+    return new Response(JSON.stringify({ error: 'Rate limit exceeded. Try again later.' }), {
+      status: 429,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
 
-    if (!shows || shows.length === 0) {
+  try {
+    const body = await req.json().catch(() => null) as { shows?: unknown } | null
+    if (body === null || (body.shows !== undefined && !Array.isArray(body.shows))) {
+      return new Response(JSON.stringify({ error: 'Invalid request body' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const shows = (body.shows ?? []).filter(
+      (s): s is string => typeof s === 'string' && s.trim().length > 0
+    )
+
+    if (shows.length === 0) {
       return new Response(JSON.stringify({ suggestions: [] }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
