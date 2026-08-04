@@ -24,7 +24,7 @@ export function useShowGroups(sort: GroupSortOption = 'added_at') {
       }
       const [showsResult, rewatchesResult] = await Promise.all([
         showQuery,
-        supabase.from('rewatches').select('id, show_id, status'),
+        supabase.from('rewatches').select('id, show_id, status, completed_at'),
       ])
       if (showsResult.error) throw showsResult.error
       if (rewatchesResult.error) throw rewatchesResult.error
@@ -34,9 +34,18 @@ export function useShowGroups(sort: GroupSortOption = 'added_at') {
 
       const inProgressIdByShow = new Map<string, string>()
       const hasCompletedByShow = new Set<string>()
+      const lastCompletedByShow = new Map<string, string>()
       for (const r of rewatches) {
         if (r.status === 'in_progress') inProgressIdByShow.set(r.show_id, r.id)
-        if (r.status === 'completed') hasCompletedByShow.add(r.show_id)
+        if (r.status === 'completed') {
+          hasCompletedByShow.add(r.show_id)
+          if (r.completed_at) {
+            const current = lastCompletedByShow.get(r.show_id)
+            if (!current || r.completed_at > current) {
+              lastCompletedByShow.set(r.show_id, r.completed_at)
+            }
+          }
+        }
       }
 
       const inProgressIds = [...inProgressIdByShow.values()]
@@ -74,6 +83,13 @@ export function useShowGroups(sort: GroupSortOption = 'added_at') {
         const aOrder = a.sort_order ?? Number.MAX_SAFE_INTEGER
         const bOrder = b.sort_order ?? Number.MAX_SAFE_INTEGER
         return aOrder - bOrder
+      })
+
+      done.sort((a, b) => {
+        const aDate = lastCompletedByShow.get(a.id) ?? ''
+        const bDate = lastCompletedByShow.get(b.id) ?? ''
+        if (aDate === bDate) return 0
+        return aDate > bDate ? -1 : 1
       })
 
       return { watching, queue, done }

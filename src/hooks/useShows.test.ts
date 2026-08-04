@@ -180,6 +180,58 @@ describe('useShowGroups', () => {
     const queueIds = result.current.data?.queue.map(s => s.id)
     expect(queueIds).toEqual(['show-b', 'show-a', 'show-c'])
   })
+
+  it('sorts done shows by most recent completion date descending', async () => {
+    const showA = makeShow({ id: 'show-a', title: 'A' })
+    const showB = makeShow({ id: 'show-b', title: 'B' })
+    const showC = makeShow({ id: 'show-c', title: 'C' })
+    const rewatches = [
+      { id: 'rw-a', show_id: 'show-a', status: 'completed', completed_at: '2025-01-10T00:00:00Z' },
+      { id: 'rw-b', show_id: 'show-b', status: 'completed', completed_at: '2026-06-15T00:00:00Z' },
+      // show-c has two completions; the most recent one should determine its position
+      { id: 'rw-c1', show_id: 'show-c', status: 'completed', completed_at: '2024-01-01T00:00:00Z' },
+      { id: 'rw-c2', show_id: 'show-c', status: 'completed', completed_at: '2025-09-20T00:00:00Z' },
+    ]
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'shows') return makeChain({ data: [showA, showB, showC], error: null })
+      if (table === 'rewatches') {
+        return { select: vi.fn().mockResolvedValue({ data: rewatches, error: null }) }
+      }
+      return makeChain({ data: [], error: null })
+    })
+
+    const { Wrapper } = createWrapper()
+    const { result } = renderHook(() => useShowGroups(), { wrapper: Wrapper })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    const doneIds = result.current.data?.done.map(s => s.id)
+    expect(doneIds).toEqual(['show-b', 'show-c', 'show-a'])
+  })
+
+  it('places done shows without a completion date last', async () => {
+    const showA = makeShow({ id: 'show-a', title: 'A' })
+    const showB = makeShow({ id: 'show-b', title: 'B' })
+    const rewatches = [
+      { id: 'rw-a', show_id: 'show-a', status: 'completed', completed_at: null },
+      { id: 'rw-b', show_id: 'show-b', status: 'completed', completed_at: '2025-05-01T00:00:00Z' },
+    ]
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'shows') return makeChain({ data: [showA, showB], error: null })
+      if (table === 'rewatches') {
+        return { select: vi.fn().mockResolvedValue({ data: rewatches, error: null }) }
+      }
+      return makeChain({ data: [], error: null })
+    })
+
+    const { Wrapper } = createWrapper()
+    const { result } = renderHook(() => useShowGroups(), { wrapper: Wrapper })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    const doneIds = result.current.data?.done.map(s => s.id)
+    expect(doneIds).toEqual(['show-b', 'show-a'])
+  })
 })
 
 describe('useShows', () => {
