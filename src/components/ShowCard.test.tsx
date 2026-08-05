@@ -134,4 +134,37 @@ describe('ShowCard quick-log button', () => {
       screen.queryByRole('button', { name: /Log next episode/ }),
     ).not.toBeInTheDocument()
   })
+
+  it('shows the last completed date for a done show', () => {
+    vi.mocked(useRewatches).mockReturnValue({
+      data: [
+        { id: 'rw-2', status: 'completed', completed_at: '2026-06-15T00:00:00Z' },
+        { id: 'rw-1', status: 'completed', completed_at: '2025-02-10T00:00:00Z' },
+      ],
+    } as unknown as ReturnType<typeof useRewatches>)
+    vi.mocked(useCurrentProgress).mockReturnValue(null)
+    vi.mocked(useLogEpisodeSheet).mockReturnValue({
+      present: mockPresent,
+      nextEp: null,
+      logNext: null,
+      isLogging: false,
+    })
+    render(<ShowCard show={makeShow()} />)
+    expect(screen.getByText('Completed · Jun 2026')).toBeInTheDocument()
+  })
+
+  it('falls back to plain Completed when no completed date exists', () => {
+    vi.mocked(useRewatches).mockReturnValue({
+      data: [{ id: 'rw-1', status: 'completed', completed_at: null }],
+    } as unknown as ReturnType<typeof useRewatches>)
+    vi.mocked(useCurrentProgress).mockReturnValue(null)
+    vi.mocked(useLogEpisodeSheet).mockReturnValue({
+      present: mockPresent,
+      nextEp: null,
+      logNext: null,
+      isLogging: false,
+    })
+    render(<ShowCard show={makeShow()} />)
+    expect(screen.getByText('Completed')).toBeInTheDocument()
+  })
 })
