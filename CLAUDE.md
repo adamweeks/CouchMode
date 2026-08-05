@@ -12,14 +12,17 @@ CouchMode is a React + TypeScript PWA for tracking TV show rewatches. Users sear
 npm run dev          # Start Vite dev server with HMR
 npm run build        # TypeScript type check + Vite production build
 npm run lint         # ESLint
-npm run test         # Run all tests once (Vitest)
+npm run test         # Run all unit tests once (Vitest)
 npm run test:watch   # Vitest watch mode
+npm run test:e2e     # Run Playwright end-to-end tests
+npm run test:e2e:ui  # Playwright interactive UI mode
 npm run preview      # Preview production build locally
 ```
 
 To run a single test file:
 ```bash
-npx vitest run src/lib/progressLogic.test.ts
+npx vitest run src/lib/progressLogic.test.ts   # single unit test file
+npx playwright test e2e/auth.spec.ts           # single e2e spec
 ```
 
 ## Environment Variables
@@ -159,14 +162,26 @@ Tests exist for:
 
 When adding new logic to `progressLogic.ts`, add corresponding unit tests.
 
+### End-to-End Tests (Playwright)
+
+Browser E2E tests live in `e2e/` and run via Playwright (`npm run test:e2e`). They are kept separate from Vitest: `vitest.config.ts` excludes `e2e/**`, and `playwright.config.ts` sets `testDir: './e2e'`.
+
+- `playwright.config.ts` boots the Vite dev server (`webServer`) with throwaway `VITE_SUPABASE_*` values, so no real Supabase project or credentials are needed. The suite only exercises the **signed-out** UI (login screen + `ProtectedRoute` redirects), which is fully deterministic and never hits the network.
+- Two projects run the same specs: `chromium` (desktop) and `mobile-chrome` (Pixel 5 viewport, reflecting the mobile-first PWA). Both use Chromium.
+- `@playwright/test` is pinned so its bundled Chromium build matches CI. Locally, run `npx playwright install chromium` once if the browser is missing.
+- Specs: `e2e/auth.spec.ts` (login branding, form, sign in/sign up toggle) and `e2e/navigation.spec.ts` (every protected route redirects to `/login`).
+
+Add E2E coverage for new user-facing flows that can be reached without an authenticated session, or extend the suite once a test auth fixture exists.
+
 ### Deployment
 
 Configured for both Vercel (`vercel.json`) and Netlify (`netlify.toml`) with SPA rewrite rules so client-side routing works. Local Supabase emulation requires Docker (`supabase start`). The app is a PWA with offline support via Workbox (caches TMDB images with `CacheFirst`).
 
 ### CI/CD
 
-Three GitHub Actions workflows:
-- **`test.yml`** — runs `npm test` on PRs
+Four GitHub Actions workflows:
+- **`test.yml`** — runs `npm test` (Vitest unit tests) on PRs
+- **`e2e.yml`** — runs `npm run test:e2e` (Playwright) on PRs, installing Chromium and uploading the HTML report as a build artifact
 - **`lint-pr.yml`** — validates PR title against Conventional Commits (`semantic-pr` check)
 - **`release.yml`** — runs `semantic-release` on pushes to `main`, creating GitHub releases and bumping `package.json` version
 

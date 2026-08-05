@@ -25,7 +25,7 @@ A Progressive Web App for tracking TV show rewatches. Search for shows, log epis
 | AI | Anthropic Claude Haiku (via Supabase edge function) |
 | Show data | TMDB API (proxied through edge function) |
 | Build | Vite + vite-plugin-pwa |
-| Tests | Vitest + jsdom + Testing Library |
+| Tests | Vitest + jsdom + Testing Library (unit) · Playwright (E2E) |
 | Releases | semantic-release (Conventional Commits) |
 
 ## Getting Started
@@ -81,8 +81,9 @@ supabase secrets set ANTHROPIC_API_KEY=your-key
 npm run dev          # Start Vite dev server with HMR
 npm run build        # Type-check and build for production
 npm run lint         # ESLint
-npm run test         # Run all tests once (Vitest)
+npm run test         # Run all unit tests once (Vitest)
 npm run test:watch   # Vitest watch mode
+npm run test:e2e     # Run Playwright end-to-end tests
 npm run preview      # Preview production build locally
 ```
 
