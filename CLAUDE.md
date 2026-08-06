@@ -169,9 +169,15 @@ Browser E2E tests live in `e2e/` and run via Playwright (`npm run test:e2e`). Th
 - `playwright.config.ts` boots the Vite dev server (`webServer`) with throwaway `VITE_SUPABASE_*` values, so no real Supabase project or credentials are needed. The suite only exercises the **signed-out** UI (login screen + `ProtectedRoute` redirects), which is fully deterministic and never hits the network.
 - Two projects run the same specs: `chromium` (desktop) and `mobile-chrome` (Pixel 5 viewport, reflecting the mobile-first PWA). Both use Chromium.
 - `@playwright/test` is pinned so its bundled Chromium build matches CI. Locally, run `npx playwright install chromium` once if the browser is missing.
-- Specs: `e2e/auth.spec.ts` (login branding, form, sign in/sign up toggle) and `e2e/navigation.spec.ts` (every protected route redirects to `/login`).
+- Signed-out specs: `e2e/auth.spec.ts` (login branding, form, sign in/sign up toggle) and `e2e/navigation.spec.ts` (every protected route redirects to `/login`).
 
-Add E2E coverage for new user-facing flows that can be reached without an authenticated session, or extend the suite once a test auth fixture exists.
+**Logged-in specs (mocked backend).** `e2e/authed/**` exercises the authenticated UI without any real Supabase project, credentials, or network — everything is faked in the browser. Support code lives in `e2e/support/`:
+- `fixtures.ts` exports an extended Playwright `test`. Its `page` fixture (a) seeds a synthetic auth session into `localStorage` via `addInitScript` before the app boots, so the app comes up signed-in, and (b) installs the request mocks. Build tests on this `test`, and tweak fixture data through the `db` fixture before navigating.
+- `session.ts` builds the exact object supabase-js persists (far-future `expires_at` so no token refresh fires) and derives the storage key (`sb-<host-label>-auth-token`) from the E2E URL — **no change to production `createClient` is needed**, which avoids invalidating real users' sessions.
+- `postgrest.ts` is a small PostgREST emulator (parses `eq`/`in`/`is`/`lt…`/`or`/`order`/`limit` and the `.single()`/`.maybeSingle()` Accept header) backed by `db.ts`'s in-memory fixtures.
+- `mockBackend.ts` routes `/rest/v1` (via the emulator), `/functions/v1` (TMDB edge function stubs), `/auth/v1`, and `image.tmdb.org` so nothing leaves the sandbox.
+
+This is the "mock lane" — it covers logged-in *UI/behaviour*, not real RLS or SQL. For true database/RLS coverage, a separate opt-in job running a local `supabase start` stack would be the next step. When adding logged-in flows, extend `e2e/authed/` and grow the `db.ts` fixtures / `postgrest.ts` operators as needed.
 
 ### Deployment
 

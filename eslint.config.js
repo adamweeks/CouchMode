@@ -21,10 +21,17 @@ export default defineConfig([
     },
   },
   {
-    // Node-context files: Playwright config reads env vars / process.
-    files: ['playwright.config.ts'],
+    // Playwright config + E2E support run in a Node context (env vars, Buffer)
+    // but also ship browser-context callbacks (addInitScript). Give them both
+    // global sets, and allow Playwright's empty-fixture destructuring pattern.
+    files: ['playwright.config.ts', 'e2e/**/*.ts'],
     languageOptions: {
-      globals: globals.node,
+      globals: { ...globals.node, ...globals.browser },
+    },
+    rules: {
+      'no-empty-pattern': 'off',
+      // Playwright's fixture `use()` callback is not a React hook.
+      'react-hooks/rules-of-hooks': 'off',
     },
   },
 ])
