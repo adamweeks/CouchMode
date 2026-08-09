@@ -19,11 +19,14 @@ export interface MockDb {
   shows: Record<string, unknown>[]
   rewatches: Record<string, unknown>[]
   progress_logs: Record<string, unknown>[]
+  /** Return value of the `is_admin` RPC. */
+  isAdmin: boolean
 }
 
 export function makeDb(): MockDb {
   const uid = TEST_USER.id
   return {
+    isAdmin: false,
     shows: [
       {
         id: 'show-breaking-bad',

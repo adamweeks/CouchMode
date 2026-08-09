@@ -30,4 +30,25 @@ export const test = base.extend<{ db: MockDb }>({
   },
 })
 
+/**
+ * Navigate to an authenticated route.
+ *
+ * The app's OAuthRedirectHandler redirects to `/` on the `SIGNED_IN` event that
+ * fires once when the seeded session is recovered on a fresh load — so a direct
+ * `page.goto('/settings')` bounces to home. We instead land on `/` (where that
+ * bounce is a no-op), wait for the app to settle signed-in, then navigate
+ * within the SPA via the History API, which doesn't reload and so never fires a
+ * second `SIGNED_IN`.
+ */
+export async function visit(page: import('@playwright/test').Page, path: string) {
+  await page.goto('/')
+  await expect(page.getByText('My Shows').first()).toBeVisible()
+  await expect(page).toHaveURL(/\/$/) // the one-time post-auth bounce has settled
+  if (path === '/') return
+  await page.evaluate(p => {
+    window.history.pushState({}, '', p)
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }, path)
+}
+
 export { expect }

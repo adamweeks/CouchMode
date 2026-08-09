@@ -99,12 +99,19 @@ export function fulfillRest(route: Route, request: Request, db: MockDb) {
   const url = new URL(request.url())
   const table = tableFromPath(url.pathname)
 
+  // Stored procedures: `supabase.rpc('is_admin')` → POST /rest/v1/rpc/is_admin.
+  if (table.startsWith('rpc/')) {
+    const fn = table.slice('rpc/'.length)
+    if (fn === 'is_admin') return jsonResponse(route, 200, db.isAdmin ?? false)
+    return jsonResponse(route, 200, null)
+  }
+
   // Writes: acknowledge without persisting.
   if (method !== 'GET') {
     return jsonResponse(route, 200, [])
   }
 
-  const source = (db as Record<string, Row[]>)[table]
+  const source = (db as unknown as Record<string, Row[]>)[table]
   if (!source) return jsonResponse(route, 404, { message: `unknown table ${table}` })
 
   let rows: Row[] = [...source]
@@ -112,9 +119,19 @@ export function fulfillRest(route: Route, request: Request, db: MockDb) {
 
   for (const [key, value] of url.searchParams.entries()) {
     if (reserved.has(key)) continue
-    const [op, ...rest] = value.split('.')
+    // `not.<op>.<operand>` negates the operator (e.g. `completed_at=not.is.null`).
+    let negate = false
+    let expr = value
+    if (expr.startsWith('not.')) {
+      negate = true
+      expr = expr.slice('not.'.length)
+    }
+    const [op, ...rest] = expr.split('.')
     const operand = rest.join('.')
-    rows = rows.filter(row => matchesOp(row[key], op, operand))
+    rows = rows.filter(row => {
+      const matched = matchesOp(row[key], op, operand)
+      return negate ? !matched : matched
+    })
   }
 
   const orValue = url.searchParams.get('or')

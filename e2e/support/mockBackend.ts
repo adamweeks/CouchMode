@@ -10,37 +10,52 @@ function json(route: Route, body: unknown, status = 200) {
 const EPISODE_NAMES = [
   'Pilot', 'Cat in the Bag', 'Gray Matter', 'Crazy Handful', 'A No-Rough-Stuff Deal',
   'Seven Thirty-Seven', 'Grilled', 'Bit by a Dead Bee', 'Down', 'Breakage',
+  'Peekaboo', 'Phoenix', 'ABQ',
 ]
 
-/** Stubs the `tmdb-search` edge function. Only the season lookup fires on load. */
-function fulfillTmdbSearch(route: Route, request: Request) {
+function findShow(db: MockDb, tmdbId: string | null) {
+  return db.shows.find(s => String((s as Record<string, unknown>).tmdb_id) === String(tmdbId)) as
+    | Record<string, unknown>
+    | undefined
+}
+
+/** Stubs the `tmdb-search` edge function. Details + season lookups are derived
+ *  from the fixture data so titles/seasons line up with the mocked DB. */
+function fulfillTmdbSearch(route: Route, request: Request, db: MockDb) {
   const url = new URL(request.url())
+  const tmdbId = url.searchParams.get('tmdb_id')
   const season = url.searchParams.get('season')
   const query = url.searchParams.get('query')
   const providers = url.searchParams.get('providers')
 
   if (season) {
-    const episodes = Array.from({ length: 13 }, (_, i) => ({
+    const show = findShow(db, tmdbId)
+    const perSeason = (show?.episodes_per_season as number[] | undefined) ?? []
+    const count = perSeason[Number(season) - 1] ?? 13
+    const episodes = Array.from({ length: count }, (_, i) => ({
       episode_number: i + 1,
       name: EPISODE_NAMES[i] ?? `Episode ${i + 1}`,
       still_path: null,
-      overview: '',
+      overview: `Episode ${i + 1} synopsis.`,
     }))
     return json(route, { season_number: Number(season), episodes })
   }
   if (providers) return json(route, { results: {} })
   if (query !== null) return json(route, { results: [] })
-  // Show details lookup.
+
+  // Show details lookup — mirror a fixture show when we have one.
+  const show = findShow(db, tmdbId)
+  const perSeason = (show?.episodes_per_season as number[] | undefined) ?? [13]
   return json(route, {
-    id: Number(url.searchParams.get('tmdb_id') ?? 0),
-    name: 'Mock Show',
+    id: Number(tmdbId ?? 0),
+    name: (show?.title as string | undefined) ?? 'Mock Show',
     poster_path: null,
-    number_of_seasons: 1,
-    seasons: [{ season_number: 1, episode_count: 13 }],
-    overview: '',
+    number_of_seasons: perSeason.length,
+    seasons: perSeason.map((count, i) => ({ season_number: i + 1, episode_count: count })),
+    overview: `${(show?.title as string | undefined) ?? 'This show'} — a synthetic overview for tests.`,
     first_air_date: '2008-01-20',
     status: 'Ended',
-    genres: [],
+    genres: [{ id: 18, name: 'Drama' }],
   })
 }
 
@@ -52,7 +67,7 @@ function fulfillTmdbSearch(route: Route, request: Request) {
  */
 export async function mockSupabase(page: Page, db: MockDb = makeDb()): Promise<MockDb> {
   // Register specific routes before the catch-all REST handler.
-  await page.route('**/functions/v1/tmdb-search**', route => fulfillTmdbSearch(route, route.request()))
+  await page.route('**/functions/v1/tmdb-search**', route => fulfillTmdbSearch(route, route.request(), db))
   await page.route('**/functions/v1/suggest-shows', route => json(route, { suggestions: [] }))
 
   await page.route('**/auth/v1/**', route => {

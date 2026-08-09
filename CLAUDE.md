@@ -175,7 +175,10 @@ Browser E2E tests live in `e2e/` and run via Playwright (`npm run test:e2e`). Th
 - `fixtures.ts` exports an extended Playwright `test`. Its `page` fixture (a) seeds a synthetic auth session into `localStorage` via `addInitScript` before the app boots, so the app comes up signed-in, and (b) installs the request mocks. Build tests on this `test`, and tweak fixture data through the `db` fixture before navigating.
 - `session.ts` builds the exact object supabase-js persists (far-future `expires_at` so no token refresh fires) and derives the storage key (`sb-<host-label>-auth-token`) from the E2E URL — **no change to production `createClient` is needed**, which avoids invalidating real users' sessions.
 - `postgrest.ts` is a small PostgREST emulator (parses `eq`/`in`/`is`/`lt…`/`or`/`order`/`limit` and the `.single()`/`.maybeSingle()` Accept header) backed by `db.ts`'s in-memory fixtures.
-- `mockBackend.ts` routes `/rest/v1` (via the emulator), `/functions/v1` (TMDB edge function stubs), `/auth/v1`, and `image.tmdb.org` so nothing leaves the sandbox.
+- `mockBackend.ts` routes `/rest/v1` (via the emulator), `/functions/v1` (TMDB edge function stubs derived from the fixture shows), `/auth/v1`, and `image.tmdb.org` so nothing leaves the sandbox.
+- `fixtures.ts` also exports `visit(page, path)`. The app's `OAuthRedirectHandler` bounces to `/` on the `SIGNED_IN` event that fires when the seeded session is recovered, so a direct `goto('/settings')` lands on home. `visit()` loads `/`, waits for the signed-in home to settle, then navigates within the SPA via the History API (no reload → no second `SIGNED_IN`). Use it for any non-root authed route.
+
+Authed specs: `e2e/authed/rotation.spec.ts`, `history.spec.ts`, `settings.spec.ts` (incl. admin gating via `db.isAdmin` and sign-out), and `show-detail.spec.ts`.
 
 This is the "mock lane" — it covers logged-in *UI/behaviour*, not real RLS or SQL. For true database/RLS coverage, a separate opt-in job running a local `supabase start` stack would be the next step. When adding logged-in flows, extend `e2e/authed/` and grow the `db.ts` fixtures / `postgrest.ts` operators as needed.
 
