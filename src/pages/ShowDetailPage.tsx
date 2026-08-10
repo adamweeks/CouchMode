@@ -16,7 +16,7 @@ import {
   useIonToast,
   IonIcon,
 } from '@ionic/react'
-import { playOutline, checkmarkDoneOutline, listOutline, arrowBackOutline, tvOutline, arrowUndoOutline } from 'ionicons/icons'
+import { playOutline, checkmarkDoneOutline, listOutline, arrowBackOutline, tvOutline, arrowUndoOutline, eyeOutline, playSkipForwardOutline } from 'ionicons/icons'
 import { useShows, useAddShow, useRemoveShow } from '../hooks/useShows'
 import { useRewatches, useActiveRewatch } from '../hooks/useRewatches'
 import { useCurrentProgress, useResetRewatch } from '../hooks/useProgressLogs'
@@ -252,7 +252,10 @@ export function ShowDetailPage() {
 
         {show && currentProgress && currentEpisode && (
           <>
-            <p style={sectionLabel}>Last Watched</p>
+            <p style={{ ...sectionLabel, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <IonIcon icon={eyeOutline} aria-hidden="true" style={{ fontSize: '13px' }} />
+              Last Watched
+            </p>
             <div style={card}>
               {currentEpisode.still_path && (
                 <img
@@ -287,7 +290,10 @@ export function ShowDetailPage() {
 
         {show && activeRewatch && nextEp && (
           <>
-            <p style={sectionLabel}>Up Next</p>
+            <p style={{ ...sectionLabel, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <IonIcon icon={playSkipForwardOutline} aria-hidden="true" style={{ fontSize: '13px' }} />
+              Up Next
+            </p>
             <div style={card}>
               {nextEpisode?.still_path && (
                 <img

@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { IonButton, IonIcon } from '@ionic/react'
-import { playOutline } from 'ionicons/icons'
+import { playOutline, playSkipForwardOutline } from 'ionicons/icons'
 import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
 import { useTMDBSeason } from '../hooks/useTMDBSeason'
 import { formatProgress } from '../lib/progressLogic'
 import { LogProgressModal } from './LogProgressModal'
+import { StatusLine } from './StatusLine'
 import type { ResumeShowData } from '../hooks/useResumeShow'
 
 export function ResumeCard({ data }: { data: ResumeShowData }) {
@@ -79,10 +80,14 @@ export function ResumeCard({ data }: { data: ResumeShowData }) {
           }}>
             {show.title}
           </h3>
-          <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)' }}>
-            Up next: {formatProgress(nextEp.season, nextEp.episode)}
-            {nextEpisodeName && ` · ${nextEpisodeName}`}
-          </p>
+          <StatusLine
+            icon={playSkipForwardOutline}
+            label="Up next"
+            detail={
+              formatProgress(nextEp.season, nextEp.episode) +
+              (nextEpisodeName ? ` · ${nextEpisodeName}` : '')
+            }
+          />
         </div>
 
         <IonButton size="small" onClick={logNext} style={{ flexShrink: 0 }}>

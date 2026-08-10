@@ -29,8 +29,11 @@ test.describe('rotation page (signed in)', () => {
     await page.goto('/')
 
     await expect(page.getByText('Continue Watching')).toBeVisible()
-    // Current progress is S1 E3, so the next episode up is S1 E4.
-    await expect(page.getByText(/Up next:\s*S1 E4/)).toBeVisible()
+    // Current progress is S1 E3, so the next episode up is S1 E4. The card shows
+    // an "Up next" label (exact match avoids the "Up Next" section heading)
+    // followed by the next episode.
+    await expect(page.getByText('Up next', { exact: true })).toBeVisible()
+    await expect(page.getByText(/S1 E4/)).toBeVisible()
   })
 
   test('filters the list via the search box', async ({ page }) => {

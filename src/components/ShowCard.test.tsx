@@ -150,7 +150,30 @@ describe('ShowCard quick-log button', () => {
       isLogging: false,
     })
     render(<ShowCard show={makeShow()} />)
-    expect(screen.getByText('Completed · Jun 2026')).toBeInTheDocument()
+    expect(screen.getByText('Completed')).toBeInTheDocument()
+    expect(screen.getByText(/Jun 2026/)).toBeInTheDocument()
+  })
+
+  it('labels a watching show with its last-watched episode', () => {
+    setupWatching()
+    render(<ShowCard show={makeShow()} />)
+    expect(screen.getByText('Watched')).toBeInTheDocument()
+    expect(screen.getByText(/S1 E3/)).toBeInTheDocument()
+  })
+
+  it('labels a fresh rewatch with no logs as Not started', () => {
+    vi.mocked(useRewatches).mockReturnValue({
+      data: [{ id: 'rw-1', status: 'in_progress' }],
+    } as unknown as ReturnType<typeof useRewatches>)
+    vi.mocked(useCurrentProgress).mockReturnValue(null)
+    vi.mocked(useLogEpisodeSheet).mockReturnValue({
+      present: mockPresent,
+      nextEp: { season: 1, episode: 1 },
+      logNext: mockLogNext,
+      isLogging: false,
+    })
+    render(<ShowCard show={makeShow()} />)
+    expect(screen.getByText('Not started')).toBeInTheDocument()
   })
 
   it('falls back to plain Completed when no completed date exists', () => {
@@ -165,6 +188,44 @@ describe('ShowCard quick-log button', () => {
       isLogging: false,
     })
     render(<ShowCard show={makeShow()} />)
+    expect(screen.getByText('Completed')).toBeInTheDocument()
+  })
+
+  it('hides the redundant status word but keeps the episode when showStatusLabel is false', () => {
+    setupWatching()
+    render(<ShowCard show={makeShow()} showStatusLabel={false} />)
+    expect(screen.queryByText('Watched')).not.toBeInTheDocument()
+    expect(screen.getByText(/S1 E3/)).toBeInTheDocument()
+  })
+
+  it('hides the Completed word but keeps the date when showStatusLabel is false', () => {
+    vi.mocked(useRewatches).mockReturnValue({
+      data: [{ id: 'rw-1', status: 'completed', completed_at: '2026-06-15T00:00:00Z' }],
+    } as unknown as ReturnType<typeof useRewatches>)
+    vi.mocked(useCurrentProgress).mockReturnValue(null)
+    vi.mocked(useLogEpisodeSheet).mockReturnValue({
+      present: mockPresent,
+      nextEp: null,
+      logNext: null,
+      isLogging: false,
+    })
+    render(<ShowCard show={makeShow()} showStatusLabel={false} />)
+    expect(screen.queryByText('Completed')).not.toBeInTheDocument()
+    expect(screen.getByText(/Jun 2026/)).toBeInTheDocument()
+  })
+
+  it('keeps the status word when there is no detail to stand in for it, even with showStatusLabel false', () => {
+    vi.mocked(useRewatches).mockReturnValue({
+      data: [{ id: 'rw-1', status: 'completed', completed_at: null }],
+    } as unknown as ReturnType<typeof useRewatches>)
+    vi.mocked(useCurrentProgress).mockReturnValue(null)
+    vi.mocked(useLogEpisodeSheet).mockReturnValue({
+      present: mockPresent,
+      nextEp: null,
+      logNext: null,
+      isLogging: false,
+    })
+    render(<ShowCard show={makeShow()} showStatusLabel={false} />)
     expect(screen.getByText('Completed')).toBeInTheDocument()
   })
 })

@@ -36,8 +36,12 @@ vi.mock('../lib/tmdb', () => ({
 }))
 
 vi.mock('../components/ShowCard', () => ({
-  ShowCard: ({ show }: { show: { title: string } }) =>
-    React.createElement('div', { 'data-testid': 'show-card' }, show.title),
+  ShowCard: ({ show, showStatusLabel }: { show: { title: string }; showStatusLabel?: boolean }) =>
+    React.createElement(
+      'div',
+      { 'data-testid': 'show-card', 'data-status-label': String(showStatusLabel ?? true) },
+      show.title,
+    ),
 }))
 
 vi.mock('../components/ResumeCard', () => ({
@@ -157,6 +161,25 @@ describe('RotationPage', () => {
     } as unknown as ReturnType<typeof useShowGroups>)
     renderPage()
     expect(await screen.findByText('Done')).toBeInTheDocument()
+  })
+
+  it('hides the redundant status label on grouped Watching and Done rows', async () => {
+    vi.mocked(useShowGroups).mockReturnValue({
+      data: {
+        watching: [makeShow({ title: 'Breaking Bad' })],
+        queue: [],
+        done: [makeShow({ id: 'show-2', title: 'Chernobyl' })],
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useShowGroups>)
+    renderPage()
+
+    await screen.findByText('Breaking Bad')
+    const cards = screen.getAllByTestId('show-card')
+    expect(cards).toHaveLength(2)
+    // The section header already names the status, so ShowCard is told to drop
+    // the redundant word (icon + detail still render).
+    cards.forEach(card => expect(card).toHaveAttribute('data-status-label', 'false'))
   })
 
   it('renders "My Shows" header title in normal mode', async () => {
