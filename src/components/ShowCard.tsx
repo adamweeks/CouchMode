@@ -11,7 +11,7 @@ import {
   IonIcon,
   IonReorder,
 } from '@ionic/react'
-import { playOutline, reloadOutline } from 'ionicons/icons'
+import { playOutline, reloadOutline, eyeOutline } from 'ionicons/icons'
 import type { Database } from '../lib/database.types'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useRewatches } from '../hooks/useRewatches'
@@ -110,6 +110,13 @@ export function ShowCard({
       <IonLabel>
         <h2 style={{ fontWeight: 600, fontSize: '15px', marginBottom: '2px' }}>{show.title}</h2>
         <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {currentProgress && (
+            <IonIcon
+              icon={eyeOutline}
+              aria-label="Last watched"
+              style={{ fontSize: '12px', verticalAlign: '-1px', marginRight: '4px' }}
+            />
+          )}
           {episodeText}
         </p>
         {currentProgress && (
