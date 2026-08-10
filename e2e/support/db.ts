@@ -21,12 +21,47 @@ export interface MockDb {
   progress_logs: Record<string, unknown>[]
   /** Return value of the `is_admin` RPC. */
   isAdmin: boolean
+  /** `suggest-shows` edge function payload (`{ tmdb, reason }[]`). */
+  suggestions: { tmdb: Record<string, unknown>; reason: string }[]
+  /** Admin RPC fixtures. */
+  adminOverview: Record<string, unknown>
+  adminUsers: Record<string, unknown>[]
+  adminPopularShows: Record<string, unknown>[]
 }
 
 export function makeDb(): MockDb {
   const uid = TEST_USER.id
   return {
     isAdmin: false,
+    suggestions: [],
+    adminOverview: {
+      total_users: 5,
+      new_users_7d: 1,
+      new_users_30d: 2,
+      total_shows: 12,
+      total_rewatches: 8,
+      completed_rewatches: 3,
+      in_progress_rewatches: 5,
+      total_episodes_logged: 420,
+      users_with_shows: 4,
+      avg_shows_per_active_user: 3,
+    },
+    adminUsers: [
+      {
+        user_id: uid,
+        email: TEST_USER.email,
+        display_name: TEST_USER.email,
+        created_at: '2026-01-01T00:00:00.000Z',
+        last_sign_in_at: null,
+        show_count: 3,
+        episode_count: 120,
+        rewatch_count: 2,
+      },
+    ],
+    adminPopularShows: [
+      { tmdb_id: '1396', title: 'Breaking Bad', poster_url: null, user_count: 3, total_rewatches: 5 },
+      { tmdb_id: '1438', title: 'The Wire', poster_url: null, user_count: 2, total_rewatches: 1 },
+    ],
     shows: [
       {
         id: 'show-breaking-bad',

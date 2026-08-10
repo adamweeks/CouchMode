@@ -102,8 +102,18 @@ export function fulfillRest(route: Route, request: Request, db: MockDb) {
   // Stored procedures: `supabase.rpc('is_admin')` → POST /rest/v1/rpc/is_admin.
   if (table.startsWith('rpc/')) {
     const fn = table.slice('rpc/'.length)
-    if (fn === 'is_admin') return jsonResponse(route, 200, db.isAdmin ?? false)
-    return jsonResponse(route, 200, null)
+    switch (fn) {
+      case 'is_admin':
+        return jsonResponse(route, 200, db.isAdmin ?? false)
+      case 'admin_get_overview':
+        return jsonResponse(route, 200, db.adminOverview ?? null)
+      case 'admin_get_user_list':
+        return jsonResponse(route, 200, db.adminUsers ?? [])
+      case 'admin_get_popular_shows':
+        return jsonResponse(route, 200, db.adminPopularShows ?? [])
+      default:
+        return jsonResponse(route, 200, null)
+    }
   }
 
   // Writes: acknowledge without persisting.

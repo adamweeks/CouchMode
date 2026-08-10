@@ -68,7 +68,7 @@ function fulfillTmdbSearch(route: Route, request: Request, db: MockDb) {
 export async function mockSupabase(page: Page, db: MockDb = makeDb()): Promise<MockDb> {
   // Register specific routes before the catch-all REST handler.
   await page.route('**/functions/v1/tmdb-search**', route => fulfillTmdbSearch(route, route.request(), db))
-  await page.route('**/functions/v1/suggest-shows', route => json(route, { suggestions: [] }))
+  await page.route('**/functions/v1/suggest-shows', route => json(route, { suggestions: db.suggestions }))
 
   await page.route('**/auth/v1/**', route => {
     const url = new URL(route.request().url())
