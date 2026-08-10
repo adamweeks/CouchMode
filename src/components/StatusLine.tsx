@@ -11,15 +11,25 @@ export function StatusLine({
   icon,
   label,
   detail,
+  hideLabel = false,
   color = 'var(--ion-color-medium)',
   style,
 }: {
   icon: string
   label: string
   detail?: string
+  /**
+   * When true, drop the visible label word to avoid repeating a status that's
+   * already stated nearby (e.g. a section header). The word is only hidden when
+   * there's a detail to stand in for it, so the line is never a bare icon. The
+   * icon keeps its aria-label either way.
+   */
+  hideLabel?: boolean
   color?: string
   style?: CSSProperties
 }) {
+  const showLabel = !hideLabel || !detail
+
   return (
     <p
       style={{
@@ -38,7 +48,7 @@ export function StatusLine({
         aria-label={label}
         style={{ fontSize: '13px', flexShrink: 0 }}
       />
-      <span style={{ fontWeight: 600, flexShrink: 0 }}>{label}</span>
+      {showLabel && <span style={{ fontWeight: 600, flexShrink: 0 }}>{label}</span>}
       {detail && (
         <span
           style={{
@@ -48,7 +58,7 @@ export function StatusLine({
             whiteSpace: 'nowrap',
           }}
         >
-          · {detail}
+          {showLabel ? `· ${detail}` : detail}
         </span>
       )}
     </p>

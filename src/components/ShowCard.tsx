@@ -34,10 +34,17 @@ export function ShowCard({
   show,
   filter = 'all',
   reorderMode = false,
+  showStatusLabel = true,
 }: {
   show: Show
   filter?: FilterTab
   reorderMode?: boolean
+  /**
+   * Whether to show the status word (e.g. "Watched", "Completed"). Set false
+   * when the card sits under a section header that already names the status,
+   * to avoid repeating it. The status icon is always shown.
+   */
+  showStatusLabel?: boolean
 }) {
   const navigate = useNavigate()
   const [logModalOpen, setLogModalOpen] = useState(false)
@@ -127,6 +134,7 @@ export function ShowCard({
           icon={status.icon}
           label={status.label}
           detail={status.detail}
+          hideLabel={!showStatusLabel}
           style={{ marginBottom: '6px' }}
         />
         {currentProgress && (

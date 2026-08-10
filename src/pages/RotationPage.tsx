@@ -125,7 +125,7 @@ export function RotationPage() {
                 </IonListHeader>
                 <IonList inset className="inset-shadow">
                   {filteredWatching.map(show => (
-                    <ShowCard key={show.id} show={show} />
+                    <ShowCard key={show.id} show={show} showStatusLabel={false} />
                   ))}
                 </IonList>
               </>
@@ -153,7 +153,7 @@ export function RotationPage() {
                 </IonListHeader>
                 <IonList inset className="inset-shadow">
                   {filteredDone.map(show => (
-                    <ShowCard key={show.id} show={show} />
+                    <ShowCard key={show.id} show={show} showStatusLabel={false} />
                   ))}
                 </IonList>
               </>
