@@ -11,12 +11,19 @@ import {
   IonIcon,
   IonReorder,
 } from '@ionic/react'
-import { playOutline, reloadOutline, eyeOutline } from 'ionicons/icons'
+import {
+  playOutline,
+  reloadOutline,
+  eyeOutline,
+  checkmarkCircleOutline,
+  ellipseOutline,
+} from 'ionicons/icons'
 import type { Database } from '../lib/database.types'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useRewatches } from '../hooks/useRewatches'
 import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
 import { LogProgressModal } from './LogProgressModal'
+import { StatusLine } from './StatusLine'
 import { useTMDBSeason } from '../hooks/useTMDBSeason'
 
 type Show = Database['public']['Tables']['shows']['Row']
@@ -71,14 +78,21 @@ export function ShowCard({
     return !latest || r.completed_at > latest ? r.completed_at : latest
   }, null)
 
-  const episodeText = currentProgress
-    ? formatProgress(currentProgress.season, currentProgress.episode) +
-      (episodeTitle ? ` · ${episodeTitle}` : '')
+  const status = currentProgress
+    ? {
+        icon: eyeOutline,
+        label: 'Watched',
+        detail:
+          formatProgress(currentProgress.season, currentProgress.episode) +
+          (episodeTitle ? ` · ${episodeTitle}` : ''),
+      }
     : isDone
-    ? lastCompletedAt
-      ? `Completed · ${formatMonthYear(lastCompletedAt)}`
-      : 'Completed'
-    : 'Not started'
+    ? {
+        icon: checkmarkCircleOutline,
+        label: 'Completed',
+        detail: lastCompletedAt ? formatMonthYear(lastCompletedAt) : undefined,
+      }
+    : { icon: ellipseOutline, label: 'Not started', detail: undefined }
 
   const item = (
     <IonItem
@@ -109,16 +123,12 @@ export function ShowCard({
 
       <IonLabel>
         <h2 style={{ fontWeight: 600, fontSize: '15px', marginBottom: '2px' }}>{show.title}</h2>
-        <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {currentProgress && (
-            <IonIcon
-              icon={eyeOutline}
-              aria-label="Last watched"
-              style={{ fontSize: '12px', verticalAlign: '-1px', marginRight: '4px' }}
-            />
-          )}
-          {episodeText}
-        </p>
+        <StatusLine
+          icon={status.icon}
+          label={status.label}
+          detail={status.detail}
+          style={{ marginBottom: '6px' }}
+        />
         {currentProgress && (
           <>
             <div

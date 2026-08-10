@@ -150,7 +150,30 @@ describe('ShowCard quick-log button', () => {
       isLogging: false,
     })
     render(<ShowCard show={makeShow()} />)
-    expect(screen.getByText('Completed · Jun 2026')).toBeInTheDocument()
+    expect(screen.getByText('Completed')).toBeInTheDocument()
+    expect(screen.getByText(/Jun 2026/)).toBeInTheDocument()
+  })
+
+  it('labels a watching show with its last-watched episode', () => {
+    setupWatching()
+    render(<ShowCard show={makeShow()} />)
+    expect(screen.getByText('Watched')).toBeInTheDocument()
+    expect(screen.getByText(/S1 E3/)).toBeInTheDocument()
+  })
+
+  it('labels a fresh rewatch with no logs as Not started', () => {
+    vi.mocked(useRewatches).mockReturnValue({
+      data: [{ id: 'rw-1', status: 'in_progress' }],
+    } as unknown as ReturnType<typeof useRewatches>)
+    vi.mocked(useCurrentProgress).mockReturnValue(null)
+    vi.mocked(useLogEpisodeSheet).mockReturnValue({
+      present: mockPresent,
+      nextEp: { season: 1, episode: 1 },
+      logNext: mockLogNext,
+      isLogging: false,
+    })
+    render(<ShowCard show={makeShow()} />)
+    expect(screen.getByText('Not started')).toBeInTheDocument()
   })
 
   it('falls back to plain Completed when no completed date exists', () => {

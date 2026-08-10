@@ -6,6 +6,7 @@ import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
 import { useTMDBSeason } from '../hooks/useTMDBSeason'
 import { formatProgress } from '../lib/progressLogic'
 import { LogProgressModal } from './LogProgressModal'
+import { StatusLine } from './StatusLine'
 import type { ResumeShowData } from '../hooks/useResumeShow'
 
 export function ResumeCard({ data }: { data: ResumeShowData }) {
@@ -79,15 +80,14 @@ export function ResumeCard({ data }: { data: ResumeShowData }) {
           }}>
             {show.title}
           </h3>
-          <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)' }}>
-            <IonIcon
-              icon={playSkipForwardOutline}
-              aria-label="Up next"
-              style={{ fontSize: '12px', verticalAlign: '-1px', marginRight: '4px' }}
-            />
-            {formatProgress(nextEp.season, nextEp.episode)}
-            {nextEpisodeName && ` · ${nextEpisodeName}`}
-          </p>
+          <StatusLine
+            icon={playSkipForwardOutline}
+            label="Up next"
+            detail={
+              formatProgress(nextEp.season, nextEp.episode) +
+              (nextEpisodeName ? ` · ${nextEpisodeName}` : '')
+            }
+          />
         </div>
 
         <IonButton size="small" onClick={logNext} style={{ flexShrink: 0 }}>
