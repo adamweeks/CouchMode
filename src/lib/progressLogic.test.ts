@@ -11,7 +11,11 @@ import {
   formatMonthYear,
   formatDuration,
   getErrorMessage,
+  isReturningSeries,
+  isCaughtUp,
+  formatAirStatus,
 } from './progressLogic'
+import type { AirStatus } from './progressLogic'
 
 describe('getCurrentProgress', () => {
   it('returns null for empty logs', () => {
@@ -252,5 +256,117 @@ describe('getErrorMessage', () => {
 
   it('returns fallback for plain objects', () => {
     expect(getErrorMessage({ message: 'not an error' })).toBe('Something went wrong')
+  })
+})
+
+describe('isReturningSeries', () => {
+  it('returns false for null/undefined air status', () => {
+    expect(isReturningSeries(null)).toBe(false)
+    expect(isReturningSeries(undefined)).toBe(false)
+  })
+
+  it('returns true when a next episode is scheduled, regardless of status', () => {
+    const air: AirStatus = {
+      status: 'Ended',
+      last_aired: { season: 2, episode: 8, air_date: '2026-08-01' },
+      next_episode: { season: 3, episode: 1, air_date: '2026-09-01' },
+    }
+    expect(isReturningSeries(air)).toBe(true)
+  })
+
+  it('returns true for a returning-series status with no scheduled episode', () => {
+    expect(isReturningSeries({ status: 'Returning Series', last_aired: null, next_episode: null })).toBe(true)
+    expect(isReturningSeries({ status: 'In Production', last_aired: null, next_episode: null })).toBe(true)
+  })
+
+  it('returns false for ended/canceled shows with no scheduled episode', () => {
+    expect(isReturningSeries({ status: 'Ended', last_aired: null, next_episode: null })).toBe(false)
+    expect(isReturningSeries({ status: 'Canceled', last_aired: null, next_episode: null })).toBe(false)
+  })
+})
+
+describe('isCaughtUp', () => {
+  const returning: AirStatus = {
+    status: 'Returning Series',
+    last_aired: { season: 1, episode: 8, air_date: '2026-08-01' },
+    next_episode: null,
+  }
+
+  it('is false without progress', () => {
+    expect(isCaughtUp(null, returning)).toBe(false)
+  })
+
+  it('is true when progress has reached the last aired episode', () => {
+    expect(isCaughtUp({ season: 1, episode: 8 }, returning)).toBe(true)
+  })
+
+  it('is true when progress is past the last aired episode', () => {
+    expect(isCaughtUp({ season: 1, episode: 9 }, returning)).toBe(true)
+  })
+
+  it('is false when episodes remain to watch', () => {
+    expect(isCaughtUp({ season: 1, episode: 7 }, returning)).toBe(false)
+  })
+
+  it('is false for an ended series even at the last aired episode', () => {
+    const ended: AirStatus = { status: 'Ended', last_aired: { season: 1, episode: 8, air_date: '2026-08-01' }, next_episode: null }
+    expect(isCaughtUp({ season: 1, episode: 8 }, ended)).toBe(false)
+  })
+
+  it('is false when there is no last-aired reference', () => {
+    expect(isCaughtUp({ season: 1, episode: 8 }, { status: 'Returning Series', last_aired: null, next_episode: null })).toBe(false)
+  })
+})
+
+describe('formatAirStatus', () => {
+  const now = new Date('2026-08-14T12:00:00')
+
+  it('returns null with no air data', () => {
+    expect(formatAirStatus(null, now)).toBeNull()
+  })
+
+  it('describes an upcoming episode airing tomorrow', () => {
+    const air: AirStatus = {
+      status: 'Returning Series',
+      last_aired: { season: 1, episode: 8, air_date: '2026-08-07' },
+      next_episode: { season: 1, episode: 9, air_date: '2026-08-15' },
+    }
+    expect(formatAirStatus(air, now)).toBe('Next: S1 E9 · tomorrow')
+  })
+
+  it('uses a relative count within a week', () => {
+    const air: AirStatus = {
+      status: 'Returning Series',
+      last_aired: null,
+      next_episode: { season: 2, episode: 1, air_date: '2026-08-19' },
+    }
+    expect(formatAirStatus(air, now)).toBe('Next: S2 E1 · in 5 days')
+  })
+
+  it('uses a calendar date beyond a week out', () => {
+    const air: AirStatus = {
+      status: 'Returning Series',
+      last_aired: null,
+      next_episode: { season: 2, episode: 1, air_date: '2026-09-20' },
+    }
+    expect(formatAirStatus(air, now)).toBe('Next: S2 E1 · Sep 20')
+  })
+
+  it('describes a recently aired episode when nothing is scheduled next', () => {
+    const air: AirStatus = {
+      status: 'Returning Series',
+      last_aired: { season: 1, episode: 8, air_date: '2026-08-12' },
+      next_episode: null,
+    }
+    expect(formatAirStatus(air, now)).toBe('New episode aired 2 days ago · S1 E8')
+  })
+
+  it('falls back to a bare "Caught up" when the last airing is stale', () => {
+    const air: AirStatus = {
+      status: 'Returning Series',
+      last_aired: { season: 1, episode: 8, air_date: '2026-01-01' },
+      next_episode: null,
+    }
+    expect(formatAirStatus(air, now)).toBe('Caught up')
   })
 })

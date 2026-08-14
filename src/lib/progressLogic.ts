@@ -149,3 +149,92 @@ export function formatDuration(startedAt: string, completedAt: string): string {
   if (days === 1) return '1 day'
   return `${days} days`
 }
+
+export interface AirEpisode {
+  season: number
+  episode: number
+  air_date: string | null
+}
+
+/**
+ * Cached air-schedule snapshot for a show, derived from TMDB's `status`,
+ * `last_episode_to_air`, and `next_episode_to_air`. Stored as JSONB on the
+ * `shows` row and refreshed on the same cadence as streaming providers.
+ */
+export interface AirStatus {
+  status: string | null
+  last_aired: AirEpisode | null
+  next_episode: AirEpisode | null
+}
+
+// TMDB series statuses that mean more episodes are expected. "Returning
+// Series" is the common one; the others cover shows that have been renewed or
+// are still in their first run.
+const RETURNING_STATUSES = new Set(['returning series', 'in production', 'pilot', 'planned'])
+
+export function isReturningSeries(air: AirStatus | null | undefined): boolean {
+  if (!air) return false
+  if (air.next_episode) return true
+  return RETURNING_STATUSES.has((air.status ?? '').toLowerCase())
+}
+
+/**
+ * True when the viewer has watched up to (or past) the most recent aired
+ * episode of a show that is still returning — i.e. they're waiting on new
+ * episodes rather than having episodes ready to watch right now.
+ */
+export function isCaughtUp(
+  current: { season: number; episode: number } | null | undefined,
+  air: AirStatus | null | undefined
+): boolean {
+  if (!current || !isReturningSeries(air)) return false
+  const last = air!.last_aired
+  if (!last) return false
+  return comparePosition(current, { season: last.season, episode: last.episode }) >= 0
+}
+
+const airDateFormatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
+
+// Whole calendar days from `now` until `dateStr` (YYYY-MM-DD). Negative when
+// the date is in the past. Compared at local midnight so "today" is 0.
+function daysUntil(dateStr: string, now: Date): number {
+  const target = new Date(`${dateStr}T00:00:00`)
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  return Math.round((target.getTime() - today.getTime()) / 86_400_000)
+}
+
+/**
+ * Human-readable air-status line for a caught-up show. Prefers the upcoming
+ * episode ("Next: S2 E1 · in 3 days"); otherwise describes the most recent
+ * one ("New episode aired 2 days ago · S2 E1"). Returns a bare "Caught up"
+ * when no useful date is available, or null when there's no air data at all.
+ */
+export function formatAirStatus(air: AirStatus | null | undefined, now: Date = new Date()): string | null {
+  if (!air) return null
+
+  const next = air.next_episode
+  if (next?.air_date) {
+    const days = daysUntil(next.air_date, now)
+    const ep = formatProgress(next.season, next.episode)
+    if (days <= 0) return `New episode out now · ${ep}`
+    const when =
+      days === 1
+        ? 'tomorrow'
+        : days <= 7
+        ? `in ${days} days`
+        : airDateFormatter.format(new Date(`${next.air_date}T00:00:00`))
+    return `Next: ${ep} · ${when}`
+  }
+
+  const last = air.last_aired
+  if (last?.air_date) {
+    const days = daysUntil(last.air_date, now) // 0 or negative
+    if (days >= -10) {
+      const ep = formatProgress(last.season, last.episode)
+      const when = days === 0 ? 'today' : days === -1 ? 'yesterday' : `${-days} days ago`
+      return `New episode aired ${when} · ${ep}`
+    }
+  }
+
+  return 'Caught up'
+}

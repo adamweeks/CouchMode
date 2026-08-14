@@ -1,8 +1,10 @@
 import { useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { fetchShowDetails, extractEpisodesPerSeason, posterUrl, fetchWatchProviders } from '../lib/tmdb'
+import { fetchShowDetails, extractEpisodesPerSeason, extractAirStatus, posterUrl, fetchWatchProviders } from '../lib/tmdb'
 import type { TMDBSearchResult } from '../lib/tmdb'
+import { comparePosition, isCaughtUp } from '../lib/progressLogic'
+import type { AirStatus } from '../lib/progressLogic'
 import { useAuth } from '../contexts/AuthContext'
 import type { Database, Json } from '../lib/database.types'
 
@@ -50,18 +52,24 @@ export function useShowGroups(sort: GroupSortOption = 'added_at') {
 
       const inProgressIds = [...inProgressIdByShow.values()]
       const logCounts = new Map<string, number>()
+      const maxPosByRewatch = new Map<string, { season: number; episode: number }>()
       if (inProgressIds.length > 0) {
         const { data: logs, error: logsError } = await supabase
           .from('progress_logs')
-          .select('rewatch_id')
+          .select('rewatch_id, season, episode')
           .in('rewatch_id', inProgressIds)
         if (logsError) throw logsError
         for (const log of logs) {
           logCounts.set(log.rewatch_id, (logCounts.get(log.rewatch_id) ?? 0) + 1)
+          const current = maxPosByRewatch.get(log.rewatch_id)
+          if (!current || comparePosition(log, current) > 0) {
+            maxPosByRewatch.set(log.rewatch_id, { season: log.season, episode: log.episode })
+          }
         }
       }
 
       const watching: Show[] = []
+      const caughtUp: Show[] = []
       const queue: Show[] = []
       const done: Show[] = []
 
@@ -71,7 +79,13 @@ export function useShowGroups(sort: GroupSortOption = 'added_at') {
         const hasCompleted = hasCompletedByShow.has(show.id)
 
         if (count > 0) {
-          watching.push(show)
+          const position = rewatchId ? maxPosByRewatch.get(rewatchId) ?? null : null
+          const air = (show.air_status as AirStatus | null) ?? null
+          if (isCaughtUp(position, air)) {
+            caughtUp.push(show)
+          } else {
+            watching.push(show)
+          }
         } else if (!hasCompleted) {
           queue.push(show)
         } else {
@@ -92,7 +106,7 @@ export function useShowGroups(sort: GroupSortOption = 'added_at') {
         return aDate > bDate ? -1 : 1
       })
 
-      return { watching, queue, done }
+      return { watching, caughtUp, queue, done }
     },
     enabled: !!user,
   })
@@ -151,6 +165,7 @@ export function useAddShow() {
         fetchWatchProviders(result.id).catch(() => []),
       ])
       const episodesPerSeason = extractEpisodesPerSeason(details)
+      const now = new Date().toISOString()
 
       const { data: show, error: showError } = await supabase
         .from('shows')
@@ -162,7 +177,9 @@ export function useAddShow() {
           total_seasons: details.number_of_seasons,
           episodes_per_season: episodesPerSeason,
           streaming_providers: providers.length > 0 ? (providers as unknown as Json) : null,
-          providers_updated_at: new Date().toISOString(),
+          providers_updated_at: now,
+          air_status: extractAirStatus(details) as unknown as Json,
+          air_status_updated_at: now,
         })
         .select()
         .single()
@@ -224,6 +241,14 @@ export function useUpdateShowOrder() {
 
 const PROVIDERS_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 
+/**
+ * On mount of the show list, refreshes cached TMDB metadata for shows whose
+ * data has gone stale (older than the TTL): streaming providers, air status
+ * (used to surface "caught up" shows and upcoming-episode dates), and the
+ * per-season episode counts (so a newly-aired episode becomes loggable and the
+ * show moves back out of the caught-up group). All three share one TTL keyed on
+ * `providers_updated_at`.
+ */
 export function useRefreshProviders() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
@@ -240,14 +265,22 @@ export function useRefreshProviders() {
 
     await Promise.allSettled(
       stale.map(async show => {
-        const providers = await fetchWatchProviders(Number(show.tmdb_id)).catch(() => [])
-        await supabase
-          .from('shows')
-          .update({
-            streaming_providers: providers.length > 0 ? (providers as unknown as Json) : null,
-            providers_updated_at: new Date().toISOString(),
-          })
-          .eq('id', show.id)
+        const [providers, details] = await Promise.all([
+          fetchWatchProviders(Number(show.tmdb_id)).catch(() => []),
+          fetchShowDetails(Number(show.tmdb_id)).catch(() => null),
+        ])
+        const now = new Date().toISOString()
+        const update: Database['public']['Tables']['shows']['Update'] = {
+          streaming_providers: providers.length > 0 ? (providers as unknown as Json) : null,
+          providers_updated_at: now,
+        }
+        if (details) {
+          update.air_status = extractAirStatus(details) as unknown as Json
+          update.air_status_updated_at = now
+          update.episodes_per_season = extractEpisodesPerSeason(details)
+          update.total_seasons = details.number_of_seasons
+        }
+        await supabase.from('shows').update(update).eq('id', show.id)
       })
     )
     queryClient.invalidateQueries({ queryKey: ['shows', userId] })

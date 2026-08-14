@@ -111,6 +111,8 @@ export type Database = {
       shows: {
         Row: {
           added_at: string
+          air_status: Json | null
+          air_status_updated_at: string | null
           episodes_per_season: number[]
           id: string
           poster_url: string | null
@@ -124,6 +126,8 @@ export type Database = {
         }
         Insert: {
           added_at?: string
+          air_status?: Json | null
+          air_status_updated_at?: string | null
           episodes_per_season?: number[]
           id?: string
           poster_url?: string | null
@@ -137,6 +141,8 @@ export type Database = {
         }
         Update: {
           added_at?: string
+          air_status?: Json | null
+          air_status_updated_at?: string | null
           episodes_per_season?: number[]
           id?: string
           poster_url?: string | null
