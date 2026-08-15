@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { formatProgress, countWatchedEpisodes, formatMonthYear } from '../lib/progressLogic'
+import { formatProgress, countWatchedEpisodes, formatMonthYear, isCaughtUp, formatAirStatus } from '../lib/progressLogic'
+import type { AirStatus } from '../lib/progressLogic'
 import {
   IonItem,
   IonLabel,
@@ -80,6 +81,10 @@ export function ShowCard({
   const progressPct = totalEpisodes > 0 ? Math.round((episodesWatched / totalEpisodes) * 100) : 0
   const rewatchNumber = completedRewatches.length + 1
 
+  const airStatus = (show.air_status as AirStatus | null) ?? null
+  const caughtUp = isCaughtUp(currentProgress, airStatus)
+  const airLine = caughtUp ? formatAirStatus(airStatus) : null
+
   const lastCompletedAt = completedRewatches.reduce<string | null>((latest, r) => {
     if (!r.completed_at) return latest
     return !latest || r.completed_at > latest ? r.completed_at : latest
@@ -158,7 +163,7 @@ export function ShowCard({
               />
             </div>
             <p style={{ fontSize: '11px', color: 'var(--ion-color-primary)', fontWeight: 600 }}>
-              {progressPct}% through show
+              {caughtUp && airLine ? airLine : `${progressPct}% through show`}
             </p>
           </>
         )}

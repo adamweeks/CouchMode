@@ -61,7 +61,7 @@ Navigation between main tabs is handled by `BottomNav` component (custom bottom 
 
 ### Database Schema (Supabase/PostgreSQL)
 
-- **shows** — User's tracked shows: `tmdb_id`, `title`, `poster_url`, `total_seasons`, `episodes_per_season` (integer array), `sort_order` (nullable int for manual queue ordering), `streaming_providers` (JSONB, cached TMDB watch provider data), `providers_updated_at` (timestamp).
+- **shows** — User's tracked shows: `tmdb_id`, `title`, `poster_url`, `total_seasons`, `episodes_per_season` (integer array), `sort_order` (nullable int for manual queue ordering), `streaming_providers` (JSONB, cached TMDB watch provider data), `providers_updated_at` (timestamp), `air_status` (JSONB, cached TMDB `status` + last/next aired episode), `air_status_updated_at` (timestamp).
 - **rewatches** — Each rewatch session per show: `status: in_progress | completed`, `started_at`, `completed_at`, `note`, `service` (streaming service name).
 - **progress_logs** — Individual episode logs: `season`, `episode`, `logged_at`, `note`, `rewatch_id`.
 - **admin_users** — Admin user UUIDs. RLS enabled with no public policies; managed via the Supabase dashboard or service role only.
@@ -81,19 +81,23 @@ Key exports:
 - `formatMonthYear(dateStr)` — returns `"Jun 2026"` formatted string
 - `countWatchedEpisodes(episodesPerSeason, progress)` — total episodes watched in a rewatch
 - `formatDuration(startedAt, completedAt)` — human-readable duration string
+- `isReturningSeries(air)` — true when TMDB air status implies more episodes are coming
+- `isCaughtUp(current, air)` — true when a returning show has been watched through its last aired episode
+- `formatAirStatus(air, now?)` — air-status line for a caught-up show (`"Next: S2 E1 · in 3 days"`, `"New episode aired 2 days ago · S2 E1"`, or `"Caught up"`)
 
 ### Streaming Providers
 
-`useRefreshProviders()` in `useShows.ts` checks for stale streaming provider data (older than 7 days) on mount of `RotationPage` and refreshes via TMDB. Provider logos come from `providerLogoUrl()` in `tmdb.ts`. The `ServiceSelector` component (`src/components/ServiceSelector.tsx`) lets users pick a streaming service when logging a rewatch; it surfaces TMDB providers for that show at the top of the list.
+`useRefreshProviders()` in `useShows.ts` checks for stale data (older than 7 days) on mount of `RotationPage` and refreshes via TMDB. Despite the name it refreshes three things on the same TTL: streaming providers, `air_status` (drives the Caught Up group and air-date labels), and `episodes_per_season`/`total_seasons` (so a newly-aired episode becomes loggable and the show moves back out of Caught Up). Provider logos come from `providerLogoUrl()` in `tmdb.ts`. The `ServiceSelector` component (`src/components/ServiceSelector.tsx`) lets users pick a streaming service when logging a rewatch; it surfaces TMDB providers for that show at the top of the list.
 
 ### Show Grouping
 
-`useShowGroups()` in `useShows.ts` organizes shows into three groups:
-- **Watching** — in-progress rewatches with at least one progress log
+`useShowGroups()` in `useShows.ts` organizes shows into four groups:
+- **Watching** — in-progress rewatches with at least one progress log and episodes still left to watch
+- **Caught Up** — in-progress rewatches on a *returning* series where progress has reached the last aired episode (`isCaughtUp` in `progressLogic.ts`, using the show's cached `air_status`). Keeps still-airing shows the user has caught up on out of Watching so the list only surfaces things ready to watch now.
 - **Up Next** — in-progress rewatches with no logs yet (supports drag-to-reorder via `sort_order`)
 - **Done** — shows whose only rewatches are completed
 
-`RotationPage` renders these three groups plus a `ResumeCard` that pinpoints the most recently active show.
+`RotationPage` renders these four groups plus a `ResumeCard` that pinpoints the most recently active show. Caught-up cards show an air-status line (`formatAirStatus`) instead of a completion percentage.
 
 ### Key Directories
 

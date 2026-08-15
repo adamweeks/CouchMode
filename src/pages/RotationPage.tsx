@@ -39,9 +39,10 @@ export function RotationPage() {
   const { mutate: updateOrder } = useUpdateShowOrder()
 
   const watching = data?.watching ?? []
+  const caughtUp = data?.caughtUp ?? []
   const queue = data?.queue ?? []
   const done = data?.done ?? []
-  const totalShows = watching.length + queue.length + done.length
+  const totalShows = watching.length + caughtUp.length + queue.length + done.length
 
   const refreshProviders = useRefreshProviders()
   useEffect(() => {
@@ -50,9 +51,11 @@ export function RotationPage() {
 
   const q = searchQuery.toLowerCase().trim()
   const filteredWatching = q ? watching.filter(s => s.title.toLowerCase().includes(q)) : watching
+  const filteredCaughtUp = q ? caughtUp.filter(s => s.title.toLowerCase().includes(q)) : caughtUp
   const filteredQueue = q ? queue.filter(s => s.title.toLowerCase().includes(q)) : queue
   const filteredDone = q ? done.filter(s => s.title.toLowerCase().includes(q)) : done
-  const filteredTotal = filteredWatching.length + filteredQueue.length + filteredDone.length
+  const filteredTotal =
+    filteredWatching.length + filteredCaughtUp.length + filteredQueue.length + filteredDone.length
 
   const debouncedQuery = useDebounce(searchQuery, 400)
   const { data: tmdbResults = [], isFetching: tmdbFetching } = useQuery({
@@ -61,7 +64,7 @@ export function RotationPage() {
     enabled: debouncedQuery.trim().length > 2,
   })
 
-  const localByTmdbId = new Map([...watching, ...queue, ...done].map(s => [s.tmdb_id, s]))
+  const localByTmdbId = new Map([...watching, ...caughtUp, ...queue, ...done].map(s => [s.tmdb_id, s]))
 
   function handleQueueReorder(event: CustomEvent<ItemReorderEventDetail>) {
     const reordered = event.detail.complete(queue) as typeof queue
@@ -131,9 +134,22 @@ export function RotationPage() {
               </>
             )}
 
-            {filteredQueue.length > 0 && (
+            {filteredCaughtUp.length > 0 && (
               <>
                 <IonListHeader style={{ paddingTop: filteredWatching.length > 0 ? '4px' : '10px' }}>
+                  <IonLabel role="heading" aria-level={2}>Caught Up</IonLabel>
+                </IonListHeader>
+                <IonList inset className="inset-shadow">
+                  {filteredCaughtUp.map(show => (
+                    <ShowCard key={show.id} show={show} />
+                  ))}
+                </IonList>
+              </>
+            )}
+
+            {filteredQueue.length > 0 && (
+              <>
+                <IonListHeader style={{ paddingTop: filteredWatching.length > 0 || filteredCaughtUp.length > 0 ? '4px' : '10px' }}>
                   <IonLabel role="heading" aria-level={2}>Up Next</IonLabel>
                 </IonListHeader>
                 <IonList inset className="inset-shadow">
@@ -148,7 +164,7 @@ export function RotationPage() {
 
             {filteredDone.length > 0 && (
               <>
-                <IonListHeader style={{ paddingTop: filteredWatching.length > 0 || filteredQueue.length > 0 ? '4px' : '10px' }}>
+                <IonListHeader style={{ paddingTop: filteredWatching.length > 0 || filteredCaughtUp.length > 0 || filteredQueue.length > 0 ? '4px' : '10px' }}>
                   <IonLabel role="heading" aria-level={2}>Done</IonLabel>
                 </IonListHeader>
                 <IonList inset className="inset-shadow">

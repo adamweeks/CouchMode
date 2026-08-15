@@ -13,16 +13,25 @@ test.describe('rotation page (signed in)', () => {
     await expect(page.getByText('My Shows').first()).toBeVisible()
   })
 
-  test('groups shows into Watching, Up Next and Done', async ({ page }) => {
+  test('groups shows into Watching, Caught Up, Up Next and Done', async ({ page }) => {
     await page.goto('/')
 
     await expect(page.getByRole('heading', { name: 'Watching' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Caught Up' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Up Next' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Done' })).toBeVisible()
 
     await expect(page.getByText('Breaking Bad').first()).toBeVisible() // Watching
+    await expect(page.getByText('Poker Face')).toBeVisible() // Caught Up
     await expect(page.getByText('The Wire')).toBeVisible() // Up Next
     await expect(page.getByText('Chernobyl')).toBeVisible() // Done
+  })
+
+  test('shows an air-status line instead of a percentage for caught-up shows', async ({ page }) => {
+    await page.goto('/')
+
+    // Returning series with no next episode scheduled → bare "Caught up" line.
+    await expect(page.getByText('Caught up', { exact: true })).toBeVisible()
   })
 
   test('surfaces the resume card for the most recently watched show', async ({ page }) => {

@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import type { AirEpisode, AirStatus } from './progressLogic'
 
 export interface TMDBSearchResult {
   id: number
@@ -13,6 +14,13 @@ export interface TMDBSeason {
   episode_count: number
 }
 
+export interface TMDBAirEpisode {
+  season_number: number
+  episode_number: number
+  air_date: string | null
+  name?: string
+}
+
 export interface TMDBShowDetails {
   id: number
   name: string
@@ -23,6 +31,8 @@ export interface TMDBShowDetails {
   first_air_date: string
   status: string
   genres: { id: number; name: string }[]
+  last_episode_to_air?: TMDBAirEpisode | null
+  next_episode_to_air?: TMDBAirEpisode | null
 }
 
 export interface TMDBEpisode {
@@ -129,4 +139,17 @@ export function extractEpisodesPerSeason(details: TMDBShowDetails): number[] {
     .filter(s => s.season_number > 0)
     .sort((a, b) => a.season_number - b.season_number)
     .map(s => s.episode_count)
+}
+
+function toAirEpisode(ep: TMDBAirEpisode | null | undefined): AirEpisode | null {
+  if (!ep) return null
+  return { season: ep.season_number, episode: ep.episode_number, air_date: ep.air_date ?? null }
+}
+
+export function extractAirStatus(details: TMDBShowDetails): AirStatus {
+  return {
+    status: details.status ?? null,
+    last_aired: toAirEpisode(details.last_episode_to_air),
+    next_episode: toAirEpisode(details.next_episode_to_air),
+  }
 }
