@@ -75,6 +75,8 @@ export function makeDb(): MockDb {
         sort_order: null,
         streaming_providers: null,
         providers_updated_at: FRESH,
+        air_status: null,
+        air_status_updated_at: FRESH,
         added_at: '2026-08-01T00:00:00.000Z',
       },
       {
@@ -109,6 +111,8 @@ export function makeDb(): MockDb {
         sort_order: 0,
         streaming_providers: null,
         providers_updated_at: FRESH,
+        air_status: null,
+        air_status_updated_at: FRESH,
         added_at: '2026-08-02T00:00:00.000Z',
       },
       {
@@ -122,6 +126,8 @@ export function makeDb(): MockDb {
         sort_order: null,
         streaming_providers: null,
         providers_updated_at: FRESH,
+        air_status: null,
+        air_status_updated_at: FRESH,
         added_at: '2026-08-03T00:00:00.000Z',
       },
     ],

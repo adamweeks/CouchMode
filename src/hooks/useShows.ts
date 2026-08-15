@@ -247,7 +247,9 @@ const PROVIDERS_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
  * (used to surface "caught up" shows and upcoming-episode dates), and the
  * per-season episode counts (so a newly-aired episode becomes loggable and the
  * show moves back out of the caught-up group). All three share one TTL keyed on
- * `providers_updated_at`.
+ * `providers_updated_at`. Shows that have never had air status fetched
+ * (`air_status_updated_at` is null) are also refreshed regardless of the TTL,
+ * so existing rows backfill promptly the first time this code runs for them.
  */
 export function useRefreshProviders() {
   const { user } = useAuth()
@@ -260,7 +262,7 @@ export function useRefreshProviders() {
     const { data: stale } = await supabase
       .from('shows')
       .select('id, tmdb_id')
-      .or(`providers_updated_at.is.null,providers_updated_at.lt.${cutoff}`)
+      .or(`providers_updated_at.is.null,providers_updated_at.lt.${cutoff},air_status_updated_at.is.null`)
     if (!stale || stale.length === 0) return
 
     await Promise.allSettled(
