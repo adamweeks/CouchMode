@@ -65,8 +65,9 @@ Navigation between main tabs is handled by `BottomNav` component (custom bottom 
 - **rewatches** — Each rewatch session per show: `status: in_progress | completed`, `started_at`, `completed_at`, `note`, `service` (streaming service name).
 - **progress_logs** — Individual episode logs: `season`, `episode`, `logged_at`, `note`, `rewatch_id`.
 - **admin_users** — Admin user UUIDs. RLS enabled with no public policies; managed via the Supabase dashboard or service role only.
+- **rate_limit_counters** — Per-user fixed-window rate limit counters for the edge functions. RLS enabled with no public policies; only touched via the `consume_rate_limit()` SECURITY DEFINER function.
 
-Row Level Security (RLS) is enabled on all tables — users only see their own rows.
+Row Level Security (RLS) is enabled on all tables — users only see their own rows, and write policies verify that `show_id`/`rewatch_id` foreign keys reference rows owned by the same user. `progress_logs` has a unique index on `(rewatch_id, season, episode)`; episode logging uses upsert with `ignoreDuplicates` so concurrent logs can't create duplicate rows. `get_rewatch_log_counts()` (SECURITY INVOKER RPC) returns per-rewatch log counts for the calling user — `useShowGroups` uses it instead of fetching raw log rows.
 
 ### Progress Logic
 
@@ -120,7 +121,7 @@ Key exports:
 3. Resolves each title via TMDB search
 4. Returns `{ suggestions: [{ tmdb, reason }] }` filtered to deduplicated results
 
-Both functions require a valid Supabase JWT in the `Authorization` header.
+Both functions require a valid Supabase JWT in the `Authorization` header and are rate-limited per user via the `consume_rate_limit()` RPC (`tmdb-search`: 240/hour; `suggest-shows`: 10/day). Exceeding a limit returns HTTP 429. The check fails open if the RPC is missing (e.g. functions deployed before the migration runs).
 
 ### Admin Portal
 

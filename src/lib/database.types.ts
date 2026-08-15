@@ -171,6 +171,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      consume_rate_limit: {
+        Args: { bucket_name: string; max_calls: number; window_seconds: number }
+        Returns: boolean
+      }
+      get_rewatch_log_counts: {
+        Args: Record<PropertyKey, never>
+        Returns: { rewatch_id: string; log_count: number }[]
+      }
     }
     Enums: {
       rewatch_status: "in_progress" | "completed"

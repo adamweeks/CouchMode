@@ -4,13 +4,14 @@ import { useShowGroups, useShows } from './useShows'
 import { createWrapper, mockUser } from '../test/utils'
 import { useAuth } from '../contexts/AuthContext'
 
-const { mockFrom } = vi.hoisted(() => {
+const { mockFrom, mockRpc } = vi.hoisted(() => {
   const from = vi.fn()
-  return { mockFrom: from }
+  const rpc = vi.fn()
+  return { mockFrom: from, mockRpc: rpc }
 })
 
 vi.mock('../lib/supabase', () => ({
-  supabase: { from: mockFrom },
+  supabase: { from: mockFrom, rpc: mockRpc },
 }))
 
 vi.mock('../contexts/AuthContext', () => ({
@@ -67,12 +68,13 @@ describe('useShowGroups', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(useAuth).mockReturnValue({ user: mockUser } as ReturnType<typeof useAuth>)
+    mockRpc.mockResolvedValue({ data: [], error: null })
   })
 
   it('places show with in-progress rewatch and logs into watching group', async () => {
     const show = makeShow()
     const rewatches = [{ id: 'rw-1', show_id: 'show-1', status: 'in_progress' }]
-    const logs = [{ rewatch_id: 'rw-1' }]
+    mockRpc.mockResolvedValue({ data: [{ rewatch_id: 'rw-1', log_count: 1 }], error: null })
 
     mockFrom.mockImplementation((table: string) => {
       if (table === 'shows') {
@@ -80,13 +82,6 @@ describe('useShowGroups', () => {
       }
       if (table === 'rewatches') {
         return { select: vi.fn().mockResolvedValue({ data: rewatches, error: null }) }
-      }
-      if (table === 'progress_logs') {
-        return {
-          select: vi.fn().mockReturnValue({
-            in: vi.fn().mockResolvedValue({ data: logs, error: null }),
-          }),
-        }
       }
       return makeChain({ data: [], error: null })
     })
@@ -108,13 +103,6 @@ describe('useShowGroups', () => {
       if (table === 'shows') return makeChain({ data: [show], error: null })
       if (table === 'rewatches') {
         return { select: vi.fn().mockResolvedValue({ data: rewatches, error: null }) }
-      }
-      if (table === 'progress_logs') {
-        return {
-          select: vi.fn().mockReturnValue({
-            in: vi.fn().mockResolvedValue({ data: [], error: null }),
-          }),
-        }
       }
       return makeChain({ data: [], error: null })
     })
@@ -162,13 +150,6 @@ describe('useShowGroups', () => {
       if (table === 'shows') return makeChain({ data: [showA, showB, showC], error: null })
       if (table === 'rewatches') {
         return { select: vi.fn().mockResolvedValue({ data: rewatches, error: null }) }
-      }
-      if (table === 'progress_logs') {
-        return {
-          select: vi.fn().mockReturnValue({
-            in: vi.fn().mockResolvedValue({ data: [], error: null }),
-          }),
-        }
       }
       return makeChain({ data: [], error: null })
     })
