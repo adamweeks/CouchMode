@@ -12,13 +12,22 @@ import {
   IonIcon,
   IonSelect,
   IonSelectOption,
+  IonListHeader,
+  IonToggle,
 } from '@ionic/react'
-import { moonOutline, shieldCheckmarkOutline } from 'ionicons/icons'
+import {
+  moonOutline,
+  shieldCheckmarkOutline,
+  playCircleOutline,
+  checkmarkDoneOutline,
+} from 'ionicons/icons'
 import { useNavigate } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import type { ThemePreference } from '../contexts/ThemeContext'
+import { usePreferences } from '../contexts/PreferencesContext'
+import type { ResumeCardMode } from '../contexts/PreferencesContext'
 import { useIsAdmin } from '../hooks/useIsAdmin'
 
 export function SettingsPage() {
@@ -26,6 +35,7 @@ export function SettingsPage() {
   const navigate = useNavigate()
   const { data: isAdmin } = useIsAdmin()
   const { preference, setPreference } = useTheme()
+  const { preferences, setPreference: setAppPreference } = usePreferences()
 
   const displayName = user?.user_metadata?.full_name ?? user?.email ?? 'User'
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined
@@ -110,6 +120,52 @@ export function SettingsPage() {
               <IonSelectOption value="light">Light</IonSelectOption>
               <IonSelectOption value="dark">Dark</IonSelectOption>
             </IonSelect>
+          </IonItem>
+        </IonList>
+
+        {/* Home screen section */}
+        <IonList inset>
+          <IonListHeader>
+            <IonLabel>Home Screen</IonLabel>
+          </IonListHeader>
+          <IonItem>
+            <IonIcon icon={playCircleOutline} slot="start" color="primary" />
+            <IonLabel>Continue Watching card</IonLabel>
+            <IonToggle
+              slot="end"
+              aria-label="Continue Watching card"
+              checked={preferences.showResumeCard}
+              onIonChange={(e) => setAppPreference('showResumeCard', e.detail.checked)}
+            />
+          </IonItem>
+          <IonItem>
+            <IonLabel>
+              <p style={{ margin: 0 }}>That card shows</p>
+              <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: '2px 0 0' }}>
+                Highlight the next episode or the last one you watched
+              </p>
+            </IonLabel>
+            <IonSelect
+              slot="end"
+              interface="popover"
+              aria-label="Continue Watching card shows"
+              disabled={!preferences.showResumeCard}
+              value={preferences.resumeCardMode}
+              onIonChange={(e) => setAppPreference('resumeCardMode', e.detail.value as ResumeCardMode)}
+            >
+              <IonSelectOption value="up-next">Up next</IonSelectOption>
+              <IonSelectOption value="last-watched">Last watched</IonSelectOption>
+            </IonSelect>
+          </IonItem>
+          <IonItem lines="none">
+            <IonIcon icon={checkmarkDoneOutline} slot="start" color="primary" />
+            <IonLabel>Show finished shows</IonLabel>
+            <IonToggle
+              slot="end"
+              aria-label="Show finished shows"
+              checked={preferences.showDoneSection}
+              onIonChange={(e) => setAppPreference('showDoneSection', e.detail.checked)}
+            />
           </IonItem>
         </IonList>
 

@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { IonButton, IonIcon } from '@ionic/react'
-import { playOutline, playSkipForwardOutline } from 'ionicons/icons'
+import { playOutline, playSkipForwardOutline, timeOutline } from 'ionicons/icons'
 import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
 import { useTMDBSeason } from '../hooks/useTMDBSeason'
+import { usePreferences } from '../contexts/PreferencesContext'
 import { formatProgress } from '../lib/progressLogic'
 import { LogProgressModal } from './LogProgressModal'
 import { StatusLine } from './StatusLine'
@@ -13,6 +14,8 @@ export function ResumeCard({ data }: { data: ResumeShowData }) {
   const navigate = useNavigate()
   const [logModalOpen, setLogModalOpen] = useState(false)
   const { show, rewatchId, currentProgress } = data
+  const { preferences } = usePreferences()
+  const showLastWatched = preferences.resumeCardMode === 'last-watched'
 
   const { logNext, nextEp } = useLogEpisodeSheet(
     show,
@@ -21,12 +24,17 @@ export function ResumeCard({ data }: { data: ResumeShowData }) {
     () => setLogModalOpen(true),
   )
 
-  const { data: seasonData } = useTMDBSeason(show.tmdb_id, nextEp?.season ?? 0)
-  const nextEpisodeName = nextEp
-    ? seasonData?.episodes?.find(e => e.episode_number === nextEp.episode)?.name
+  // The card always logs the *next* episode, but which one it names is a
+  // user preference: the episode coming up, or the one they last logged.
+  const displaySeason = showLastWatched ? currentProgress.season : nextEp?.season ?? 0
+  const displayEpisode = showLastWatched ? currentProgress.episode : nextEp?.episode
+
+  const { data: seasonData } = useTMDBSeason(show.tmdb_id, displaySeason)
+  const displayEpisodeName = displayEpisode
+    ? seasonData?.episodes?.find(e => e.episode_number === displayEpisode)?.name
     : undefined
 
-  if (!nextEp || !logNext) return null
+  if (!nextEp || !logNext || displayEpisode === undefined) return null
 
   return (
     <>
@@ -81,11 +89,11 @@ export function ResumeCard({ data }: { data: ResumeShowData }) {
             {show.title}
           </h3>
           <StatusLine
-            icon={playSkipForwardOutline}
-            label="Up next"
+            icon={showLastWatched ? timeOutline : playSkipForwardOutline}
+            label={showLastWatched ? 'Last watched' : 'Up next'}
             detail={
-              formatProgress(nextEp.season, nextEp.episode) +
-              (nextEpisodeName ? ` · ${nextEpisodeName}` : '')
+              formatProgress(displaySeason, displayEpisode) +
+              (displayEpisodeName ? ` · ${displayEpisodeName}` : '')
             }
           />
         </div>

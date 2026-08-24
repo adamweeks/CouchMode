@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { IonApp } from '@ionic/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { PreferencesProvider } from './contexts/PreferencesContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AdminRoute } from './components/AdminRoute'
 import { LoginPage } from './pages/LoginPage'
@@ -43,6 +44,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
+        <PreferencesProvider>
         <AuthProvider>
           <IonApp>
             <PWAUpdatePrompt />
@@ -113,6 +115,7 @@ export default function App() {
             </BrowserRouter>
           </IonApp>
         </AuthProvider>
+        </PreferencesProvider>
       </ThemeProvider>
     </QueryClientProvider>
   )

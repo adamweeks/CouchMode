@@ -24,6 +24,7 @@ import type { ItemReorderEventDetail } from '@ionic/core'
 import { useShowGroups, useUpdateShowOrder, useRefreshProviders } from '../hooks/useShows'
 import { useResumeShow } from '../hooks/useResumeShow'
 import { useDebounce } from '../hooks/useDebounce'
+import { usePreferences } from '../contexts/PreferencesContext'
 import { searchShows, posterUrl } from '../lib/tmdb'
 import { ShowCard } from '../components/ShowCard'
 import { ResumeCard } from '../components/ResumeCard'
@@ -37,6 +38,7 @@ export function RotationPage() {
   const { data, isLoading } = useShowGroups()
   const { data: resumeData } = useResumeShow()
   const { mutate: updateOrder } = useUpdateShowOrder()
+  const { preferences } = usePreferences()
 
   const watching = data?.watching ?? []
   const caughtUp = data?.caughtUp ?? []
@@ -119,7 +121,7 @@ export function RotationPage() {
           </div>
         ) : (
           <>
-            {!q && resumeData && <ResumeCard data={resumeData} />}
+            {!q && preferences.showResumeCard && resumeData && <ResumeCard data={resumeData} />}
 
             {filteredWatching.length > 0 && (
               <>
@@ -162,7 +164,7 @@ export function RotationPage() {
               </>
             )}
 
-            {filteredDone.length > 0 && (
+            {preferences.showDoneSection && filteredDone.length > 0 && (
               <>
                 <IonListHeader style={{ paddingTop: filteredWatching.length > 0 || filteredCaughtUp.length > 0 || filteredQueue.length > 0 ? '4px' : '10px' }}>
                   <IonLabel role="heading" aria-level={2}>Done</IonLabel>

@@ -223,15 +223,19 @@ export const IonSelect = ({
   children,
   value,
   onIonChange,
+  'aria-label': ariaLabel,
 }: {
   children?: React.ReactNode
   value?: string
   onIonChange?: (e: { detail: { value: string } }) => void
+  'aria-label'?: string
+  [k: string]: unknown
 }) =>
   React.createElement(
     'select',
     {
       value,
+      'aria-label': ariaLabel,
       onChange: (e: React.ChangeEvent<HTMLSelectElement>) =>
         onIonChange?.({ detail: { value: e.target.value } }),
     },
@@ -293,13 +297,17 @@ export const IonAccordion = passChildren
 export const IonToggle = ({
   checked,
   onIonChange,
+  'aria-label': ariaLabel,
 }: {
   checked?: boolean
   onIonChange?: (e: { detail: { checked: boolean } }) => void
+  'aria-label'?: string
+  [k: string]: unknown
 }) =>
   React.createElement('input', {
     type: 'checkbox',
     checked,
+    'aria-label': ariaLabel,
     onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
       onIonChange?.({ detail: { checked: e.target.checked } }),
   })
