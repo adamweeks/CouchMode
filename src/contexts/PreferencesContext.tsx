@@ -1,5 +1,8 @@
-import { createContext, useCallback, useContext, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { supabase } from '../lib/supabase'
+import type { Json } from '../lib/database.types'
+import { useAuth } from './AuthContext'
 
 /**
  * What the "Continue Watching" card on the main index highlights:
@@ -17,6 +20,7 @@ export interface Preferences {
   showDoneSection: boolean
 }
 
+/** localStorage key — a per-device cache for instant/offline first paint. */
 export const PREFERENCES_STORAGE_KEY = 'couchmode-preferences'
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -43,7 +47,7 @@ function sanitize(raw: Partial<Preferences>): Partial<Preferences> {
   return out
 }
 
-function getStoredPreferences(): Preferences {
+function readCache(): Preferences {
   try {
     const raw = localStorage.getItem(PREFERENCES_STORAGE_KEY)
     if (raw) return { ...DEFAULT_PREFERENCES, ...sanitize(JSON.parse(raw)) }
@@ -53,22 +57,79 @@ function getStoredPreferences(): Preferences {
   return DEFAULT_PREFERENCES
 }
 
+function writeCache(prefs: Preferences) {
+  try {
+    localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(prefs))
+  } catch {
+    // caching is best-effort; the in-memory preference still applies
+  }
+}
+
+/** Write-through to the user's row. Best-effort — the local cache already holds
+ * the change, so a failed sync recovers on the next successful load. */
+async function persist(userId: string, prefs: Preferences) {
+  try {
+    await supabase
+      .from('user_preferences')
+      .upsert({
+        user_id: userId,
+        preferences: prefs as unknown as Json,
+        updated_at: new Date().toISOString(),
+      })
+  } catch {
+    // ignore — will re-sync later
+  }
+}
+
 export function PreferencesProvider({ children }: { children: ReactNode }) {
-  const [preferences, setPreferences] = useState<Preferences>(getStoredPreferences)
+  const { user } = useAuth()
+  const userId = user?.id
+  const [preferences, setPreferences] = useState<Preferences>(readCache)
+  // Once the user changes something locally, don't let a slower server load
+  // clobber their fresh choice.
+  const editedRef = useRef(false)
+
+  // On sign-in, pull this user's saved preferences. If the server has none yet
+  // (new user, or first run since this feature shipped), seed it from the local
+  // cache so their existing device's choice becomes the synced baseline.
+  useEffect(() => {
+    if (!userId) return
+    editedRef.current = false
+    let cancelled = false
+
+    void (async () => {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('preferences')
+        .eq('user_id', userId)
+        .maybeSingle()
+      if (cancelled || error) return
+
+      if (data?.preferences) {
+        const merged = { ...DEFAULT_PREFERENCES, ...sanitize(data.preferences as Partial<Preferences>) }
+        writeCache(merged)
+        if (!editedRef.current) setPreferences(merged)
+      } else {
+        void persist(userId, readCache())
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [userId])
 
   const setPreference = useCallback(
     <K extends keyof Preferences>(key: K, value: Preferences[K]) => {
+      editedRef.current = true
       setPreferences(prev => {
         const next = { ...prev, [key]: value }
-        try {
-          localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(next))
-        } catch {
-          // persisting is best-effort; the in-memory preference still applies
-        }
+        writeCache(next)
+        if (userId) void persist(userId, next)
         return next
       })
     },
-    [],
+    [userId],
   )
 
   return (

@@ -44,8 +44,8 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <PreferencesProvider>
         <AuthProvider>
+          <PreferencesProvider>
           <IonApp>
             <PWAUpdatePrompt />
             <BrowserRouter>
@@ -114,8 +114,8 @@ export default function App() {
               </Routes>
             </BrowserRouter>
           </IonApp>
+          </PreferencesProvider>
         </AuthProvider>
-        </PreferencesProvider>
       </ThemeProvider>
     </QueryClientProvider>
   )

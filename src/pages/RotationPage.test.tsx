@@ -12,6 +12,10 @@ vi.mock('../contexts/AuthContext', () => ({
   useAuth: vi.fn(() => ({ user: mockUser })),
 }))
 
+// RotationPage transitively imports the Supabase client (via PreferencesContext).
+// Stub it so `createClient` doesn't run at import time in the test env.
+vi.mock('../lib/supabase', () => ({ supabase: {} }))
+
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>()
   return { ...actual, useNavigate: vi.fn(() => mockNavigateFn) }

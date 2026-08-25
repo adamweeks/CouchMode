@@ -21,6 +21,17 @@ vi.mock('../contexts/AuthContext', () => ({
   useAuth: vi.fn(),
 }))
 
+// The preferences provider loads/saves through Supabase; stub it so tests stay
+// offline. Preference state is still exercised via localStorage + optimistic UI.
+vi.mock('../lib/supabase', () => ({
+  supabase: {
+    from: () => ({
+      select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: null, error: null }) }) }),
+      upsert: () => Promise.resolve({ data: null, error: null }),
+    }),
+  },
+}))
+
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>()
   return { ...actual, useNavigate: vi.fn(() => mockNavigate) }
