@@ -29,6 +29,10 @@ import type { ThemePreference } from '../contexts/ThemeContext'
 import { usePreferences } from '../contexts/PreferencesContext'
 import type { ResumeCardMode } from '../contexts/PreferencesContext'
 import { useIsAdmin } from '../hooks/useIsAdmin'
+import { useResumeShow } from '../hooks/useResumeShow'
+import { getNextEpisode } from '../lib/progressLogic'
+import { ResumeCardPreview } from '../components/ResumeCardPreview'
+import type { ResumeCardPreviewData } from '../components/ResumeCardPreview'
 
 export function SettingsPage() {
   const { user, signOut } = useAuth()
@@ -36,6 +40,35 @@ export function SettingsPage() {
   const { data: isAdmin } = useIsAdmin()
   const { preference, setPreference } = useTheme()
   const { preferences, setPreference: setAppPreference } = usePreferences()
+  const { data: resume } = useResumeShow()
+
+  // Drive the preview from the user's real "continue watching" show when there
+  // is one, so the two options show their actual episodes; otherwise a small
+  // illustrative example still conveys the difference.
+  const previewData: ResumeCardPreviewData = resume
+    ? {
+        title: resume.show.title,
+        posterUrl: resume.show.poster_url,
+        lastWatched: {
+          season: resume.currentProgress.season,
+          episode: resume.currentProgress.episode,
+        },
+        upNext:
+          getNextEpisode(
+            resume.currentProgress,
+            resume.show.total_seasons,
+            resume.show.episodes_per_season,
+          ) ?? {
+            season: resume.currentProgress.season,
+            episode: resume.currentProgress.episode,
+          },
+      }
+    : {
+        title: 'Example Show',
+        posterUrl: null,
+        lastWatched: { season: 1, episode: 3 },
+        upNext: { season: 1, episode: 4 },
+      }
 
   const displayName = user?.user_metadata?.full_name ?? user?.email ?? 'User'
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined
@@ -157,6 +190,38 @@ export function SettingsPage() {
               <IonSelectOption value="last-watched">Last watched</IonSelectOption>
             </IonSelect>
           </IonItem>
+          {preferences.showResumeCard && (
+            <IonItem lines="none">
+              <div style={{ width: '100%', padding: '4px 0 10px' }}>
+                <p
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: 'var(--ion-color-medium)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    margin: '0 0 8px',
+                  }}
+                >
+                  Preview
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <ResumeCardPreview
+                    mode="up-next"
+                    data={previewData}
+                    selected={preferences.resumeCardMode === 'up-next'}
+                    onSelect={() => setAppPreference('resumeCardMode', 'up-next')}
+                  />
+                  <ResumeCardPreview
+                    mode="last-watched"
+                    data={previewData}
+                    selected={preferences.resumeCardMode === 'last-watched'}
+                    onSelect={() => setAppPreference('resumeCardMode', 'last-watched')}
+                  />
+                </div>
+              </div>
+            </IonItem>
+          )}
           <IonItem lines="none">
             <IonIcon icon={checkmarkDoneOutline} slot="start" color="primary" />
             <IonLabel>Show finished shows</IonLabel>

@@ -3,6 +3,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('../hooks/useIsAdmin', () => ({
   useIsAdmin: vi.fn(() => ({ data: false, isPending: false })),
 }))
+
+vi.mock('../hooks/useResumeShow', () => ({
+  useResumeShow: vi.fn(() => ({ data: null })),
+}))
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -165,6 +169,27 @@ describe('SettingsPage', () => {
       expect(JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY)!)).toMatchObject({
         showDoneSection: false,
       })
+    })
+
+    it('renders a preview of both resume-card modes', () => {
+      renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
+      expect(screen.getByRole('button', { name: 'Preview: Up next' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Preview: Last watched' })).toBeInTheDocument()
+    })
+
+    it('selecting a preview sets and persists that mode', () => {
+      renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
+      fireEvent.click(screen.getByRole('button', { name: 'Preview: Last watched' }))
+      expect(screen.getByRole('combobox', { name: 'Continue Watching card shows' })).toHaveValue('last-watched')
+      expect(JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY)!)).toMatchObject({
+        resumeCardMode: 'last-watched',
+      })
+    })
+
+    it('hides the preview when the Continue Watching card is off', () => {
+      renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Continue Watching card' }))
+      expect(screen.queryByRole('button', { name: 'Preview: Up next' })).not.toBeInTheDocument()
     })
 
     it('restores stored preferences on load', () => {
