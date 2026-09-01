@@ -20,6 +20,8 @@ export interface MockDb {
   shows: Record<string, unknown>[]
   rewatches: Record<string, unknown>[]
   progress_logs: Record<string, unknown>[]
+  /** Rows of the `user_preferences` table (empty → new user on defaults). */
+  user_preferences: Record<string, unknown>[]
   /** Return value of the `is_admin` RPC. */
   isAdmin: boolean
   /** `suggest-shows` edge function payload (`{ tmdb, reason }[]`). */
@@ -35,6 +37,7 @@ export function makeDb(): MockDb {
   return {
     isAdmin: false,
     suggestions: [],
+    user_preferences: [],
     adminOverview: {
       total_users: 5,
       new_users_7d: 1,

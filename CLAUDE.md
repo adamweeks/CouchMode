@@ -65,6 +65,7 @@ Navigation between main tabs is handled by `BottomNav` component (custom bottom 
 - **rewatches** — Each rewatch session per show: `status: in_progress | completed`, `started_at`, `completed_at`, `note`, `service` (streaming service name).
 - **progress_logs** — Individual episode logs: `season`, `episode`, `logged_at`, `note`, `rewatch_id`.
 - **admin_users** — Admin user UUIDs. RLS enabled with no public policies; managed via the Supabase dashboard or service role only.
+- **user_preferences** — Per-user app preferences synced across devices: `user_id` (PK), `preferences` (JSONB blob merged over client defaults, so options can be added without a migration), `updated_at`. RLS: users own their row.
 
 Row Level Security (RLS) is enabled on all tables — users only see their own rows.
 
@@ -99,13 +100,17 @@ Key exports:
 
 `RotationPage` renders these four groups plus a `ResumeCard` that pinpoints the most recently active show. Caught-up cards show an air-status line (`formatAirStatus`) instead of a completion percentage.
 
+### User Preferences
+
+`PreferencesContext` (`src/contexts/PreferencesContext.tsx`) holds per-user app options, exposed via `usePreferences()` as `{ preferences, setPreference }`. Options today (all surfaced in the Settings page "Home Screen" section): `showResumeCard`, `resumeCardMode` (`'up-next' | 'last-watched'` — what the `ResumeCard` on `RotationPage` highlights), and `showDoneSection`. It's a hybrid store: a synchronous `localStorage` cache (`couchmode-preferences`) for instant/offline first paint, plus background sync to the `user_preferences` table so choices follow the user across devices. On sign-in it loads the server row (or seeds it from the local cache if none exists); each `setPreference` updates state + cache immediately and write-throughs an upsert (best-effort). Outside a provider, `usePreferences()` returns defaults with no-op setters. Add new options by extending the `Preferences` type + `DEFAULT_PREFERENCES` + `sanitize()`; no migration is needed since the column is a merged JSONB blob.
+
 ### Key Directories
 
 - `src/hooks/` — All data-fetching and mutation hooks (React Query wrappers around Supabase calls)
 - `src/pages/` — Route-level components: `LoginPage`, `RotationPage`, `ShowDetailPage`, `SearchPage`, `HistoryPage`, `SettingsPage`, `SuggestionsPage`, `AdminPage`
 - `src/components/` — Reusable UI: `ShowCard`, `WatchlistCard`, `ResumeCard`, `LogProgressModal`, `BrowseEpisodesModal`, `MarkFinishedModal`, `EditServiceModal`, `ServiceSelector`, `BottomNav`, `StatusBadge`, `TmdbAttribution`, `AdminRoute`, `ProtectedRoute`
 - `src/lib/` — Non-React utilities: `supabase.ts` (client init), `database.types.ts` (generated types), `progressLogic.ts`, `tmdb.ts`
-- `src/contexts/` — `AuthContext`, `ThemeContext`
+- `src/contexts/` — `AuthContext`, `ThemeContext`, `PreferencesContext`
 - `src/test/` — Vitest setup, `ionicMock.tsx` (stubs Ionic components for tests), `utils.tsx` (render helpers)
 - `supabase/migrations/` — SQL schema and RLS policies
 - `supabase/functions/` — Deno edge functions: `tmdb-search`, `suggest-shows`

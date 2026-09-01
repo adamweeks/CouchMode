@@ -1,4 +1,5 @@
 import { test, expect } from '../support/fixtures'
+import { TEST_USER } from '../support/session'
 
 /**
  * Signed-in RotationPage. Backed by the mocked Supabase backend + a synthetic
@@ -43,6 +44,29 @@ test.describe('rotation page (signed in)', () => {
     // followed by the next episode.
     await expect(page.getByText('Up next', { exact: true })).toBeVisible()
     await expect(page.getByText(/S1 E4/)).toBeVisible()
+  })
+
+  test('applies home-screen preferences saved to the user record', async ({ page, db }) => {
+    // A row in user_preferences (as if set on another device) should drive the
+    // UI once loaded: the resume card names the last-watched episode and the
+    // Done group is hidden.
+    db.user_preferences = [
+      {
+        user_id: TEST_USER.id,
+        preferences: { resumeCardMode: 'last-watched', showDoneSection: false },
+        updated_at: '2026-08-05T00:00:00.000Z',
+      },
+    ]
+
+    await page.goto('/')
+
+    // Current progress is S1 E3 → "Last watched" card (vs the default "Up next").
+    await expect(page.getByText('Last watched', { exact: true })).toBeVisible()
+    await expect(page.getByText(/S1 E3/).first()).toBeVisible()
+
+    // Finished shows are hidden, so the Done group and Chernobyl drop out.
+    await expect(page.getByRole('heading', { name: 'Done' })).toHaveCount(0)
+    await expect(page.getByText('Chernobyl')).toHaveCount(0)
   })
 
   test('filters the list via the search box', async ({ page }) => {
