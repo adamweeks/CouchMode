@@ -40,6 +40,7 @@ export interface TMDBEpisode {
   name: string
   still_path: string | null
   overview: string
+  air_date: string | null
 }
 
 export interface TMDBSeasonDetails {

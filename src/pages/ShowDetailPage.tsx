@@ -16,7 +16,7 @@ import {
   useIonToast,
   IonIcon,
 } from '@ionic/react'
-import { playOutline, checkmarkDoneOutline, listOutline, arrowBackOutline, tvOutline, arrowUndoOutline, eyeOutline, playSkipForwardOutline } from 'ionicons/icons'
+import { playOutline, checkmarkDoneOutline, listOutline, arrowBackOutline, tvOutline, arrowUndoOutline, eyeOutline, playSkipForwardOutline, calendarOutline } from 'ionicons/icons'
 import { useShows, useAddShow, useRemoveShow } from '../hooks/useShows'
 import { useRewatches, useActiveRewatch } from '../hooks/useRewatches'
 import { useCurrentProgress, useResetRewatch } from '../hooks/useProgressLogs'
@@ -30,7 +30,7 @@ import { BrowseEpisodesModal } from '../components/BrowseEpisodesModal'
 import { BottomNav } from '../components/BottomNav'
 import { EditServiceModal } from '../components/EditServiceModal'
 import { ServiceSelector } from '../components/ServiceSelector'
-import { formatProgress, formatDuration, formatMonthYear, countWatchedEpisodes } from '../lib/progressLogic'
+import { formatProgress, formatDuration, formatMonthYear, countWatchedEpisodes, formatEpisodeAirDate, isUnaired } from '../lib/progressLogic'
 import { posterUrl, providerLogoUrl } from '../lib/tmdb'
 import type { TMDBWatchProvider } from '../lib/tmdb'
 
@@ -106,6 +106,8 @@ export function ShowDetailPage() {
     ? currentSeasonData?.episodes
     : nextSeasonData?.episodes
   const nextEpisode = nextEp ? nextEpisodeEps?.find(e => e.episode_number === nextEp.episode) : undefined
+  const nextEpisodeAirLine = formatEpisodeAirDate(nextEpisode?.air_date)
+  const nextEpisodeUnaired = isUnaired(nextEpisode?.air_date)
 
   const addShow = useAddShow()
   const removeShow = useRemoveShow()
@@ -310,6 +312,20 @@ export function ShowDetailPage() {
                     <span style={{ fontWeight: 400, color: 'var(--ion-color-medium)' }}> · {nextEpisode.name}</span>
                   )}
                 </p>
+                {nextEpisodeAirLine && (
+                  <p style={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: nextEpisodeUnaired ? 'var(--ion-color-warning)' : 'var(--ion-color-medium)',
+                    margin: '0 0 8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}>
+                    <IonIcon icon={calendarOutline} aria-hidden="true" style={{ fontSize: '13px' }} />
+                    {nextEpisodeAirLine}
+                  </p>
+                )}
                 {nextEpisode?.overview && (
                   <p style={{
                     fontSize: '12px',
