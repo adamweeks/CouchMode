@@ -238,3 +238,41 @@ export function formatAirStatus(air: AirStatus | null | undefined, now: Date = n
 
   return 'Caught up'
 }
+
+const episodeAirDateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+})
+
+/**
+ * True when an episode's air date (YYYY-MM-DD) is still in the future — i.e.
+ * the episode hasn't aired yet. An empty/missing date is treated as aired
+ * (unknown), so callers don't gate behaviour on missing data.
+ */
+export function isUnaired(airDate: string | null | undefined, now: Date = new Date()): boolean {
+  if (!airDate) return false
+  return daysUntil(airDate, now) > 0
+}
+
+/**
+ * Human-readable air-date line for a single episode. Upcoming episodes read
+ * "Airs tomorrow" / "Airs in 3 days" / "Airs Oct 3, 2026"; today reads
+ * "Airs today"; past episodes read "Aired Oct 3, 2026". Returns null when no
+ * air date is known.
+ */
+export function formatEpisodeAirDate(
+  airDate: string | null | undefined,
+  now: Date = new Date()
+): string | null {
+  if (!airDate) return null
+  const days = daysUntil(airDate, now)
+  const date = episodeAirDateFormatter.format(new Date(`${airDate}T00:00:00`))
+  if (days > 0) {
+    if (days === 1) return 'Airs tomorrow'
+    if (days <= 7) return `Airs in ${days} days`
+    return `Airs ${date}`
+  }
+  if (days === 0) return 'Airs today'
+  return `Aired ${date}`
+}

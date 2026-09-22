@@ -14,6 +14,8 @@ import {
   isReturningSeries,
   isCaughtUp,
   formatAirStatus,
+  formatEpisodeAirDate,
+  isUnaired,
 } from './progressLogic'
 import type { AirStatus } from './progressLogic'
 
@@ -368,5 +370,53 @@ describe('formatAirStatus', () => {
       next_episode: null,
     }
     expect(formatAirStatus(air, now)).toBe('Caught up')
+  })
+})
+
+describe('isUnaired', () => {
+  const now = new Date('2026-08-14T12:00:00')
+
+  it('is false for a missing/empty date', () => {
+    expect(isUnaired(null, now)).toBe(false)
+    expect(isUnaired(undefined, now)).toBe(false)
+    expect(isUnaired('', now)).toBe(false)
+  })
+
+  it('is true for a future date', () => {
+    expect(isUnaired('2026-08-15', now)).toBe(true)
+  })
+
+  it('is false for today and past dates', () => {
+    expect(isUnaired('2026-08-14', now)).toBe(false)
+    expect(isUnaired('2026-08-01', now)).toBe(false)
+  })
+})
+
+describe('formatEpisodeAirDate', () => {
+  const now = new Date('2026-08-14T12:00:00')
+
+  it('returns null with no air date', () => {
+    expect(formatEpisodeAirDate(null, now)).toBeNull()
+    expect(formatEpisodeAirDate('', now)).toBeNull()
+  })
+
+  it('reads "Airs tomorrow" for the next day', () => {
+    expect(formatEpisodeAirDate('2026-08-15', now)).toBe('Airs tomorrow')
+  })
+
+  it('uses a relative count within a week', () => {
+    expect(formatEpisodeAirDate('2026-08-19', now)).toBe('Airs in 5 days')
+  })
+
+  it('uses a calendar date beyond a week out', () => {
+    expect(formatEpisodeAirDate('2026-09-20', now)).toBe('Airs Sep 20, 2026')
+  })
+
+  it('reads "Airs today" on the air date', () => {
+    expect(formatEpisodeAirDate('2026-08-14', now)).toBe('Airs today')
+  })
+
+  it('describes a past episode with its date', () => {
+    expect(formatEpisodeAirDate('2026-08-01', now)).toBe('Aired Aug 1, 2026')
   })
 })
