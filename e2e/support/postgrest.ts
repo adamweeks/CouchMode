@@ -5,7 +5,7 @@ import type { MockDb } from './db'
  * A tiny PostgREST emulator — just enough of the wire protocol for the read
  * queries CouchMode's hooks build. It parses the table, column filters
  * (`eq`, `in`, `is`, `lt`/`lte`/`gt`/`gte`, `neq`), `or=(...)`, `order`, and
- * `limit`, and honours the single-object Accept header used by
+ * `limit`/`offset`, and honours the single-object Accept header used by
  * `.single()` / `.maybeSingle()`.
  *
  * Writes (POST/PATCH/DELETE) are acknowledged generically — the read-only
@@ -150,6 +150,9 @@ export function fulfillRest(route: Route, request: Request, db: MockDb) {
   const orderParams = url.searchParams.getAll('order')
   if (orderParams.length > 0) rows = applyOrder(rows, orderParams)
 
+  // `.range(from, to)` sends `offset` + `limit`.
+  const offset = Number(url.searchParams.get('offset') ?? 0)
+  if (offset) rows = rows.slice(offset)
   const limit = url.searchParams.get('limit')
   if (limit) rows = rows.slice(0, Number(limit))
 

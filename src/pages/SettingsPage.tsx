@@ -14,12 +14,14 @@ import {
   IonSelectOption,
   IonListHeader,
   IonToggle,
+  IonSpinner,
 } from '@ionic/react'
 import {
   moonOutline,
   shieldCheckmarkOutline,
   playCircleOutline,
   checkmarkDoneOutline,
+  downloadOutline,
 } from 'ionicons/icons'
 import { useNavigate } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
@@ -30,6 +32,8 @@ import { usePreferences } from '../contexts/PreferencesContext'
 import type { ResumeCardMode } from '../contexts/PreferencesContext'
 import { useIsAdmin } from '../hooks/useIsAdmin'
 import { useResumeShow } from '../hooks/useResumeShow'
+import { useExportData } from '../hooks/useExportData'
+import type { ExportFormat } from '../hooks/useExportData'
 import { getNextEpisode } from '../lib/progressLogic'
 import { ResumeCardPreview } from '../components/ResumeCardPreview'
 import type { ResumeCardPreviewData } from '../components/ResumeCardPreview'
@@ -41,6 +45,8 @@ export function SettingsPage() {
   const { preference, setPreference } = useTheme()
   const { preferences, setPreference: setAppPreference } = usePreferences()
   const { data: resume } = useResumeShow()
+  const exportData = useExportData()
+  const exportingFormat = exportData.isPending ? exportData.variables : null
 
   // Drive the preview from the user's real "continue watching" show when there
   // is one, so the two options show their actual episodes; otherwise a small
@@ -232,6 +238,46 @@ export function SettingsPage() {
               onIonChange={(e) => setAppPreference('showDoneSection', e.detail.checked)}
             />
           </IonItem>
+        </IonList>
+
+        {/* Your data section */}
+        <IonList inset>
+          <IonListHeader>
+            <IonLabel>Your Data</IonLabel>
+          </IonListHeader>
+          {(
+            [
+              ['csv', 'Export as CSV', 'One row per episode — opens in any spreadsheet'],
+              ['json', 'Export as JSON', 'Full history grouped by show and rewatch'],
+            ] as [ExportFormat, string, string][]
+          ).map(([format, label, hint], i) => (
+            <IonItem
+              key={format}
+              button
+              detail={false}
+              lines={i === 1 ? 'none' : undefined}
+              disabled={exportData.isPending}
+              onClick={() => exportData.mutate(format)}
+            >
+              <IonIcon icon={downloadOutline} slot="start" color="primary" />
+              <IonLabel>
+                <p style={{ margin: 0 }}>{label}</p>
+                <p style={{ fontSize: '12px', color: 'var(--ion-color-medium)', margin: '2px 0 0' }}>
+                  {hint}
+                </p>
+              </IonLabel>
+              {exportingFormat === format && <IonSpinner slot="end" name="crescent" />}
+            </IonItem>
+          ))}
+          {exportData.isError && (
+            <IonItem lines="none">
+              <IonLabel>
+                <p role="alert" style={{ margin: 0, color: 'var(--ion-color-danger)' }}>
+                  Export failed. Please try again.
+                </p>
+              </IonLabel>
+            </IonItem>
+          )}
         </IonList>
 
         {/* Admin section */}

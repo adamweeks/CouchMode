@@ -7,6 +7,12 @@ vi.mock('../hooks/useIsAdmin', () => ({
 vi.mock('../hooks/useResumeShow', () => ({
   useResumeShow: vi.fn(() => ({ data: null })),
 }))
+
+const mockExportMutate = vi.fn()
+const mockExportState = { isPending: false, isError: false, variables: undefined as string | undefined }
+vi.mock('../hooks/useExportData', () => ({
+  useExportData: vi.fn(() => ({ mutate: mockExportMutate, ...mockExportState })),
+}))
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -201,6 +207,35 @@ describe('SettingsPage', () => {
       expect(screen.getByRole('checkbox', { name: 'Continue Watching card' })).not.toBeChecked()
       expect(screen.getByRole('combobox', { name: 'Continue Watching card shows' })).toHaveValue('last-watched')
       expect(screen.getByRole('checkbox', { name: 'Show finished shows' })).not.toBeChecked()
+    })
+  })
+
+  describe('data export', () => {
+    beforeEach(() => {
+      Object.assign(mockExportState, { isPending: false, isError: false, variables: undefined })
+    })
+
+    it('exports as CSV or JSON when the matching row is tapped', () => {
+      renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
+      expect(screen.getByText('Your Data')).toBeInTheDocument()
+
+      fireEvent.click(screen.getByText('Export as CSV'))
+      expect(mockExportMutate).toHaveBeenLastCalledWith('csv')
+
+      fireEvent.click(screen.getByText('Export as JSON'))
+      expect(mockExportMutate).toHaveBeenLastCalledWith('json')
+    })
+
+    it('shows a spinner while an export is running', () => {
+      Object.assign(mockExportState, { isPending: true, variables: 'csv' })
+      renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
+      expect(screen.getByTestId('ion-spinner')).toBeInTheDocument()
+    })
+
+    it('shows an error when the export fails', () => {
+      Object.assign(mockExportState, { isError: true })
+      renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
+      expect(screen.getByRole('alert')).toHaveTextContent('Export failed')
     })
   })
 })
