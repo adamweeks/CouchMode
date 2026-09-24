@@ -22,6 +22,6 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     // Playwright specs live in `e2e/` and are run separately (`npm run test:e2e`).
-    exclude: [...configDefaults.exclude, 'e2e/**'],
+    exclude: [...configDefaults.exclude, 'e2e/**', 'ios/**'],
   },
 })

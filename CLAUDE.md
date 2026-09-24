@@ -195,12 +195,24 @@ This is the "mock lane" — it covers logged-in *UI/behaviour*, not real RLS or 
 
 Configured for both Vercel (`vercel.json`) and Netlify (`netlify.toml`) with SPA rewrite rules so client-side routing works. Local Supabase emulation requires Docker (`supabase start`). The app is a PWA with offline support via Workbox (caches TMDB images with `CacheFirst`).
 
+### Native iOS App (`ios/`)
+
+A native SwiftUI app lives in `ios/` and talks to the same Supabase backend (tables, RLS, edge functions). See `ios/README.md` for setup.
+
+- `ios/project.yml` — XcodeGen spec; run `xcodegen generate` in `ios/` (the `.xcodeproj` is git-ignored). Supabase URL/key go in `ios/Config/Config.xcconfig` (git-ignored; copy `Config.example.xcconfig`).
+- `ios/CouchModeKit/` — Swift package with everything that isn't a view. `CouchModeCore` is a pure-Foundation port of `src/lib/progressLogic.ts` plus the grouping (`useShowGroups`, `useResumeShow`) and History stats logic; `CouchModeData` holds the Supabase repository (port of the `src/hooks/` queries/mutations) and `@Observable` stores. Both build and test on Linux: `cd ios/CouchModeKit && swift test`.
+- `ios/CouchMode/` — SwiftUI views (`Features/` per screen, `Components/` shared).
+- **Keep logic in sync:** when changing `progressLogic.ts`, grouping, or a mutation's behaviour, mirror it in `CouchModeCore`/`LibraryRepository.swift` and their tests (`ios/CouchModeKit/Tests/`), which mirror `progressLogic.test.ts`.
+- Preferences share the `user_preferences` JSONB blob with the web app — add new keys to both `Preferences` types.
+- App icon: `node scripts/generate-ios-icon.js`.
+
 ### CI/CD
 
-Four GitHub Actions workflows:
+Five GitHub Actions workflows:
 - **`test.yml`** — runs `npm test` (Vitest unit tests) on PRs
 - **`e2e.yml`** — runs `npm run test:e2e` (Playwright) on PRs, installing Chromium and uploading the HTML report as a build artifact
 - **`lint-pr.yml`** — validates PR title against Conventional Commits (`semantic-pr` check)
+- **`ios.yml`** — on changes under `ios/`: runs `swift test` for `CouchModeKit` on Linux and builds the SwiftUI app for the iOS Simulator on macOS
 - **`release.yml`** — runs `semantic-release` on pushes to `main`, creating GitHub releases and bumping `package.json` version
 
 ## Pull Requests

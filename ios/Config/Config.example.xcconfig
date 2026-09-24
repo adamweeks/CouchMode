@@ -1,0 +1,12 @@
+// Copy to Config.xcconfig (git-ignored) and fill in.
+//
+// xcconfig treats "//" as a comment, so write URLs with "/$()/" in place of
+// "//", e.g. https:/$()/abcd1234.supabase.co
+
+SUPABASE_URL = https:/$()/YOUR-PROJECT-REF.supabase.co
+SUPABASE_ANON_KEY = YOUR-ANON-KEY
+
+// Your Apple Developer team ID (Xcode → Settings → Accounts) and a bundle id
+// you own. Required to run on a device and for Sign in with Apple.
+DEVELOPMENT_TEAM = ABCDE12345
+APP_BUNDLE_ID = com.example.couchmode

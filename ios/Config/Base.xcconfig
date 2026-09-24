@@ -1,0 +1,20 @@
+// Shared build settings for the CouchMode iOS app.
+//
+// Put your own values in Config.xcconfig (git-ignored) — copy
+// Config.example.xcconfig to get started. Anything set there overrides the
+// defaults below.
+
+APP_BUNDLE_ID = com.couchmode.app
+DEVELOPMENT_TEAM =
+
+// Supabase project (same values as the web app's VITE_SUPABASE_URL /
+// VITE_SUPABASE_ANON_KEY). Left blank here so a missing config shows a clear
+// message in the app instead of failing silently.
+SUPABASE_URL =
+SUPABASE_ANON_KEY =
+
+// Custom URL scheme OAuth providers (Google) redirect back to.
+AUTH_URL_SCHEME = couchmode
+AUTH_REDIRECT_URL = $(AUTH_URL_SCHEME):/$()/auth-callback
+
+#include? "Config.xcconfig"

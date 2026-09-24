@@ -1,0 +1,60 @@
+name: iOS
+
+on:
+  pull_request:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios.yml'
+  push:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios.yml'
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Pure-Swift logic (progress, grouping, stats, decoding) + the Supabase data
+  # layer build and test on Linux, which is fast and cheap.
+  kit:
+    name: CouchModeKit tests (Linux)
+    runs-on: ubuntu-latest
+    container: swift:6.1
+    defaults:
+      run:
+        working-directory: ios/CouchModeKit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ios/CouchModeKit/.build
+          key: kit-${{ runner.os }}-${{ hashFiles('ios/CouchModeKit/Package.resolved') }}
+      - run: swift build
+      - run: swift test
+
+  # Builds the SwiftUI app for the simulator to catch compile errors in the
+  # view layer. No signing, no Supabase credentials needed.
+  app:
+    name: Build app (iOS Simulator)
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project CouchMode.xcodeproj \
+            -scheme CouchMode \
+            -destination 'generic/platform=iOS Simulator' \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee build.log | grep -E '(error|warning: .*CouchMode|BUILD)' || true
+          grep -q 'BUILD SUCCEEDED' build.log
