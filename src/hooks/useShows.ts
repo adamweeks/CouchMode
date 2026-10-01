@@ -53,10 +53,11 @@ export function useShowGroups(sort: GroupSortOption = 'added_at') {
       const inProgressIds = [...inProgressIdByShow.values()]
       const logCounts = new Map<string, number>()
       const maxPosByRewatch = new Map<string, { season: number; episode: number }>()
+      const lastLoggedByRewatch = new Map<string, string>()
       if (inProgressIds.length > 0) {
         const { data: logs, error: logsError } = await supabase
           .from('progress_logs')
-          .select('rewatch_id, season, episode')
+          .select('rewatch_id, season, episode, logged_at')
           .in('rewatch_id', inProgressIds)
         if (logsError) throw logsError
         for (const log of logs) {
@@ -65,8 +66,24 @@ export function useShowGroups(sort: GroupSortOption = 'added_at') {
           if (!current || comparePosition(log, current) > 0) {
             maxPosByRewatch.set(log.rewatch_id, { season: log.season, episode: log.episode })
           }
+          const lastLogged = lastLoggedByRewatch.get(log.rewatch_id)
+          if (!lastLogged || log.logged_at > lastLogged) {
+            lastLoggedByRewatch.set(log.rewatch_id, log.logged_at)
+          }
         }
       }
+
+      // The show the user most recently logged an episode of always sits at the
+      // top of Watching (even if it's caught up), so it's the first thing they
+      // see when they come back.
+      let mostRecentRewatchId: string | null = null
+      for (const [rewatchId, loggedAt] of lastLoggedByRewatch) {
+        if (!mostRecentRewatchId || loggedAt > lastLoggedByRewatch.get(mostRecentRewatchId)!) {
+          mostRecentRewatchId = rewatchId
+        }
+      }
+      const lastActivity = (show: Show) =>
+        lastLoggedByRewatch.get(inProgressIdByShow.get(show.id) ?? '') ?? ''
 
       const watching: Show[] = []
       const caughtUp: Show[] = []
@@ -81,7 +98,7 @@ export function useShowGroups(sort: GroupSortOption = 'added_at') {
         if (count > 0) {
           const position = rewatchId ? maxPosByRewatch.get(rewatchId) ?? null : null
           const air = (show.air_status as AirStatus | null) ?? null
-          if (isCaughtUp(position, air)) {
+          if (rewatchId !== mostRecentRewatchId && isCaughtUp(position, air)) {
             caughtUp.push(show)
           } else {
             watching.push(show)
@@ -92,6 +109,14 @@ export function useShowGroups(sort: GroupSortOption = 'added_at') {
           done.push(show)
         }
       }
+
+      // Most recently watched first.
+      watching.sort((a, b) => {
+        const aDate = lastActivity(a)
+        const bDate = lastActivity(b)
+        if (aDate === bDate) return 0
+        return aDate > bDate ? -1 : 1
+      })
 
       queue.sort((a, b) => {
         const aOrder = a.sort_order ?? Number.MAX_SAFE_INTEGER

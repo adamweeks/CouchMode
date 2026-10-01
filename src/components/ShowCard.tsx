@@ -14,7 +14,7 @@ import {
 } from '@ionic/react'
 import {
   playOutline,
-  reloadOutline,
+  playSkipForwardOutline,
   eyeOutline,
   checkmarkCircleOutline,
   ellipseOutline,
@@ -66,12 +66,22 @@ export function ShowCard({
     ep => ep.episode_number === currentProgress?.episode,
   )?.name
 
-  const { present: presentLogSheet, logNext, isLogging } = useLogEpisodeSheet(
+  const { present: presentLogSheet, logNext, nextEp, isLogging } = useLogEpisodeSheet(
     show,
     activeRewatch?.id,
     currentProgress,
     activeRewatch ? () => setLogModalOpen(true) : undefined,
   )
+
+  // The episode coming up next — shown under the last-watched line so the row
+  // answers both "where was I?" and "what's next?".
+  const { data: nextSeasonData } = useTMDBSeason(
+    currentProgress && nextEp ? show.tmdb_id : null,
+    nextEp?.season ?? 0,
+  )
+  const nextEpisodeTitle = nextSeasonData?.episodes.find(
+    ep => ep.episode_number === nextEp?.episode,
+  )?.name
 
   if (filter === 'watching' && !isWatching) return null
   if (filter === 'done' && !isDone) return null
@@ -79,11 +89,13 @@ export function ShowCard({
   const totalEpisodes = show.episodes_per_season.reduce((sum, n) => sum + n, 0)
   const episodesWatched = currentProgress ? countWatchedEpisodes(show.episodes_per_season, currentProgress) : 0
   const progressPct = totalEpisodes > 0 ? Math.round((episodesWatched / totalEpisodes) * 100) : 0
-  const rewatchNumber = completedRewatches.length + 1
 
   const airStatus = (show.air_status as AirStatus | null) ?? null
   const caughtUp = isCaughtUp(currentProgress, airStatus)
   const airLine = caughtUp ? formatAirStatus(airStatus) : null
+  // A caught-up show's air-status line already names the next episode (and the
+  // one in episodes_per_season may not have aired yet), so skip it there.
+  const showUpNext = isWatching && !caughtUp && !!nextEp
 
   const lastCompletedAt = completedRewatches.reduce<string | null>((latest, r) => {
     if (!r.completed_at) return latest
@@ -116,9 +128,9 @@ export function ShowCard({
         slot="start"
         style={
           {
-            '--size': '44px',
+            '--size': '52px',
             '--border-radius': '6px',
-            height: '58px',
+            height: '94px',
             paddingTop: '8px',
             paddingBottom: '8px',
             marginRight: '12px',
@@ -133,15 +145,27 @@ export function ShowCard({
         />
       </IonThumbnail>
 
-      <IonLabel>
-        <h2 style={{ fontWeight: 600, fontSize: '15px', marginBottom: '2px' }}>{show.title}</h2>
+      <IonLabel style={{ margin: '10px 0' }}>
+        <h2 style={{ fontWeight: 600, fontSize: '15px', marginBottom: '4px' }}>{show.title}</h2>
         <StatusLine
           icon={status.icon}
           label={status.label}
           detail={status.detail}
           hideLabel={!showStatusLabel}
-          style={{ marginBottom: '6px' }}
+          style={{ marginBottom: showUpNext ? '3px' : '8px' }}
         />
+        {showUpNext && nextEp && (
+          <StatusLine
+            icon={playSkipForwardOutline}
+            label="Up next"
+            detail={
+              formatProgress(nextEp.season, nextEp.episode) +
+              (nextEpisodeTitle ? ` · ${nextEpisodeTitle}` : '')
+            }
+            hideLabel={!showStatusLabel}
+            style={{ marginBottom: '8px' }}
+          />
+        )}
         {currentProgress && (
           <>
             <div
@@ -199,23 +223,6 @@ export function ShowCard({
               +1
             </button>
           )}
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '3px',
-              background: 'rgba(var(--ion-color-primary-rgb), 0.12)',
-              color: 'var(--ion-color-primary)',
-              borderRadius: '20px',
-              padding: '3px 8px',
-              fontSize: '11px',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <IonIcon icon={reloadOutline} style={{ fontSize: '11px' }} />
-            #{rewatchNumber}
-          </span>
         </div>
       )}
 

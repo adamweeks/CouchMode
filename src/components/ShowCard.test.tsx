@@ -228,4 +228,17 @@ describe('ShowCard quick-log button', () => {
     render(<ShowCard show={makeShow()} showStatusLabel={false} />)
     expect(screen.getByText('Completed')).toBeInTheDocument()
   })
+
+  it('shows the up-next episode under the last-watched one', () => {
+    setupWatching()
+    render(<ShowCard show={makeShow()} showStatusLabel={false} />)
+    expect(screen.getByText(/S1 E3/)).toBeInTheDocument()
+    expect(screen.getByText(/S1 E4/)).toBeInTheDocument()
+  })
+
+  it('does not show a rewatch count badge', () => {
+    setupWatching()
+    render(<ShowCard show={makeShow()} />)
+    expect(screen.queryByText('#1')).not.toBeInTheDocument()
+  })
 })

@@ -4,7 +4,7 @@ import { TEST_USER } from '../support/session'
 /**
  * Signed-in RotationPage. Backed by the mocked Supabase backend + a synthetic
  * session (see e2e/support), so this exercises the real authenticated UI —
- * grouping, the resume card, navigation — with deterministic data and no
+ * grouping, row details, navigation — with deterministic data and no
  * network or credentials.
  */
 test.describe('rotation page (signed in)', () => {
@@ -35,34 +35,28 @@ test.describe('rotation page (signed in)', () => {
     await expect(page.getByText('Caught up', { exact: true })).toBeVisible()
   })
 
-  test('surfaces the resume card for the most recently watched show', async ({ page }) => {
+  test('lists the most recently watched show first with last-watched and up-next episodes', async ({ page }) => {
     await page.goto('/')
 
-    await expect(page.getByText('Continue Watching')).toBeVisible()
-    // Current progress is S1 E3, so the next episode up is S1 E4. The card shows
-    // an "Up next" label (exact match avoids the "Up Next" section heading)
-    // followed by the next episode.
-    await expect(page.getByText('Up next', { exact: true })).toBeVisible()
+    await expect(page.getByText('Continue Watching')).toHaveCount(0)
+    // Breaking Bad is at S1 E3, so its row also names S1 E4 as up next.
+    await expect(page.getByText(/S1 E3/)).toBeVisible()
     await expect(page.getByText(/S1 E4/)).toBeVisible()
   })
 
   test('applies home-screen preferences saved to the user record', async ({ page, db }) => {
     // A row in user_preferences (as if set on another device) should drive the
-    // UI once loaded: the resume card names the last-watched episode and the
-    // Done group is hidden.
+    // UI once loaded: the Done group is hidden.
     db.user_preferences = [
       {
         user_id: TEST_USER.id,
-        preferences: { resumeCardMode: 'last-watched', showDoneSection: false },
+        preferences: { showDoneSection: false },
         updated_at: '2026-08-05T00:00:00.000Z',
       },
     ]
 
     await page.goto('/')
-
-    // Current progress is S1 E3 → "Last watched" card (vs the default "Up next").
-    await expect(page.getByText('Last watched', { exact: true })).toBeVisible()
-    await expect(page.getByText(/S1 E3/).first()).toBeVisible()
+    await expect(page.getByText('Breaking Bad').first()).toBeVisible()
 
     // Finished shows are hidden, so the Done group and Chernobyl drop out.
     await expect(page.getByRole('heading', { name: 'Done' })).toHaveCount(0)

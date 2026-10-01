@@ -4,8 +4,7 @@ import { TEST_USER } from './session'
  * In-memory fixture data for the mocked Supabase backend. Shapes mirror the
  * `shows` / `rewatches` / `progress_logs` tables (see database.types.ts).
  *
- * The data is arranged to exercise all four RotationPage groups plus the
- * resume card:
+ * The data is arranged to exercise all four RotationPage groups:
  *   - Breaking Bad  → Watching  (in-progress rewatch with logs; current S1 E3)
  *   - Poker Face    → Caught Up (returning series, watched to the last aired ep)
  *   - The Wire      → Up Next   (in-progress rewatch, no logs yet)
@@ -181,7 +180,7 @@ export function makeDb(): MockDb {
       { id: 'log-bb-2', user_id: uid, rewatch_id: 'rewatch-bb-1', season: 1, episode: 2, logged_at: '2026-08-04T10:05:00.000Z', note: null },
       { id: 'log-bb-3', user_id: uid, rewatch_id: 'rewatch-bb-1', season: 1, episode: 3, logged_at: '2026-08-04T10:10:00.000Z', note: null },
       // Poker Face watched through the last aired episode (older than Breaking
-      // Bad's logs, so the resume card still points at Breaking Bad).
+      // Bad's logs, so it stays in Caught Up rather than pinned to Watching).
       { id: 'log-pf-1', user_id: uid, rewatch_id: 'rewatch-pf-1', season: 1, episode: 10, logged_at: '2026-07-15T20:00:00.000Z', note: null },
     ],
   }

@@ -232,6 +232,77 @@ describe('useShowGroups', () => {
     const doneIds = result.current.data?.done.map(s => s.id)
     expect(doneIds).toEqual(['show-b', 'show-a'])
   })
+
+  function mockGroupsBackend(shows: unknown[], rewatches: unknown[], logs: unknown[]) {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'shows') return makeChain({ data: shows, error: null })
+      if (table === 'rewatches') {
+        return { select: vi.fn().mockResolvedValue({ data: rewatches, error: null }) }
+      }
+      if (table === 'progress_logs') {
+        return {
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({ data: logs, error: null }),
+          }),
+        }
+      }
+      return makeChain({ data: [], error: null })
+    })
+  }
+
+  it('sorts watching shows by most recently logged episode first', async () => {
+    const showA = makeShow({ id: 'show-a', title: 'A' })
+    const showB = makeShow({ id: 'show-b', title: 'B' })
+    const showC = makeShow({ id: 'show-c', title: 'C' })
+    mockGroupsBackend(
+      [showA, showB, showC],
+      [
+        { id: 'rw-a', show_id: 'show-a', status: 'in_progress' },
+        { id: 'rw-b', show_id: 'show-b', status: 'in_progress' },
+        { id: 'rw-c', show_id: 'show-c', status: 'in_progress' },
+      ],
+      [
+        { rewatch_id: 'rw-a', season: 1, episode: 1, logged_at: '2026-01-01T00:00:00Z' },
+        { rewatch_id: 'rw-b', season: 1, episode: 1, logged_at: '2026-03-01T00:00:00Z' },
+        { rewatch_id: 'rw-c', season: 1, episode: 1, logged_at: '2026-02-01T00:00:00Z' },
+        { rewatch_id: 'rw-a', season: 1, episode: 2, logged_at: '2026-01-02T00:00:00Z' },
+      ],
+    )
+
+    const { Wrapper } = createWrapper()
+    const { result } = renderHook(() => useShowGroups(), { wrapper: Wrapper })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data?.watching.map(s => s.id)).toEqual(['show-b', 'show-c', 'show-a'])
+  })
+
+  it('keeps the most recently watched show in watching even when it is caught up', async () => {
+    const air = {
+      status: 'Returning Series',
+      last_aired: { season: 1, episode: 5, air_date: '2026-01-01' },
+      next_episode: null,
+    }
+    const recent = makeShow({ id: 'show-recent', title: 'Recent', air_status: air })
+    const older = makeShow({ id: 'show-older', title: 'Older', air_status: air })
+    mockGroupsBackend(
+      [recent, older],
+      [
+        { id: 'rw-recent', show_id: 'show-recent', status: 'in_progress' },
+        { id: 'rw-older', show_id: 'show-older', status: 'in_progress' },
+      ],
+      [
+        { rewatch_id: 'rw-recent', season: 1, episode: 5, logged_at: '2026-02-01T00:00:00Z' },
+        { rewatch_id: 'rw-older', season: 1, episode: 5, logged_at: '2026-01-15T00:00:00Z' },
+      ],
+    )
+
+    const { Wrapper } = createWrapper()
+    const { result } = renderHook(() => useShowGroups(), { wrapper: Wrapper })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data?.watching.map(s => s.id)).toEqual(['show-recent'])
+    expect(result.current.data?.caughtUp.map(s => s.id)).toEqual(['show-older'])
+  })
 })
 
 describe('useShows', () => {
