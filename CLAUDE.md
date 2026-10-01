@@ -106,10 +106,11 @@ Key exports:
 
 ### Data Export
 
-The Settings page "Your Data" section lets users download their full viewing history. `useExportData()` (`src/hooks/useExportData.ts`) is a mutation taking `'csv' | 'json'`: it pages through `shows`, `rewatches`, and `progress_logs` (1000 rows per request, since PostgREST caps responses) and triggers a browser download. The pure formatting lives in `src/lib/exportData.ts` (unit-tested in `exportData.test.ts`):
+The Settings page "Your Data" section lets users download their full viewing history. `useExportData()` (`src/hooks/useExportData.ts`) is a mutation taking `'csv' | 'json'`: `fetchAllRows()` keyset-paginates `shows`, `rewatches`, and `progress_logs` on `id` (1000 rows per request, stopping only on an empty page, so PostgREST's max-rows cap can't truncate it), then `saveFile()` hands over the file. The pure formatting lives in `src/lib/exportData.ts` (unit-tested in `exportData.test.ts`; paging in `useExportData.test.ts`):
 - `buildViewingExport(source)` — nests rows into show → rewatch → episode JSON (`format_version: 1`), dropping internal ids and cached TMDB data
-- `buildViewingCsv(data)` — one row per logged episode (rewatches/shows with nothing logged still get a row); cells are RFC 4180-escaped and formula-trigger prefixes are neutralised
+- `buildViewingCsv(data)` — one row per logged episode (rewatches/shows with nothing logged still get a row); cells are RFC 4180-escaped and formula-trigger prefixes are neutralised. A UTF-8 BOM is prepended at save time for Excel.
 - `exportFilename(ext)` — `couchmode-export-YYYY-MM-DD.<ext>`
+- `saveFile(name, content, mime)` — on touch devices that can share files (iOS/Android, incl. the installed PWA, where `<a download>` is unreliable) opens the native share sheet; otherwise, or if sharing is refused, downloads via a link whose object URL is revoked after 60s (WebKit fails if it's revoked sooner)
 
 ### Key Directories
 
@@ -171,7 +172,8 @@ Tests use Vitest + jsdom + `@testing-library/react`. Ionic components are mocked
 Tests exist for:
 - `src/lib/progressLogic.test.ts` — pure logic unit tests (most comprehensive)
 - `src/lib/tmdb.test.ts` — TMDB fetch functions
-- `src/hooks/useProgressLogs.test.ts`, `useRewatches.test.ts`, `useShows.test.ts`, `useTMDBSeason.test.ts`, `useTMDBShow.test.ts`, `useDebounce.test.ts`
+- `src/lib/exportData.test.ts` — export formatting, CSV escaping, `saveFile` share/download paths
+- `src/hooks/useExportData.test.ts`, `useProgressLogs.test.ts`, `useRewatches.test.ts`, `useShows.test.ts`, `useTMDBSeason.test.ts`, `useTMDBShow.test.ts`, `useDebounce.test.ts`
 - `src/components/AppTabBar.test.tsx`, `ProtectedRoute.test.tsx`, `StatusBadge.test.tsx`
 - `src/contexts/AuthContext.test.tsx`
 - `src/pages/HistoryPage.test.tsx`, `LoginPage.test.tsx`, `RotationPage.test.tsx`, `SearchPage.test.tsx`, `SettingsPage.test.tsx`, `ShowDetailPage.test.tsx`

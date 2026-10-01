@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   buildViewingCsv,
   buildViewingExport,
   CSV_COLUMNS,
   escapeCsvCell,
   exportFilename,
+  saveFile,
 } from './exportData'
 import type { ExportSource } from './exportData'
 
@@ -158,5 +159,82 @@ describe('exportFilename', () => {
   it('uses the local date', () => {
     expect(exportFilename('json', new Date(2026, 8, 4, 23, 30))).toBe('couchmode-export-2026-09-04.json')
     expect(exportFilename('csv', new Date(2026, 11, 31))).toBe('couchmode-export-2026-12-31.csv')
+  })
+})
+
+describe('saveFile', () => {
+  const originalMatchMedia = window.matchMedia
+  const nav = navigator as Navigator & { share?: unknown; canShare?: unknown }
+
+  function setTouch(coarse: boolean) {
+    window.matchMedia = vi.fn(() => ({ matches: coarse }) as MediaQueryList)
+  }
+
+  function stubDownload() {
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    URL.createObjectURL = vi.fn(() => 'blob:fake')
+    URL.revokeObjectURL = vi.fn()
+    return click
+  }
+
+  afterEach(() => {
+    window.matchMedia = originalMatchMedia
+    delete nav.share
+    delete nav.canShare
+    vi.restoreAllMocks()
+    vi.useRealTimers()
+  })
+
+  it('downloads via a link on desktop and revokes the URL only after a delay', async () => {
+    vi.useFakeTimers()
+    setTouch(false)
+    nav.share = vi.fn()
+    nav.canShare = vi.fn(() => true)
+    const click = stubDownload()
+
+    await saveFile('a.csv', 'x', 'text/csv')
+
+    expect(nav.share).not.toHaveBeenCalled()
+    expect(click).toHaveBeenCalledTimes(1)
+    vi.advanceTimersByTime(1000)
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(60_000)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:fake')
+  })
+
+  it('opens the share sheet on touch devices that can share files', async () => {
+    setTouch(true)
+    nav.share = vi.fn().mockResolvedValue(undefined)
+    nav.canShare = vi.fn(() => true)
+    const click = stubDownload()
+
+    await saveFile('a.json', '{}', 'application/json')
+
+    expect(nav.share).toHaveBeenCalledTimes(1)
+    const shared = (nav.share as ReturnType<typeof vi.fn>).mock.calls[0][0] as { files: File[] }
+    expect(shared.files[0].name).toBe('a.json')
+    expect(click).not.toHaveBeenCalled()
+  })
+
+  it('does nothing more when the user dismisses the share sheet', async () => {
+    setTouch(true)
+    nav.share = vi.fn().mockRejectedValue(new DOMException('cancelled', 'AbortError'))
+    nav.canShare = vi.fn(() => true)
+    const click = stubDownload()
+
+    await saveFile('a.json', '{}', 'application/json')
+
+    expect(click).not.toHaveBeenCalled()
+  })
+
+  it('falls back to a download when sharing is not allowed', async () => {
+    setTouch(true)
+    nav.share = vi.fn().mockRejectedValue(new DOMException('no activation', 'NotAllowedError'))
+    nav.canShare = vi.fn(() => true)
+    const click = stubDownload()
+
+    await saveFile('a.json', '{}', 'application/json')
+
+    expect(click).toHaveBeenCalledTimes(1)
   })
 })

@@ -266,9 +266,18 @@ export function SettingsPage() {
                   {hint}
                 </p>
               </IonLabel>
-              {exportingFormat === format && <IonSpinner slot="end" name="crescent" />}
+              {exportingFormat === format && <IonSpinner slot="end" name="crescent" aria-label="Exporting" />}
             </IonItem>
           ))}
+          {exportData.isSuccess && (
+            <IonItem lines="none">
+              <IonLabel>
+                <p role="status" style={{ margin: 0, color: 'var(--ion-color-medium)' }}>
+                  Export ready — check your downloads.
+                </p>
+              </IonLabel>
+            </IonItem>
+          )}
           {exportData.isError && (
             <IonItem lines="none">
               <IonLabel>

@@ -48,7 +48,8 @@ export interface ViewingDataExport {
  * Nests the user's flat table rows into a portable show → rewatch → episode
  * tree. Internal ids, user ids, and cached TMDB metadata (providers, air
  * status) are left out — only what the user actually recorded is exported.
- * Shows are ordered by title, rewatches oldest first, episodes in watch order.
+ * Shows are ordered by title, rewatches oldest first, episodes by season and
+ * episode (not `logged_at` — backfilled episodes share one timestamp).
  */
 export function buildViewingExport(
   { shows, rewatches, progressLogs }: ExportSource,
@@ -178,9 +179,11 @@ export function exportFilename(extension: 'json' | 'csv', date: Date = new Date(
   return `couchmode-export-${y}-${m}-${d}.${extension}`
 }
 
-/** Triggers a browser download of `content` as a file. */
-export function downloadFile(filename: string, content: string, mimeType: string): void {
-  const blob = new Blob([content], { type: mimeType })
+// Long enough for WebKit, which starts blob downloads asynchronously and fails
+// ("WebKitBlobResource error 1") if the object URL is revoked too soon.
+const REVOKE_DELAY_MS = 60_000
+
+function downloadViaLink(filename: string, blob: Blob): void {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
@@ -189,6 +192,29 @@ export function downloadFile(filename: string, content: string, mimeType: string
   document.body.appendChild(link)
   link.click()
   link.remove()
-  // Revoke on the next tick so the download has started before the URL dies.
-  setTimeout(() => URL.revokeObjectURL(url), 0)
+  setTimeout(() => URL.revokeObjectURL(url), REVOKE_DELAY_MS)
+}
+
+/**
+ * Hands `content` to the user as a file. On touch devices that can share files
+ * (iOS/Android, including the installed PWA, where `<a download>` is
+ * unreliable) this opens the native share sheet so they can save it to Files,
+ * AirDrop it, etc. Everywhere else — or if sharing isn't allowed, e.g. the tap's
+ * user activation expired while the data loaded — it falls back to a download.
+ * Resolves quietly if the user dismisses the share sheet.
+ */
+export async function saveFile(filename: string, content: string, mimeType: string): Promise<void> {
+  const blob = new Blob([content], { type: mimeType })
+  const file = typeof File === 'function' ? new File([blob], filename, { type: mimeType }) : null
+  const touch = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches
+  if (file && touch && typeof navigator.share === 'function' && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: filename })
+      return
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return
+      // NotAllowedError etc. → fall through to a regular download.
+    }
+  }
+  downloadViaLink(filename, blob)
 }

@@ -9,7 +9,12 @@ vi.mock('../hooks/useResumeShow', () => ({
 }))
 
 const mockExportMutate = vi.fn()
-const mockExportState = { isPending: false, isError: false, variables: undefined as string | undefined }
+const mockExportState = {
+  isPending: false,
+  isError: false,
+  isSuccess: false,
+  variables: undefined as string | undefined,
+}
 vi.mock('../hooks/useExportData', () => ({
   useExportData: vi.fn(() => ({ mutate: mockExportMutate, ...mockExportState })),
 }))
@@ -212,7 +217,7 @@ describe('SettingsPage', () => {
 
   describe('data export', () => {
     beforeEach(() => {
-      Object.assign(mockExportState, { isPending: false, isError: false, variables: undefined })
+      Object.assign(mockExportState, { isPending: false, isError: false, isSuccess: false, variables: undefined })
     })
 
     it('exports as CSV or JSON when the matching row is tapped', () => {
@@ -230,6 +235,12 @@ describe('SettingsPage', () => {
       Object.assign(mockExportState, { isPending: true, variables: 'csv' })
       renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
       expect(screen.getByTestId('ion-spinner')).toBeInTheDocument()
+    })
+
+    it('confirms when an export has finished', () => {
+      Object.assign(mockExportState, { isSuccess: true })
+      renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
+      expect(screen.getByRole('status')).toHaveTextContent('Export ready')
     })
 
     it('shows an error when the export fails', () => {
