@@ -104,12 +104,20 @@ Key exports:
 
 `PreferencesContext` (`src/contexts/PreferencesContext.tsx`) holds per-user app options, exposed via `usePreferences()` as `{ preferences, setPreference }`. Options today (all surfaced in the Settings page "Home Screen" section): `showResumeCard`, `resumeCardMode` (`'up-next' | 'last-watched'` — what the `ResumeCard` on `RotationPage` highlights), and `showDoneSection`. It's a hybrid store: a synchronous `localStorage` cache (`couchmode-preferences`) for instant/offline first paint, plus background sync to the `user_preferences` table so choices follow the user across devices. On sign-in it loads the server row (or seeds it from the local cache if none exists); each `setPreference` updates state + cache immediately and write-throughs an upsert (best-effort). Outside a provider, `usePreferences()` returns defaults with no-op setters. Add new options by extending the `Preferences` type + `DEFAULT_PREFERENCES` + `sanitize()`; no migration is needed since the column is a merged JSONB blob.
 
+### Data Export
+
+The Settings page "Your Data" section lets users download their full viewing history. `useExportData()` (`src/hooks/useExportData.ts`) is a mutation taking `'csv' | 'json'`: `fetchAllRows()` keyset-paginates `shows`, `rewatches`, and `progress_logs` on `id` (1000 rows per request, stopping only on an empty page, so PostgREST's max-rows cap can't truncate it), then `saveFile()` hands over the file. The pure formatting lives in `src/lib/exportData.ts` (unit-tested in `exportData.test.ts`; paging in `useExportData.test.ts`):
+- `buildViewingExport(source)` — nests rows into show → rewatch → episode JSON (`format_version: 1`), dropping internal ids and cached TMDB data
+- `buildViewingCsv(data)` — one row per logged episode (rewatches/shows with nothing logged still get a row); cells are RFC 4180-escaped and formula-trigger prefixes are neutralised. A UTF-8 BOM is prepended at save time for Excel.
+- `exportFilename(ext)` — `couchmode-export-YYYY-MM-DD.<ext>`
+- `saveFile(name, content, mime)` — on touch devices that can share files (iOS/Android, incl. the installed PWA, where `<a download>` is unreliable) opens the native share sheet; otherwise, or if sharing is refused, downloads via a link whose object URL is revoked after 60s (WebKit fails if it's revoked sooner)
+
 ### Key Directories
 
 - `src/hooks/` — All data-fetching and mutation hooks (React Query wrappers around Supabase calls)
 - `src/pages/` — Route-level components: `LoginPage`, `RotationPage`, `ShowDetailPage`, `SearchPage`, `HistoryPage`, `SettingsPage`, `SuggestionsPage`, `AdminPage`
 - `src/components/` — Reusable UI: `ShowCard`, `WatchlistCard`, `ResumeCard`, `LogProgressModal`, `BrowseEpisodesModal`, `MarkFinishedModal`, `EditServiceModal`, `ServiceSelector`, `BottomNav`, `StatusBadge`, `TmdbAttribution`, `AdminRoute`, `ProtectedRoute`
-- `src/lib/` — Non-React utilities: `supabase.ts` (client init), `database.types.ts` (generated types), `progressLogic.ts`, `tmdb.ts`
+- `src/lib/` — Non-React utilities: `supabase.ts` (client init), `database.types.ts` (generated types), `progressLogic.ts`, `tmdb.ts`, `exportData.ts`
 - `src/contexts/` — `AuthContext`, `ThemeContext`, `PreferencesContext`
 - `src/test/` — Vitest setup, `ionicMock.tsx` (stubs Ionic components for tests), `utils.tsx` (render helpers)
 - `supabase/migrations/` — SQL schema and RLS policies
@@ -164,7 +172,8 @@ Tests use Vitest + jsdom + `@testing-library/react`. Ionic components are mocked
 Tests exist for:
 - `src/lib/progressLogic.test.ts` — pure logic unit tests (most comprehensive)
 - `src/lib/tmdb.test.ts` — TMDB fetch functions
-- `src/hooks/useProgressLogs.test.ts`, `useRewatches.test.ts`, `useShows.test.ts`, `useTMDBSeason.test.ts`, `useTMDBShow.test.ts`, `useDebounce.test.ts`
+- `src/lib/exportData.test.ts` — export formatting, CSV escaping, `saveFile` share/download paths
+- `src/hooks/useExportData.test.ts`, `useProgressLogs.test.ts`, `useRewatches.test.ts`, `useShows.test.ts`, `useTMDBSeason.test.ts`, `useTMDBShow.test.ts`, `useDebounce.test.ts`
 - `src/components/AppTabBar.test.tsx`, `ProtectedRoute.test.tsx`, `StatusBadge.test.tsx`
 - `src/contexts/AuthContext.test.tsx`
 - `src/pages/HistoryPage.test.tsx`, `LoginPage.test.tsx`, `RotationPage.test.tsx`, `SearchPage.test.tsx`, `SettingsPage.test.tsx`, `ShowDetailPage.test.tsx`
@@ -183,11 +192,11 @@ Browser E2E tests live in `e2e/` and run via Playwright (`npm run test:e2e`). Th
 **Logged-in specs (mocked backend).** `e2e/authed/**` exercises the authenticated UI without any real Supabase project, credentials, or network — everything is faked in the browser. Support code lives in `e2e/support/`:
 - `fixtures.ts` exports an extended Playwright `test`. Its `page` fixture (a) seeds a synthetic auth session into `localStorage` via `addInitScript` before the app boots, so the app comes up signed-in, and (b) installs the request mocks. Build tests on this `test`, and tweak fixture data through the `db` fixture before navigating.
 - `session.ts` builds the exact object supabase-js persists (far-future `expires_at` so no token refresh fires) and derives the storage key (`sb-<host-label>-auth-token`) from the E2E URL — **no change to production `createClient` is needed**, which avoids invalidating real users' sessions.
-- `postgrest.ts` is a small PostgREST emulator (parses `eq`/`in`/`is`/`lt…`/`or`/`order`/`limit` and the `.single()`/`.maybeSingle()` Accept header) backed by `db.ts`'s in-memory fixtures.
+- `postgrest.ts` is a small PostgREST emulator (parses `eq`/`in`/`is`/`lt…`/`or`/`order`/`limit`/`offset` and the `.single()`/`.maybeSingle()` Accept header) backed by `db.ts`'s in-memory fixtures.
 - `mockBackend.ts` routes `/rest/v1` (via the emulator), `/functions/v1` (TMDB `tmdb-search` stubs derived from the fixture shows, and `suggest-shows` from `db.suggestions`), `/auth/v1`, and `image.tmdb.org` so nothing leaves the sandbox. The emulator also answers the RPCs (`is_admin`, `admin_get_overview`/`_user_list`/`_popular_shows`) from `db` fields.
 - `fixtures.ts` also exports `visit(page, path)`. The app's `OAuthRedirectHandler` bounces to `/` on the `SIGNED_IN` event that fires when the seeded session is recovered, so a direct `goto('/settings')` lands on home. `visit()` loads `/`, waits for the signed-in home to settle, then navigates within the SPA via the History API (no reload → no second `SIGNED_IN`). Use it for any non-root authed route.
 
-Authed specs cover every logged-in screen: `e2e/authed/rotation.spec.ts`, `history.spec.ts`, `settings.spec.ts` (incl. admin gating via `db.isAdmin` and sign-out), `show-detail.spec.ts`, `suggestions.spec.ts` (populated / "nothing new" / empty-library states via `db.suggestions`), and `admin.spec.ts` (non-admin redirect + admin stats/users/popular shows).
+Authed specs cover every logged-in screen: `e2e/authed/rotation.spec.ts`, `history.spec.ts`, `settings.spec.ts` (incl. admin gating via `db.isAdmin`, sign-out, and CSV/JSON data export downloads), `show-detail.spec.ts`, `suggestions.spec.ts` (populated / "nothing new" / empty-library states via `db.suggestions`), and `admin.spec.ts` (non-admin redirect + admin stats/users/popular shows).
 
 This is the "mock lane" — it covers logged-in *UI/behaviour*, not real RLS or SQL. For true database/RLS coverage, a separate opt-in job running a local `supabase start` stack would be the next step. When adding logged-in flows, extend `e2e/authed/` and grow the `db.ts` fixtures / `postgrest.ts` operators as needed.
 
