@@ -98,7 +98,7 @@ Key exports:
 - **Up Next** — in-progress rewatches with no logs yet (supports drag-to-reorder via `sort_order`)
 - **Done** — shows whose only rewatches are completed
 
-`RotationPage` renders these four groups. Each in-progress `ShowCard` shows the last-watched episode (eye icon) and, below it, the up-next episode (skip-forward icon), both with TMDB episode titles. Caught-up cards skip the up-next line and show an air-status line (`formatAirStatus`) instead of a completion percentage.
+`RotationPage` renders these four groups. Each in-progress `ShowCard` shows the last-watched episode (eye icon) and, below it, the up-next episode (skip-forward icon, in the primary color), both with TMDB episode titles. A matching primary-color ✓ button marks that up-next episode watched (its accessible name names the episode). Caught-up cards skip both the up-next line and the ✓ button (so an unaired episode can't be logged) and show an air-status line (`formatAirStatus`) instead of a completion percentage.
 
 ### User Preferences
 

@@ -37,6 +37,7 @@ vi.mock('./LogProgressModal', () => ({
 import { useRewatches } from '../hooks/useRewatches'
 import { useCurrentProgress } from '../hooks/useProgressLogs'
 import { useLogEpisodeSheet } from '../hooks/useLogEpisodeSheet'
+import { useTMDBSeason } from '../hooks/useTMDBSeason'
 
 function makeShow(overrides: Partial<Show> = {}): Show {
   return {
@@ -76,13 +77,14 @@ function setupWatching() {
 describe('ShowCard quick-log button', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(useTMDBSeason).mockReturnValue({ data: undefined } as unknown as ReturnType<typeof useTMDBSeason>)
   })
 
-  it('renders a +1 button for a watching show', () => {
+  it('renders a mark-watched button naming the next episode', () => {
     setupWatching()
     render(<ShowCard show={makeShow()} />)
     expect(
-      screen.getByRole('button', { name: 'Log next episode of Breaking Bad' }),
+      screen.getByRole('button', { name: 'Mark Breaking Bad S1 E4 as watched' }),
     ).toBeInTheDocument()
   })
 
@@ -90,7 +92,7 @@ describe('ShowCard quick-log button', () => {
     setupWatching()
     render(<ShowCard show={makeShow()} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Log next episode of Breaking Bad' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Mark Breaking Bad S1 E4 as watched' }))
 
     expect(mockLogNext).toHaveBeenCalledTimes(1)
     expect(mockNavigateFn).not.toHaveBeenCalled()
@@ -106,7 +108,7 @@ describe('ShowCard quick-log button', () => {
     })
     render(<ShowCard show={makeShow()} />)
     expect(
-      screen.getByRole('button', { name: 'Log next episode of Breaking Bad' }),
+      screen.getByRole('button', { name: 'Mark Breaking Bad S1 E4 as watched' }),
     ).toBeDisabled()
   })
 
@@ -123,7 +125,7 @@ describe('ShowCard quick-log button', () => {
     })
     render(<ShowCard show={makeShow()} />)
     expect(
-      screen.queryByRole('button', { name: /Log next episode/ }),
+      screen.queryByRole('button', { name: /as watched/ }),
     ).not.toBeInTheDocument()
   })
 
@@ -131,8 +133,36 @@ describe('ShowCard quick-log button', () => {
     setupWatching()
     render(<ShowCard show={makeShow()} reorderMode />)
     expect(
-      screen.queryByRole('button', { name: /Log next episode/ }),
+      screen.queryByRole('button', { name: /as watched/ }),
     ).not.toBeInTheDocument()
+  })
+
+  it('includes the next episode title in the button label when known', () => {
+    setupWatching()
+    vi.mocked(useTMDBSeason).mockReturnValue({
+      data: { episodes: [{ episode_number: 4, name: 'Cancer Man' }] },
+    } as unknown as ReturnType<typeof useTMDBSeason>)
+    render(<ShowCard show={makeShow()} />)
+    expect(
+      screen.getByRole('button', { name: 'Mark Breaking Bad S1 E4 "Cancer Man" as watched' }),
+    ).toBeInTheDocument()
+  })
+
+  it('does not render the button for a caught-up show', () => {
+    setupWatching()
+    render(
+      <ShowCard
+        show={makeShow({
+          air_status: {
+            status: 'Returning Series',
+            last_aired: { season: 1, episode: 3, air_date: '2026-01-01' },
+            next_episode: null,
+          },
+        } as Partial<Show>)}
+      />,
+    )
+    expect(screen.queryByRole('button', { name: /as watched/ })).not.toBeInTheDocument()
+    expect(screen.getByText('Caught up')).toBeInTheDocument()
   })
 
   it('shows the last completed date for a done show', () => {

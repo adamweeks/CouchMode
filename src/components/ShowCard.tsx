@@ -17,6 +17,7 @@ import {
   playSkipForwardOutline,
   eyeOutline,
   checkmarkCircleOutline,
+  checkmarkSharp,
   ellipseOutline,
 } from 'ionicons/icons'
 import type { Database } from '../lib/database.types'
@@ -94,8 +95,12 @@ export function ShowCard({
   const caughtUp = isCaughtUp(currentProgress, airStatus)
   const airLine = caughtUp ? formatAirStatus(airStatus) : null
   // A caught-up show's air-status line already names the next episode (and the
-  // one in episodes_per_season may not have aired yet), so skip it there.
+  // one in episodes_per_season may not have aired yet), so skip it there — and
+  // skip the quick-log button too, so it can't log an unaired episode.
   const showUpNext = isWatching && !caughtUp && !!nextEp
+  const nextEpLabel = nextEp
+    ? formatProgress(nextEp.season, nextEp.episode) + (nextEpisodeTitle ? ` "${nextEpisodeTitle}"` : '')
+    : ''
 
   const lastCompletedAt = completedRewatches.reduce<string | null>((latest, r) => {
     if (!r.completed_at) return latest
@@ -163,7 +168,9 @@ export function ShowCard({
               (nextEpisodeTitle ? ` · ${nextEpisodeTitle}` : '')
             }
             hideLabel={!showStatusLabel}
-            style={{ marginBottom: '8px' }}
+            // Same blue as the quick-log button, so the eye links the two.
+            color="var(--ion-color-primary)"
+            style={{ marginBottom: '8px', fontWeight: 500 }}
           />
         )}
         {currentProgress && (
@@ -195,9 +202,9 @@ export function ShowCard({
 
       {!reorderMode && (
         <div slot="end" style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingRight: '4px' }}>
-          {isWatching && logNext && (
+          {showUpNext && logNext && (
             <button
-              aria-label={`Log next episode of ${show.title}`}
+              aria-label={`Mark ${show.title} ${nextEpLabel} as watched`}
               disabled={isLogging}
               onClick={e => {
                 e.stopPropagation()
@@ -220,7 +227,7 @@ export function ShowCard({
                 opacity: isLogging ? 0.5 : 1,
               }}
             >
-              +1
+              <IonIcon icon={checkmarkSharp} aria-hidden="true" style={{ fontSize: '18px' }} />
             </button>
           )}
         </div>
