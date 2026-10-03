@@ -17,6 +17,7 @@ dist-ssr
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/pr-screenshots/
 
 # Environment files (never commit secrets)
 .env

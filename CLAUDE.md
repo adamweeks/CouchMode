@@ -16,6 +16,7 @@ npm run test         # Run all unit tests once (Vitest)
 npm run test:watch   # Vitest watch mode
 npm run test:e2e     # Run Playwright end-to-end tests
 npm run test:e2e:ui  # Playwright interactive UI mode
+npm run screenshots  # Capture PR screenshots into pr-screenshots/ (see Pull Requests → Screenshots)
 npm run preview      # Preview production build locally
 ```
 
@@ -216,6 +217,17 @@ docs: update CLAUDE.md
 ```
 
 Common types: `feat`, `fix`, `chore`, `refactor`, `test`, `docs`, `style`, `perf`.
+
+### Screenshots
+
+Every PR that changes anything a user can see must include screenshots in its description, light and dark, at phone size. Purely internal PRs (refactors, tooling, tests) can skip them.
+
+1. `npm run screenshots` captures each main signed-in screen (mocked backend, iPhone 13 viewport, light + dark) into `pr-screenshots/` (gitignored). The list of screens is in `e2e/screenshots/screens.shot.ts`. If the PR changes a screen or state that isn't listed there, add it. Look at the images before using them.
+2. Commit the relevant PNGs to the PR branch under `.github/pr-screenshots/pr-<number>/` and push.
+3. Link them in the PR body pinned to that commit's SHA, so they keep working after the files are gone: `![home, dark](https://github.com/adamweeks/CouchMode/blob/<sha>/.github/pr-screenshots/pr-<number>/home-dark.png?raw=true)`. Put light and dark side by side in a table.
+4. Delete the folder in a follow-up commit, so the images never land in `main`. GitHub keeps the PR's commits, so the SHA links stay valid.
+
+When the UI changes again later in the same PR, repeat the steps and update the screenshots in the description.
 
 ### semantic-release impact
 
