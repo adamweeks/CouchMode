@@ -4,18 +4,7 @@ import { supabase } from '../lib/supabase'
 import type { Json } from '../lib/database.types'
 import { useAuth } from './AuthContext'
 
-/**
- * What the "Continue Watching" card on the main index highlights:
- * - `up-next` — the next episode to watch (the default).
- * - `last-watched` — the most recently logged episode.
- */
-export type ResumeCardMode = 'up-next' | 'last-watched'
-
 export interface Preferences {
-  /** Whether the "Continue Watching" card appears at the top of the main list. */
-  showResumeCard: boolean
-  /** Whether that card highlights the next episode to watch, or the last one watched. */
-  resumeCardMode: ResumeCardMode
   /** Whether finished shows appear in a "Done" group on the main list. */
   showDoneSection: boolean
 }
@@ -24,8 +13,6 @@ export interface Preferences {
 export const PREFERENCES_STORAGE_KEY = 'couchmode-preferences'
 
 export const DEFAULT_PREFERENCES: Preferences = {
-  showResumeCard: true,
-  resumeCardMode: 'up-next',
   showDoneSection: true,
 }
 
@@ -39,10 +26,6 @@ const PreferencesContext = createContext<PreferencesContextValue | undefined>(un
 /** Keep only well-typed, known keys so a corrupt/old blob can't poison the app. */
 function sanitize(raw: Partial<Preferences>): Partial<Preferences> {
   const out: Partial<Preferences> = {}
-  if (typeof raw.showResumeCard === 'boolean') out.showResumeCard = raw.showResumeCard
-  if (raw.resumeCardMode === 'up-next' || raw.resumeCardMode === 'last-watched') {
-    out.resumeCardMode = raw.resumeCardMode
-  }
   if (typeof raw.showDoneSection === 'boolean') out.showDoneSection = raw.showDoneSection
   return out
 }

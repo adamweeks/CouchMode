@@ -16,6 +16,7 @@ npm run test         # Run all unit tests once (Vitest)
 npm run test:watch   # Vitest watch mode
 npm run test:e2e     # Run Playwright end-to-end tests
 npm run test:e2e:ui  # Playwright interactive UI mode
+npm run screenshots  # Capture PR screenshots into pr-screenshots/ (see Pull Requests → Screenshots)
 npm run preview      # Preview production build locally
 ```
 
@@ -41,7 +42,7 @@ The TMDB API key and Anthropic API key are never exposed to the frontend — all
 ### Data Flow
 
 1. **Auth** — `AuthContext` (`src/contexts/AuthContext.tsx`) wraps the app and exposes `useAuth()`. All pages are wrapped in `ProtectedRoute`.
-2. **Data fetching** — Custom hooks in `src/hooks/` use TanStack React Query. Query keys follow the pattern `['shows', userId]`, `['rewatches', showId]`, `['progress_logs', rewatchId]`, `['resume-show', userId]`, `['suggestions', userId, showTitlesHash]`.
+2. **Data fetching** — Custom hooks in `src/hooks/` use TanStack React Query. Query keys follow the pattern `['shows', userId]`, `['rewatches', showId]`, `['progress_logs', rewatchId]`, `['suggestions', userId, showTitlesHash]`.
 3. **Mutations** — Each mutation hook (e.g., `useLogProgress`, `useAddShow`) calls `queryClient.invalidateQueries` on success to keep the UI in sync.
 4. **TMDB search** — Frontend calls Supabase edge function (`supabase/functions/tmdb-search`) which proxies to TMDB API with the server-side key.
 5. **AI suggestions** — Frontend calls `supabase/functions/suggest-shows` which uses the Anthropic API (Claude Haiku) to suggest shows based on the user's current library, then resolves titles to TMDB metadata.
@@ -93,22 +94,22 @@ Key exports:
 ### Show Grouping
 
 `useShowGroups()` in `useShows.ts` organizes shows into four groups:
-- **Watching** — in-progress rewatches with at least one progress log and episodes still left to watch
+- **Watching** — in-progress rewatches with at least one progress log and episodes still left to watch, sorted by most recently logged episode. The single most recently watched show is always placed here (at the top), even if it would otherwise be Caught Up.
 - **Caught Up** — in-progress rewatches on a *returning* series where progress has reached the last aired episode (`isCaughtUp` in `progressLogic.ts`, using the show's cached `air_status`). Keeps still-airing shows the user has caught up on out of Watching so the list only surfaces things ready to watch now.
 - **Up Next** — in-progress rewatches with no logs yet (supports drag-to-reorder via `sort_order`)
 - **Done** — shows whose only rewatches are completed
 
-`RotationPage` renders these four groups plus a `ResumeCard` that pinpoints the most recently active show. Caught-up cards show an air-status line (`formatAirStatus`) instead of a completion percentage.
+`RotationPage` renders these four groups. Each in-progress `ShowCard` shows the last-watched episode (eye icon) and, below it, the up-next episode (skip-forward icon, in the primary color), both with TMDB episode titles. A matching primary-color ✓ button marks that up-next episode watched (its accessible name names the episode). Caught-up cards skip both the up-next line and the ✓ button (so an unaired episode can't be logged) and show an air-status line (`formatAirStatus`) instead of a completion percentage.
 
 ### User Preferences
 
-`PreferencesContext` (`src/contexts/PreferencesContext.tsx`) holds per-user app options, exposed via `usePreferences()` as `{ preferences, setPreference }`. Options today (all surfaced in the Settings page "Home Screen" section): `showResumeCard`, `resumeCardMode` (`'up-next' | 'last-watched'` — what the `ResumeCard` on `RotationPage` highlights), and `showDoneSection`. It's a hybrid store: a synchronous `localStorage` cache (`couchmode-preferences`) for instant/offline first paint, plus background sync to the `user_preferences` table so choices follow the user across devices. On sign-in it loads the server row (or seeds it from the local cache if none exists); each `setPreference` updates state + cache immediately and write-throughs an upsert (best-effort). Outside a provider, `usePreferences()` returns defaults with no-op setters. Add new options by extending the `Preferences` type + `DEFAULT_PREFERENCES` + `sanitize()`; no migration is needed since the column is a merged JSONB blob.
+`PreferencesContext` (`src/contexts/PreferencesContext.tsx`) holds per-user app options, exposed via `usePreferences()` as `{ preferences, setPreference }`. Options today (surfaced in the Settings page "Home Screen" section): `showDoneSection`. `sanitize()` drops unknown keys, so retired options (e.g. the old `showResumeCard`/`resumeCardMode`) still stored in a user's row are ignored. It's a hybrid store: a synchronous `localStorage` cache (`couchmode-preferences`) for instant/offline first paint, plus background sync to the `user_preferences` table so choices follow the user across devices. On sign-in it loads the server row (or seeds it from the local cache if none exists); each `setPreference` updates state + cache immediately and write-throughs an upsert (best-effort). Outside a provider, `usePreferences()` returns defaults with no-op setters. Add new options by extending the `Preferences` type + `DEFAULT_PREFERENCES` + `sanitize()`; no migration is needed since the column is a merged JSONB blob.
 
 ### Key Directories
 
 - `src/hooks/` — All data-fetching and mutation hooks (React Query wrappers around Supabase calls)
 - `src/pages/` — Route-level components: `LoginPage`, `RotationPage`, `ShowDetailPage`, `SearchPage`, `HistoryPage`, `SettingsPage`, `SuggestionsPage`, `AdminPage`
-- `src/components/` — Reusable UI: `ShowCard`, `WatchlistCard`, `ResumeCard`, `LogProgressModal`, `BrowseEpisodesModal`, `MarkFinishedModal`, `EditServiceModal`, `ServiceSelector`, `BottomNav`, `StatusBadge`, `TmdbAttribution`, `AdminRoute`, `ProtectedRoute`
+- `src/components/` — Reusable UI: `ShowCard`, `WatchlistCard`, `LogProgressModal`, `BrowseEpisodesModal`, `MarkFinishedModal`, `EditServiceModal`, `ServiceSelector`, `BottomNav`, `StatusBadge`, `TmdbAttribution`, `AdminRoute`, `ProtectedRoute`
 - `src/lib/` — Non-React utilities: `supabase.ts` (client init), `database.types.ts` (generated types), `progressLogic.ts`, `tmdb.ts`
 - `src/contexts/` — `AuthContext`, `ThemeContext`, `PreferencesContext`
 - `src/test/` — Vitest setup, `ionicMock.tsx` (stubs Ionic components for tests), `utils.tsx` (render helpers)
@@ -216,6 +217,17 @@ docs: update CLAUDE.md
 ```
 
 Common types: `feat`, `fix`, `chore`, `refactor`, `test`, `docs`, `style`, `perf`.
+
+### Screenshots
+
+Every PR that changes anything a user can see must include screenshots in its description, light and dark, at phone size. Purely internal PRs (refactors, tooling, tests) can skip them.
+
+1. `npm run screenshots` captures each main signed-in screen (mocked backend, iPhone 13 viewport, light + dark) into `pr-screenshots/` (gitignored). The list of screens is in `e2e/screenshots/screens.shot.ts`. If the PR changes a screen or state that isn't listed there, add it. Look at the images before using them.
+2. Commit the relevant PNGs to the PR branch under `.github/pr-screenshots/pr-<number>/` and push.
+3. Link them in the PR body pinned to that commit's SHA, so they keep working after the files are gone: `![home, dark](https://github.com/adamweeks/CouchMode/blob/<sha>/.github/pr-screenshots/pr-<number>/home-dark.png?raw=true)`. Put light and dark side by side in a table.
+4. Delete the folder in a follow-up commit, so the images never land in `main`. GitHub keeps the PR's commits, so the SHA links stay valid.
+
+When the UI changes again later in the same PR, repeat the steps and update the screenshots in the description.
 
 ### semantic-release impact
 

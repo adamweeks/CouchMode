@@ -110,7 +110,6 @@ export function useLogProgress() {
       queryClient.invalidateQueries({ queryKey: ['progress_logs', rewatchId] })
       queryClient.invalidateQueries({ queryKey: ['rewatches', showId] })
       queryClient.invalidateQueries({ queryKey: ['shows', user?.id] })
-      queryClient.invalidateQueries({ queryKey: ['resume-show', user?.id] })
     },
   })
 }
@@ -150,7 +149,6 @@ export function useResetRewatch() {
       queryClient.invalidateQueries({ queryKey: ['progress_logs', rewatchId] })
       queryClient.invalidateQueries({ queryKey: ['rewatches', showId] })
       queryClient.invalidateQueries({ queryKey: ['shows', user?.id] })
-      queryClient.invalidateQueries({ queryKey: ['resume-show', user?.id] })
     },
   })
 }
@@ -170,7 +168,6 @@ export function useDeleteProgressLogs() {
       queryClient.invalidateQueries({ queryKey: ['progress_logs', rewatchId] })
       queryClient.invalidateQueries({ queryKey: ['rewatches', showId] })
       queryClient.invalidateQueries({ queryKey: ['shows', user?.id] })
-      queryClient.invalidateQueries({ queryKey: ['resume-show', user?.id] })
     },
   })
 }

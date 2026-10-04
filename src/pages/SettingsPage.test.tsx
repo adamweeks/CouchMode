@@ -4,9 +4,6 @@ vi.mock('../hooks/useIsAdmin', () => ({
   useIsAdmin: vi.fn(() => ({ data: false, isPending: false })),
 }))
 
-vi.mock('../hooks/useResumeShow', () => ({
-  useResumeShow: vi.fn(() => ({ data: null })),
-}))
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -135,31 +132,14 @@ describe('SettingsPage', () => {
       localStorage.clear()
     })
 
-    it('defaults the Continue Watching card on and set to "Up next"', () => {
+    it('defaults finished shows on', () => {
       renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
-      expect(screen.getByRole('checkbox', { name: 'Continue Watching card' })).toBeChecked()
-      expect(screen.getByRole('combobox', { name: 'Continue Watching card shows' })).toHaveValue('up-next')
       expect(screen.getByRole('checkbox', { name: 'Show finished shows' })).toBeChecked()
     })
 
-    it('switches the Continue Watching card to "Last watched" and persists it', () => {
+    it('no longer offers a Continue Watching card option', () => {
       renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
-      fireEvent.change(screen.getByRole('combobox', { name: 'Continue Watching card shows' }), {
-        target: { value: 'last-watched' },
-      })
-      expect(screen.getByRole('combobox', { name: 'Continue Watching card shows' })).toHaveValue('last-watched')
-      expect(JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY)!)).toMatchObject({
-        resumeCardMode: 'last-watched',
-      })
-    })
-
-    it('toggles the Continue Watching card off and persists it', () => {
-      renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
-      fireEvent.click(screen.getByRole('checkbox', { name: 'Continue Watching card' }))
-      expect(screen.getByRole('checkbox', { name: 'Continue Watching card' })).not.toBeChecked()
-      expect(JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY)!)).toMatchObject({
-        showResumeCard: false,
-      })
+      expect(screen.queryByRole('checkbox', { name: 'Continue Watching card' })).not.toBeInTheDocument()
     })
 
     it('toggles the finished-shows section off and persists it', () => {
@@ -171,35 +151,12 @@ describe('SettingsPage', () => {
       })
     })
 
-    it('renders a preview of both resume-card modes', () => {
-      renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
-      expect(screen.getByRole('button', { name: 'Preview: Up next' })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: 'Preview: Last watched' })).toBeInTheDocument()
-    })
-
-    it('selecting a preview sets and persists that mode', () => {
-      renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
-      fireEvent.click(screen.getByRole('button', { name: 'Preview: Last watched' }))
-      expect(screen.getByRole('combobox', { name: 'Continue Watching card shows' })).toHaveValue('last-watched')
-      expect(JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY)!)).toMatchObject({
-        resumeCardMode: 'last-watched',
-      })
-    })
-
-    it('hides the preview when the Continue Watching card is off', () => {
-      renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
-      fireEvent.click(screen.getByRole('checkbox', { name: 'Continue Watching card' }))
-      expect(screen.queryByRole('button', { name: 'Preview: Up next' })).not.toBeInTheDocument()
-    })
-
     it('restores stored preferences on load', () => {
       localStorage.setItem(
         PREFERENCES_STORAGE_KEY,
-        JSON.stringify({ showResumeCard: false, resumeCardMode: 'last-watched', showDoneSection: false }),
+        JSON.stringify({ showDoneSection: false }),
       )
       renderPage({ id: 'u1', email: 'a@b.com', user_metadata: {} })
-      expect(screen.getByRole('checkbox', { name: 'Continue Watching card' })).not.toBeChecked()
-      expect(screen.getByRole('combobox', { name: 'Continue Watching card shows' })).toHaveValue('last-watched')
       expect(screen.getByRole('checkbox', { name: 'Show finished shows' })).not.toBeChecked()
     })
   })
